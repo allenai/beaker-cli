@@ -1,0 +1,11 @@
+# This is the root of the repository.
+root = true
+
+# Global settings
+[*]
+insert_final_newline = true
+
+# Go files. We rely on gofmt for style; these settings are strictly for GitHub display.
+[*.go]
+indent_style = tab
+indent_size = 4

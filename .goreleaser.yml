@@ -1,0 +1,50 @@
+# This file builds Beaker's release binaries and image. It assumes that all
+# dependencies have been built, and should be invoked with 'make release'.
+# See http://goreleaser.com for documentation on the below customizations.
+
+# Declare the binary we want to build.
+builds:
+  - binary: beaker
+    main: cmd/beaker/main.go
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+    ldflags:
+      - |
+        -X main.version={{.Tag}}
+        -X main.commit={{.Commit}}
+
+# Set archive name conventions.
+archive:
+  format: tar.gz
+  name_template: "{{.ProjectName}}_{{.Os}}"
+  replacements:
+    darwin: mac
+  files:
+    - none*
+
+# Customize remaining release metadata.
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{.Tag}}-snapshot"
+changelog:
+  sort: asc
+
+# Build GitHub release. This step is enabled by default.
+release: {}
+
+# Build Homebrew tap.
+brew:
+  github:
+    owner: allenai
+    name: homebrew-beaker
+  download_strategy: GitHubPrivateRepositoryReleaseDownloadStrategy
+  homepage: "https://beaker.allenai.org"
+  description: "Beaker command-line tool."
+  test: |
+    system "#{bin}/program --version"

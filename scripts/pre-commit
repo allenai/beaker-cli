@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# This file is modified from a pre-commit hook written by the Go Authors under a BSD-style license.
+# The original source can be found at: http://tip.golang.org/misc/git/pre-commit
+
+# Get a list of modified go files under our source directory. Ignore vendor files. If none, exit.
+git_root=$(git rev-parse --show-toplevel)
+gofiles=$(git diff --cached --name-only --diff-filter=ACM "$git_root" | grep '\.go$')
+[ -z "$gofiles" ] && exit 0
+
+# Get the subset of unformatted files. If none, exit.
+unformatted=$(goimports -l $gofiles)
+[ -z "$unformatted" ] && exit 0
+
+# Some files are not gofmt'd. Print message and fail.
+echo >&2 "Go files must be formatted with gofmt. Please run:"
+for fn in $unformatted; do
+  echo >&2 "  goimports -w $git_root/$fn"
+done
+
+exit 1

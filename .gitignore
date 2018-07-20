@@ -1,0 +1,7 @@
+# Golang dependencies
+Gopkg.lock
+/vendor/
+
+# Built binaries
+/dist/
+/beaker
