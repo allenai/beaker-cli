@@ -30,15 +30,15 @@ func TestRequirementsToAPI(t *testing.T) {
 		// Bad memory strings
 		{
 			input:       Requirements{Memory: "-2mb"},
-			expectedErr: `invalid memory value "-2mb": Byte quantity must be a positive integer with a unit of measurement like M, MB, MiB, G, GiB, or GB`,
+			expectedErr: `invalid memory value "-2mb": byte quantity must be a positive integer with a unit of measurement like M, MB, MiB, G, GiB, or GB`,
 		},
 		{
 			input:       Requirements{Memory: "1BeakerByte"},
-			expectedErr: `invalid memory value "1BeakerByte": Byte quantity must be a positive integer with a unit of measurement like M, MB, MiB, G, GiB, or GB`,
+			expectedErr: `invalid memory value "1BeakerByte": byte quantity must be a positive integer with a unit of measurement like M, MB, MiB, G, GiB, or GB`,
 		},
 		{
 			input:       Requirements{Memory: "g!bb3rish"},
-			expectedErr: `invalid memory value "g!bb3rish": Byte quantity must be a positive integer with a unit of measurement like M, MB, MiB, G, GiB, or GB`,
+			expectedErr: `invalid memory value "g!bb3rish": byte quantity must be a positive integer with a unit of measurement like M, MB, MiB, G, GiB, or GB`,
 		},
 	}
 
