@@ -5,7 +5,7 @@
 # Declare the binary we want to build.
 builds:
   - binary: beaker
-    main: cmd/beaker/main.go
+    main: cmd/beaker
     env:
       - CGO_ENABLED=0
     goos:
