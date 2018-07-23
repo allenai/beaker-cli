@@ -21,7 +21,7 @@ builds:
 # Set archive name conventions.
 archive:
   format: tar.gz
-  name_template: "{{.ProjectName}}_{{.Os}}"
+  name_template: "beaker_{{.Os}}"
   replacements:
     darwin: mac
   files:
