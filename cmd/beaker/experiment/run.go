@@ -19,6 +19,7 @@ import (
 type runOptions struct {
 	dryRun     bool
 	expandVars bool
+	specFile   *os.File
 	name       string
 	quiet      bool
 	specArgs   specArgs
@@ -56,6 +57,7 @@ func newRunCmd(
 	cmd.Flag("expand-vars", "Expand occurrences of '$VAR' and '${VAR}' in the experiment spec file from environment variables. Default true.").
 		Default("true").
 		BoolVar(&o.expandVars)
+	cmd.Flag("file", "Load experiment spec from a file.").Short('f').FileVar(&o.specFile)
 	cmd.Flag("name", "Assign a name to the experiment").Short('n').StringVar(&o.name)
 	cmd.Flag("quiet", "Only display the experiment's unique ID").Short('q').BoolVar(&o.quiet)
 
@@ -76,6 +78,10 @@ func newRunCmd(
 
 func (o *runOptions) run(beaker *beaker.Client) error {
 	ctx := context.TODO()
+
+	if o.specFile != nil {
+		return errors.Errorf("--file argument is no longer supported; experiment specs can be run with 'experiment create'")
+	}
 
 	spec, err := specFromArgs(o.specArgs)
 	if err != nil {
