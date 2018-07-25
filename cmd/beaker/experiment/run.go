@@ -26,6 +26,7 @@ type runOptions struct {
 }
 
 type specArgs struct {
+	blueprint  string
 	image      string
 	resultPath string
 	desc       string
@@ -61,6 +62,8 @@ func newRunCmd(
 	cmd.Flag("quiet", "Only display the experiment's unique ID").Short('q').BoolVar(&o.quiet)
 
 	// File spec alternatives
+	cmd.Flag("blueprint", "Blueprint containing code to run").StringVar(&o.specArgs.blueprint)
+	cmd.Flag("image", "Docker image to run").StringVar(&o.specArgs.image)
 	cmd.Flag("desc", "Optional description for the experiment").StringVar(&o.specArgs.desc)
 	cmd.Flag("result-path", "Path within the container to which results will be written").
 		PlaceHolder("PATH").StringVar(&o.specArgs.resultPath)
@@ -70,25 +73,19 @@ func newRunCmd(
 	cmd.Flag("memory", "Memory to reserve for this experiment (e.g., 1GB)").StringVar(&o.specArgs.memory)
 	cmd.Flag("gpu-count", "GPUs to use for this experiment (e.g., 2)").IntVar(&o.specArgs.gpuCount)
 
-	cmd.Arg("image", "Docker image to run").StringVar(&o.specArgs.image)
 	cmd.Arg("arg", "Argument to the Docker image").StringsVar(&o.specArgs.args)
 }
 
 func (o *runOptions) run(beaker *beaker.Client) error {
 	ctx := context.TODO()
 
-	var err error
-	var spec *ExperimentSpec
 	if o.specFile != nil {
-		spec, err = ReadSpec(o.specFile, o.expandVars)
-		if err != nil {
-			return err
-		}
-	} else {
-		spec, err = specFromArgs(o.specArgs)
-		if err != nil {
-			return err
-		}
+		return errors.Errorf("--file argument is no longer supported; experiment specs can be run with 'experiment create'")
+	}
+
+	spec, err := specFromArgs(o.specArgs)
+	if err != nil {
+		return err
 	}
 
 	// Create blueprints in place of images.
@@ -129,6 +126,7 @@ func (o *runOptions) run(beaker *beaker.Client) error {
 
 func specFromArgs(args specArgs) (*ExperimentSpec, error) {
 	spec := TaskSpec{
+		Blueprint:  args.blueprint,
 		Image:      args.image,
 		ResultPath: args.resultPath,
 		Arguments:  args.args,
