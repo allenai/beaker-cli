@@ -1,0 +1,10 @@
+#!/bin/sh
+
+if [ -z "$LIST_DIR" ]; then
+    (>&2 echo "LIST_DIR environment variable must be defined")
+    exit 1
+fi
+
+cd $LIST_DIR
+
+find $LIST_DIR -type f -exec echo {} \; -exec cat {} \; -exec echo \;

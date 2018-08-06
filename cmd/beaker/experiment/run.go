@@ -66,7 +66,7 @@ func newRunCmd(
 	cmd.Flag("image", "Docker image to run").StringVar(&o.specArgs.image)
 	cmd.Flag("desc", "Optional description for the experiment").StringVar(&o.specArgs.desc)
 	cmd.Flag("result-path", "Path within the container to which results will be written").
-		PlaceHolder("PATH").StringVar(&o.specArgs.resultPath)
+		PlaceHolder("PATH").Required().StringVar(&o.specArgs.resultPath)
 	cmd.Flag("env", "Set environment variables (e.g. NAME=value or NAME)").StringsVar(&o.specArgs.env)
 	cmd.Flag("source", "Bind a remote data source (e.g. source-id:/target/path)").StringsVar(&o.specArgs.sources)
 	cmd.Flag("cpu", "CPUs to reserve for this experiment (e.g., 0.5)").FloatVar(&o.specArgs.cpu)
