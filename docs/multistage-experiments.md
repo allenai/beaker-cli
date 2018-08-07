@@ -15,7 +15,7 @@ This example uses two blueprints:
 2. `example/merge-wordcount`: Sums the `word_count` metrics in the `/input` directory.
 
 To run an experiment with multiple tasks, you must define an experiment specification in YAML.
-The full spec is available [here](./parallel-wordcount.yaml).
+The full spec is available [here](./parallel-wordcount.yml).
 
 ```yaml
 description: Parallel wordcount
