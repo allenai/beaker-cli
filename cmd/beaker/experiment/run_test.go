@@ -6,7 +6,7 @@ import (
 	"github.com/allenai/beaker-api/api"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/allenai/beaker-cli/cmd/beaker/options"
+	"github.com/allenai/beaker/cmd/beaker/options"
 )
 
 func Test_MakeRequirements_NoValues(t *testing.T) {

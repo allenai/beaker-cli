@@ -8,7 +8,7 @@ gofiles=$(find $git_root -type f -name '*.go' | grep -v "$git_root/vendor")
 [ -z "$gofiles" ] && exit 0
 
 # Get the subset of unformatted files. If none, exit.
-goimports_cmd="goimports -local github.com/allenai/beaker-cli"
+goimports_cmd="goimports -local github.com/allenai/beaker/"
 unformatted=$($goimports_cmd -l $gofiles)
 [ -z "$unformatted" ] && exit 0
 
