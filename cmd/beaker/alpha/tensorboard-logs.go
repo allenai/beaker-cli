@@ -18,7 +18,7 @@ import (
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/allenai/beaker-cli/config"
+	"github.com/allenai/beaker/config"
 )
 
 type tensorboardOptions struct {

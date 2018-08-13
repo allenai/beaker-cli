@@ -9,7 +9,7 @@ import (
 	beaker "github.com/allenai/beaker-api/client"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/allenai/beaker-cli/config"
+	"github.com/allenai/beaker/config"
 )
 
 type inspectOptions struct {

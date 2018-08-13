@@ -1,2 +1,3 @@
-# beaker-cli
+# Beaker
+
 Beaker command line interface tool

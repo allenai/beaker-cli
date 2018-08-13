@@ -3,8 +3,8 @@ package alpha
 import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/allenai/beaker-cli/cmd/beaker/options"
-	"github.com/allenai/beaker-cli/config"
+	"github.com/allenai/beaker/cmd/beaker/options"
+	"github.com/allenai/beaker/config"
 )
 
 type alphaOptions struct {

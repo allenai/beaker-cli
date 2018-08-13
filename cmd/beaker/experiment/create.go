@@ -12,7 +12,7 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/allenai/beaker-cli/config"
+	"github.com/allenai/beaker/config"
 )
 
 // CreateOptions wraps options used to create an experiment.

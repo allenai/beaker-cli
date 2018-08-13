@@ -2,7 +2,7 @@
 SHELL=/bin/bash -o pipefail
 
 # Project variables
-PACKAGE = github.com/allenai/beaker-cli
+PACKAGE = github.com/allenai/beaker
 BASE    = $(GOPATH)/src/$(PACKAGE)
 DIST    = $(BASE)/dist
 VERSION = $(shell git describe --tags --abbrev=0 --match=v* 2> /dev/null || echo v0.0.0)
@@ -42,8 +42,8 @@ $(GOMETALINTER):
 #
 
 # Artificial targets declared in the order they appear below.
-.PHONY: clean git-hooks local release dep test vet check-format format
-.DEFAULT_GOAL := local
+.PHONY: clean git-hooks dev release dep test vet check-format format
+.DEFAULT_GOAL := dev
 
 # TODO: Split clean into clean-all to also clean the dependencies
 clean:
@@ -60,8 +60,8 @@ git-hooks: | $(GOIMPORTS)
 # Primary targets
 #
 
-# Build a local binary against the current platform and place it.
-local: dep $(GOBIN)/beaker
+# Build a dev binary against the current platform and place it.
+dev: dep $(GOBIN)/beaker
 $(GOBIN)/beaker: $(GO_SRC_FILES)
 	@echo "Building for local development..."
 	@go build -v --tags dev -o $@ -ldflags "\

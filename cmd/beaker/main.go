@@ -7,14 +7,14 @@ import (
 	"github.com/fatih/color"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/allenai/beaker-cli/cmd/beaker/alpha"
-	"github.com/allenai/beaker-cli/cmd/beaker/blueprint"
-	"github.com/allenai/beaker-cli/cmd/beaker/dataset"
-	"github.com/allenai/beaker-cli/cmd/beaker/experiment"
-	"github.com/allenai/beaker-cli/cmd/beaker/group"
-	"github.com/allenai/beaker-cli/cmd/beaker/options"
-	"github.com/allenai/beaker-cli/cmd/beaker/task"
-	"github.com/allenai/beaker-cli/config"
+	"github.com/allenai/beaker/cmd/beaker/alpha"
+	"github.com/allenai/beaker/cmd/beaker/blueprint"
+	"github.com/allenai/beaker/cmd/beaker/dataset"
+	"github.com/allenai/beaker/cmd/beaker/experiment"
+	"github.com/allenai/beaker/cmd/beaker/group"
+	"github.com/allenai/beaker/cmd/beaker/options"
+	"github.com/allenai/beaker/cmd/beaker/task"
+	"github.com/allenai/beaker/config"
 )
 
 func main() {
