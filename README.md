@@ -19,6 +19,7 @@ must be installed to take full advantage of Beaker.
 
    ```bash
    beaker experiment run \
+     --name wordcount-moby \
      --blueprint examples/wordcount \
      --source examples/moby:/input \
      --result-path /output
