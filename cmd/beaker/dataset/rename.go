@@ -8,7 +8,7 @@ import (
 	"github.com/fatih/color"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/allenai/beaker-cli/config"
+	"github.com/allenai/beaker/config"
 )
 
 type renameOptions struct {

@@ -55,7 +55,7 @@ func findConfig() (io.ReadCloser, error) {
 		return os.Open(override)
 	}
 
-	const configFile = "config.yaml"
+	const configFile = "config.yml"
 	configPaths := []string{
 		beakerConfigDir,
 		"/etc/beaker",
