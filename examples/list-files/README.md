@@ -2,6 +2,14 @@
 
 This example recursively prints the paths and contents of all files in a directory.
 
+## Build
+
+To build this example, run:
+
+```bash
+docker build -t list-files .
+```
+
 ## Configuration
 
 This example supports the following environment variables:
