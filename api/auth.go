@@ -7,10 +7,7 @@ const (
 	// NoPermission indicates a user isn't permitted any access to an object.
 	NoPermission Permission = "none"
 
-	// List allows a user to see an object's existence and metadata.
-	List Permission = "list"
-
-	// Read allows a user to list an object and read its contents.
+	// Read allows a user to read an object.
 	Read Permission = "read"
 
 	// Write allows a user to read, modify and delete an object.
