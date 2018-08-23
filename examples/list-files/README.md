@@ -4,8 +4,6 @@ This example recursively prints the paths and contents of all files in a directo
 
 ## Build
 
-To build this example, run:
-
 ```bash
 docker build -t list-files .
 ```

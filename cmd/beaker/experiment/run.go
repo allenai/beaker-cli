@@ -7,11 +7,11 @@ import (
 	"strconv"
 	"strings"
 
-	beaker "github.com/allenai/beaker-api/client"
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	yaml "gopkg.in/yaml.v2"
 
+	beaker "github.com/allenai/beaker/client"
 	"github.com/allenai/beaker/cmd/beaker/blueprint"
 	"github.com/allenai/beaker/config"
 )

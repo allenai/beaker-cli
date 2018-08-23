@@ -2,8 +2,9 @@ package options
 
 import (
 	"code.cloudfoundry.org/bytefmt"
-	"github.com/allenai/beaker-api/api"
 	"github.com/pkg/errors"
+
+	"github.com/allenai/beaker/api"
 )
 
 // AppOptions captures options relevant throughout the application.

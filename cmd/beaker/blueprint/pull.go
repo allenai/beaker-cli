@@ -9,13 +9,13 @@ import (
 	"io/ioutil"
 	"os"
 
-	beaker "github.com/allenai/beaker-api/client"
 	"github.com/docker/docker/api/types"
 	docker "github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
+	beaker "github.com/allenai/beaker/client"
 	"github.com/allenai/beaker/config"
 )
 
