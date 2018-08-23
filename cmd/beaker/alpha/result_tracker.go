@@ -4,8 +4,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/allenai/beaker-api/api"
 	"github.com/pkg/errors"
+
+	"github.com/allenai/beaker/api"
 )
 
 type datasetPath struct {

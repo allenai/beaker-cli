@@ -3,8 +3,9 @@ package experiment
 import (
 	"testing"
 
-	"github.com/allenai/beaker-api/api"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/allenai/beaker/api"
 )
 
 func TestRequirementsToAPI(t *testing.T) {

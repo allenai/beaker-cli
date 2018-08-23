@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/allenai/beaker-api/api"
-	beaker "github.com/allenai/beaker-api/client"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
+	"github.com/allenai/beaker/api"
+	beaker "github.com/allenai/beaker/client"
 	"github.com/allenai/beaker/config"
 )
 

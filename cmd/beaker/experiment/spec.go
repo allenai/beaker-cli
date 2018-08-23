@@ -2,8 +2,9 @@ package experiment
 
 import (
 	"code.cloudfoundry.org/bytefmt"
-	"github.com/allenai/beaker-api/api"
 	"github.com/pkg/errors"
+
+	"github.com/allenai/beaker/api"
 )
 
 // ExperimentSpec describes a set of tasks with optional dependencies.

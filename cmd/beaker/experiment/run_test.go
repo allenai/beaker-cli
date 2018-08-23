@@ -3,9 +3,9 @@ package experiment
 import (
 	"testing"
 
-	"github.com/allenai/beaker-api/api"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/allenai/beaker/api"
 	"github.com/allenai/beaker/cmd/beaker/options"
 )
 
