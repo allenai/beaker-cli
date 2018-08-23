@@ -1,0 +1,41 @@
+description: Parallel wordcount
+tasks:
+  - name: count-1
+    spec:
+      description: Count words in wordcount-1
+      blueprint: example/wordcount
+      resultPath: /output
+      datasetMounts:
+        - datasetId: example/wordcount-1
+          containerPath: /input/1.txt
+
+  - name: count-2
+    spec:
+      description: Count words in wordcount-2
+      blueprint: example/wordcount
+      resultPath: /output
+      datasetMounts:
+        - datasetId: example/wordcount-2
+          containerPath: /input/2.txt
+
+  - name: count-3
+    spec:
+      description: Count words in wordcount-3
+      blueprint: example/wordcount
+      resultPath: /output
+      datasetMounts:
+        - datasetId: example/wordcount-3
+          containerPath: /input/3.txt
+
+  - name: merge
+    spec:
+      description: Merge wordcounts
+      blueprint: example/merge-wordcount
+      resultPath: /output
+    dependsOn:
+     - parentName: count-1
+       containerPath: /input/1.txt
+     - parentName: count-2
+       containerPath: /input/2.txt
+     - parentName: count-3
+       containerPath: /input/3.txt
