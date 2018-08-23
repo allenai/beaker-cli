@@ -132,6 +132,11 @@ func (h *BlueprintHandle) Commit(ctx context.Context) error {
 	return errorFromResponse(resp)
 }
 
+// GetPermissions gets a summary of the user's permissions on the blueprint.
+func (h *BlueprintHandle) GetPermissions(ctx context.Context) (*api.PermissionSummary, error) {
+	return getPermissions(ctx, h.client, path.Join("/api/v3/blueprints", h.ID(), "auth"))
+}
+
 // PatchPermissions ammends a blueprint's permissions.
 func (h *BlueprintHandle) PatchPermissions(
 	ctx context.Context,

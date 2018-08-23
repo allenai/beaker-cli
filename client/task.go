@@ -50,6 +50,11 @@ func (h *TaskHandle) Get(ctx context.Context) (*api.Task, error) {
 	return &task, nil
 }
 
+// GetPermissions gets a summary of the user's permissions on the task.
+func (h *TaskHandle) GetPermissions(ctx context.Context) (*api.PermissionSummary, error) {
+	return getPermissions(ctx, h.client, path.Join("/api/v3/tasks", h.ID(), "auth"))
+}
+
 // GetResults retrieves a task's results.
 func (h *TaskHandle) GetResults(ctx context.Context) (*api.TaskResults, error) {
 	path := path.Join("/api/v3/tasks", h.id, "results")

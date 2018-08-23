@@ -150,6 +150,11 @@ func (h *GroupHandle) Delete(ctx context.Context) error {
 	return errorFromResponse(resp)
 }
 
+// GetPermissions gets a summary of the user's permissions on the group.
+func (h *GroupHandle) GetPermissions(ctx context.Context) (*api.PermissionSummary, error) {
+	return getPermissions(ctx, h.client, path.Join("/api/v3/groups", h.ID(), "auth"))
+}
+
 // PatchPermissions ammends a group's permissions.
 func (h *GroupHandle) PatchPermissions(
 	ctx context.Context,

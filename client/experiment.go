@@ -107,6 +107,11 @@ func (h *ExperimentHandle) Stop(ctx context.Context) error {
 	return errorFromResponse(resp)
 }
 
+// GetPermissions gets a summary of the user's permissions on the experiment.
+func (h *ExperimentHandle) GetPermissions(ctx context.Context) (*api.PermissionSummary, error) {
+	return getPermissions(ctx, h.client, path.Join("/api/v3/experiments", h.ID(), "auth"))
+}
+
 // PatchPermissions ammends an experiment's permissions.
 func (h *ExperimentHandle) PatchPermissions(
 	ctx context.Context,
