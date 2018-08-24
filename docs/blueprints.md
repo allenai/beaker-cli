@@ -94,5 +94,5 @@ beaker-pub blueprint pull examples/wordcount friendly-name
 
 To clean up, simply `docker image rm` any images created above.
 
-Because blueprints are immutable, they can't be deleted. It will be possible to archive datasets in
-the near future.
+Because blueprints are immutable, they can't be deleted. It will be possible to archive them in the
+near future.
