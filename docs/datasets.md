@@ -107,9 +107,9 @@ the dataset. An optional `--manifest` flag, if provided, will also produce the d
 
 ## Download
 
-You can download a dataset to your local drive at any time `beaker dataset fetch`. Beaker's `fetch`
-command follows the same rules as the standard `cp` command. The following example downloads the
-single-file dataset to an empty directory. Notice how the original filename is restored by default.
+You can download a dataset to your local drive at any time with `beaker dataset fetch`. Beaker's
+`fetch` command follows the same rules as the standard `cp` command. The following example downloads
+the single-file dataset to an empty directory. Notice how the original filename is restored by default.
 
 ```
 ▶ mkdir fetched
