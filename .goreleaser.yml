@@ -43,7 +43,6 @@ brew:
   github:
     owner: allenai
     name: homebrew-beaker
-  download_strategy: GitHubPrivateRepositoryReleaseDownloadStrategy
   homepage: "https://beaker.allenai.org"
   description: "Beaker command-line tool."
   test: |
