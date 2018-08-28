@@ -84,23 +84,6 @@ type ExperimentFilterClause struct {
 	Value    interface{}            `json:"value"`
 }
 
-type TaskSearchOptions struct {
-	SortClauses      []TaskSortClause   `json:"sort_clauses,omitempty"`
-	FilterClauses    []TaskFilterClause `json:"filter_clauses,omitempty"`
-	FilterCombinator FilterCombinator   `json:"filter_combinator,omitempty"`
-}
-
-type TaskSortClause struct {
-	Field searchfield.Task `json:"field"`
-	Order SortOrder        `json:"order"`
-}
-
-type TaskFilterClause struct {
-	Field    searchfield.Task `json:"field"`
-	Operator SearchOperator   `json:"operator,omitempty"`
-	Value    interface{}      `json:"value"`
-}
-
 type GroupSearchOptions struct {
 	SortClauses      []GroupSortClause   `json:"sort_clauses,omitempty"`
 	FilterClauses    []GroupFilterClause `json:"filter_clauses,omitempty"`

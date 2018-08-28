@@ -22,7 +22,7 @@ import (
 // We encode the version as a manually-assigned constant for now. This must be
 // updated with each material change to how a client makes requests, and is
 // assumed to be monotonically increasing.
-const version = "v20180628"
+const version = "v20180828"
 
 var idPattern = regexp.MustCompile(`^\w\w_[a-z0-9]{12}$`)
 
