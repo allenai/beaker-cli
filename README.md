@@ -40,7 +40,7 @@ tar -xvzf beaker_*.tar.gz -C /usr/local/bin
 OS X users can install Beaker through [Homebrew](https://brew.sh/) with a custom tap.
 
 ```bash
-brew tap allenai/homebrew-beaker git@github.com:allenai/homebrew-beaker.git
+brew tap allenai/homebrew-beaker https://github.com/allenai/homebrew-beaker.git
 brew install beaker
 ```
 
