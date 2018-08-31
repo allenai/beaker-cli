@@ -2,7 +2,7 @@
 // docker build -t node-docker .
 // docker run --rm node-docker
 // or for test
-// docker run --rm -e TESTING=true node-docker test
+// docker run --rm -e TESTING=true node-docker
 
 const csvdata = require('csvdata');
 
