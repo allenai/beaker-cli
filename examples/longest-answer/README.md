@@ -1,4 +1,4 @@
-# Example: Word Count
+# Example: Longest Answer
 
 This example creates a simple experiment for Leaderboard.
 The Docker image described here reads from
