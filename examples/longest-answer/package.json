@@ -1,0 +1,11 @@
+{
+    "name": "node-docker",
+    "version": "1.0.0",
+    "description": "SWAG Leaderboard javascript example",
+    "private": false,
+    "scripts": {},
+    "author": "jon.borchardt@gmail.com",
+    "dependencies": {
+        "csvdata": "1.7.0"
+    }
+}
