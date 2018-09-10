@@ -2,7 +2,7 @@
 
 Blueprints are Beaker's unit of executable code. A blueprint combines a Docker image with metadata,
 such as its author and description, and an optional richer narrative in markdown. Please refer to
-[this example](https://beaker-pub.allenai.org/bp/bp_qbjvcda1sed7) for an overview.
+[the wordcount example](https://beaker-pub.allenai.org/bp/bp_qbjvcda1sed7) for an overview.
 
 Like datasets, blueprints are immutable. The following example shows how to create and use blueprints.
 
@@ -16,12 +16,9 @@ command
 docker build -t wordcount <path/to/wordcount/directory>
 ```
 
-Notice that we don't include a repository name in the tag. Beaker doesn't require an image to be
-published separately. We'll cover upload next.
+## Create and Upload
 
-## Upload
-
-You can upload any image as a blueprint with a single command. Behind the scenes, Beaker pushes your
+You can create and upload any image as a blueprint with a single command. Behind the scenes, Beaker pushes your
 Docker image to a private repository. This guarantees that the image will remain available and
 unchanged for future experiments.
 
@@ -89,7 +86,7 @@ internally assigned tag  `gcr.io/ai2-beaker-core/public/bduufrl06q5ner2l0440` by
 a more human-friendly tag, set it with an additional argument:
 
 ```bash
-beaker-pub blueprint pull examples/wordcount friendly-name
+▶ beaker blueprint pull examples/wordcount friendly-name
 ```
 
 ## Cleanup
