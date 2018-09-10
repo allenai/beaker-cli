@@ -85,7 +85,7 @@ In order to avoid accidentally overwriting your local images, this command assig
 internally assigned tag  `gcr.io/ai2-beaker-core/public/bduufrl06q5ner2l0440` by default. To assign
 a more human-friendly tag, set it with an additional argument:
 
-```bash
+```
 ▶ beaker blueprint pull examples/wordcount friendly-name
 ```
 
