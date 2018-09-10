@@ -10,10 +10,9 @@ Groups are created from the Experiments page by clicking the “Create Group” 
 Each group's detail page shows a table of all experiments, and their tasks, included in the group. This table is divided vertically, with information identifying each task and experiment on the left, and a user-configurable set of columns on the right. To select columns for display, click the Manage Comparisons button to bring up the Comparisons modal. Beaker will examine the members of the group and present you a list of all environment variables and metrics it found, and a count of how many tasks have data for that metric or variable.
 
 ### Metrics.Json
-The metrics values for any one task come from the `metrics.json` file written to the experiment's output directory. In order for values to be correctly extracted, the file must:
-- Contain data in JSON format, specifically a JSON object mapping metric names to values. The keys must be strings, but the values can be either numbers, strings, or arrays of numbers and/or strings.
-For example:
-    ```
+The metrics values for any one task come from the `metrics.json` file written to the experiment's output directory. In order for values to be correctly extracted, the file must contain data in JSON format, specifically a JSON object mapping metric names to values. The keys must be strings, but the values can be either numbers, strings, or arrays of numbers and/or strings. For example:
+
+    ```json
     {
         "f1_score": 0.82,
         "precision": 0.77,
@@ -21,10 +20,13 @@ For example:
         "top_concept": "gravity"
     }
     ```
+
+Additional considerations:
+
 - Nested values are not extracted into their own columns.
-- Arrays of objects are *not* supported.
-ex:
-    ```
+- Arrays of objects are not supported. For example:
+
+    ```json
     [
         {
             "foo": "bar"
