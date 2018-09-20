@@ -23,7 +23,8 @@ type UserPatchSpec struct {
 	// name, display names have no restrictions character set or uniqueness.
 	DisplayName *string `json:"display_name,omitempty"`
 
-	Institution string `json:"institution,omitempty"`
+	// (optional) User-submitted professional affiliation.
+	Institution *string `json:"institution,omitempty"`
 
 	// (optional) Assign an authorization level to the user.
 	Role *string `json:"role,omitempty"`
