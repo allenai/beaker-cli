@@ -15,6 +15,9 @@ must be installed to take full advantage of Beaker.
 
    These instructions will guide you through installing and configuring the
    Beaker CLI. See [below](#install-beaker-cli) for more options.
+   
+   Request "Scientist" or higher credentials from a Beaker admin to get authorization
+   to create experiments.
 
 2. Run your first experiment. The following example
    [counts words](https://beaker-pub.allenai.org/bp/bp_qbjvcda1sed7) in the text
