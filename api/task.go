@@ -7,8 +7,9 @@ import (
 // Task is a full description of a task specification and its status.
 type Task struct {
 	// Identity
-	ID   string `json:"id"`
-	User User   `json:"user"`
+	ID           string `json:"id"`
+	User         User   `json:"user"`
+	ExperimentID string `json:"experiment_id"`
 
 	// Status
 	Status  TaskStatus `json:"status"`
