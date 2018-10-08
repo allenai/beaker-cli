@@ -45,7 +45,7 @@ const (
 	// TaskStatusSkipped means a task will never run due to failed or invalid prerequisites.
 	TaskStatusSkipped TaskStatus = "skipped"
 
-	// TaskStatusStopped means a task was interrupted by a user.
+	// TaskStatusStopped means a task was interrupted.
 	TaskStatusStopped TaskStatus = "stopped"
 
 	// TaskStatusFailed means a task could not be completed.
