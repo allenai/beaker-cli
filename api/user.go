@@ -11,6 +11,7 @@ type User struct {
 	DisplayName string `json:"display_name"`
 	Institution string `json:"institution,omitempty"`
 	Role        string `json:"role,omitempty"`
+	Email       string `json:"email,omitempty"`
 }
 
 // UserPatchSpec describes a patch to apply to a user's editable fields.
