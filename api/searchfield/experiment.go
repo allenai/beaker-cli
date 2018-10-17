@@ -9,4 +9,5 @@ const (
 	ExperimentNameOrDescription Experiment = "name_or_description"
 	ExperimentCreated           Experiment = "created"
 	ExperimentCreatingUser      Experiment = "user"
+	ExperimentStatus            Experiment = "status"
 )
