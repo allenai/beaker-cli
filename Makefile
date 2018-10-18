@@ -78,7 +78,7 @@ else
 	$(eval ARCHIVE := goreleaser_Linux_x86_64.tar.gz)
 endif
 
-	curl -L https://github.com/goreleaser/goreleaser/releases/download/v0.80.1/$(ARCHIVE) | tar -xvz -C$(TEMP) goreleaser
+	curl -L https://github.com/goreleaser/goreleaser/releases/download/v0.89.0/$(ARCHIVE) | tar -xvz -C$(TEMP) goreleaser
 	$(TEMP)/goreleaser release --rm-dist
 	rm -rf $(TEMP)
 
