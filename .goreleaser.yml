@@ -43,6 +43,9 @@ brew:
   github:
     owner: allenai
     name: homebrew-beaker
+  commit_author:
+    name: beakerbot
+    email: 43896404+beakerbot@users.noreply.github.com
   homepage: "https://beaker.allenai.org"
   description: "Beaker command-line tool."
   test: |
