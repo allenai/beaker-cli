@@ -93,10 +93,9 @@ func (h *TaskHandle) Stop(ctx context.Context) error {
 
 // SetStatus overrides a task's status.
 // TODO: Move this to an internal-only API. External clients should call Stop to cancel tasks.
-func (h *TaskHandle) SetStatus(ctx context.Context, status api.TaskStatus) error {
-	path := path.Join("/api/tasks", h.id, "status")
-	query := map[string]string{"status": string(status)}
-	resp, err := h.client.sendRequest(ctx, http.MethodPut, path, query, nil)
+func (h *TaskHandle) SetStatus(ctx context.Context, spec api.TaskStatusSpec) error {
+	path := path.Join("/api/v3/tasks", h.id, "status")
+	resp, err := h.client.sendRequest(ctx, http.MethodPut, path, nil, spec)
 	if err != nil {
 		return err
 	}
