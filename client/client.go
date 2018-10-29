@@ -121,6 +121,24 @@ func (c *Client) sendRequest(
 		}
 	}
 
+	req, err := c.newRequest(ctx, method, path, query, b)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	return client.Do(req.WithContext(ctx))
+}
+
+func (c *Client) newRequest(
+	ctx context.Context,
+	method string,
+	path string,
+	query map[string]string,
+	body io.Reader,
+) (*http.Request, error) {
 	var q url.Values
 	if len(query) != 0 {
 		q = url.Values{}
@@ -130,12 +148,11 @@ func (c *Client) sendRequest(
 	}
 
 	u := url.URL{Scheme: c.baseURL.Scheme, Host: c.baseURL.Host, Path: path, RawQuery: q.Encode()}
-	req, err := http.NewRequest(method, u.String(), b)
+	req, err := http.NewRequest(method, u.String(), body)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set(api.VersionHeader, version)
 	if len(c.userToken) > 0 {
 		req.AddCookie(&http.Cookie{Name: "User-Token", Value: c.userToken})
@@ -143,8 +160,7 @@ func (c *Client) sendRequest(
 		req.Header.Set("Authorization", "Bearer "+c.userToken)
 	}
 
-	client := &http.Client{Timeout: 30 * time.Second}
-	return client.Do(req.WithContext(ctx))
+	return req.WithContext(ctx), nil
 }
 
 // errorFromResponse creates an error from an HTTP response, or nil on success.
