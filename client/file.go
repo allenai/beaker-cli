@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -31,6 +32,31 @@ func (h *FileHandle) Download(ctx context.Context) (io.ReadCloser, error) {
 	req, err := h.dataset.client.newRequest(ctx, http.MethodGet, path, nil, nil)
 	if err != nil {
 		return nil, errors.WithStack(err)
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	if err := errorFromResponse(resp); err != nil {
+		return nil, err
+	}
+	return resp.Body, nil
+}
+
+// DownloadRange reads a range of bytes from a file.
+// If length is negative, the file is read until the end.
+func (h *FileHandle) DownloadRange(ctx context.Context, offset, length int64) (io.ReadCloser, error) {
+	path := path.Join("/api/v3/datasets", h.dataset.id, "files", h.file)
+	req, err := h.dataset.client.newRequest(ctx, http.MethodGet, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	if length < 0 {
+		req.Header.Set("Range", fmt.Sprintf("bytes=%d-", offset))
+	} else {
+		req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", offset, offset+length-1))
 	}
 
 	client := &http.Client{}
