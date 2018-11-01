@@ -111,8 +111,10 @@ func (h *FileHandle) Upload(ctx context.Context, source string) error {
 		return errors.WithStack(err)
 	}
 
+	// Only read as many bytes as were hashed.
+	body := io.LimitReader(file, length)
 	path := path.Join("/api/v3/datasets", h.dataset.id, "files", h.file)
-	req, err := h.dataset.client.newRequest(ctx, http.MethodPut, path, nil, file)
+	req, err := h.dataset.client.newRequest(ctx, http.MethodPut, path, nil, body)
 	if err != nil {
 		return err
 	}
