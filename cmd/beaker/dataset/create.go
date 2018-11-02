@@ -3,6 +3,7 @@ package dataset
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 
@@ -77,7 +78,7 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 	if info.IsDir() {
 		err = uploadDirectory(ctx, dataset, o.source, !o.quiet)
 	} else {
-		err = dataset.FileRef(info.Name()).Upload(ctx, o.source)
+		err = uploadFile(ctx, dataset.FileRef(info.Name()), o.source)
 	}
 	if err != nil {
 		return err
@@ -139,8 +140,42 @@ func uploadDirectory(
 			return nil
 		}
 
-		return dataset.FileRef(relpath).Upload(ctx, path)
+		return uploadFile(ctx, dataset.FileRef(relpath), path)
 	}
 
 	return filepath.Walk(directory, visitor)
+}
+
+func uploadFile(ctx context.Context, fileRef *beaker.FileHandle, source string) error {
+	url, err := fileRef.PresignLink(ctx, true)
+	if err != nil {
+		return err
+	}
+
+	info, err := os.Stat(source)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	// The HTTP Do() function guarantees this will be closed, so don't defer it.
+	file, err := os.Open(source)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	req, err := http.NewRequest(http.MethodPut, url.URL, file)
+	if err != nil {
+		_ = file.Close()
+		return errors.WithStack(err)
+	}
+	req.ContentLength = info.Size()
+
+	client := http.Client{}
+	resp, err := client.Do(req.WithContext(ctx))
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	defer resp.Body.Close()
+
+	return nil
 }

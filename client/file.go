@@ -2,15 +2,16 @@ package client
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/base64"
 	"io"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 
 	"github.com/pkg/errors"
+
+	"github.com/allenai/beaker/api"
 )
 
 // FileHandle provides operations on a file within a dataset.
@@ -25,21 +26,39 @@ func (h *DatasetHandle) FileRef(filePath string) *FileHandle {
 	return &FileHandle{h, filePath}
 }
 
+// PresignLink creates a pre-signed URL link to a file.
+func (h *FileHandle) PresignLink(ctx context.Context, forWrite bool) (*api.DatasetFileLink, error) {
+	path := path.Join("/api/v3/datasets", h.dataset.id, "links", h.file)
+	query := map[string]string{"upload": strconv.FormatBool(forWrite)}
+	resp, err := h.dataset.client.sendRequest(ctx, http.MethodPost, path, query, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer safeClose(resp.Body)
+
+	var body api.DatasetFileLink
+	if err = parseResponse(resp, &body); err != nil {
+		return nil, err
+	}
+	return &body, nil
+}
+
 // Download gets a file from a datastore.
 func (h *FileHandle) Download(ctx context.Context) (io.ReadCloser, error) {
-	path := path.Join("/api/v3/datasets", h.dataset.id, "files", h.file)
-	req, err := h.dataset.client.newRequest(ctx, http.MethodGet, path, nil, nil)
+	link, err := h.PresignLink(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, link.URL, nil)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	httpClient := http.Client{}
+	resp, err := httpClient.Do(req.WithContext(ctx))
 	if err != nil {
 		return nil, errors.WithStack(err)
-	}
-	if err := errorFromResponse(resp); err != nil {
-		return nil, err
 	}
 	return resp.Body, nil
 }
@@ -64,41 +83,6 @@ func (h *FileHandle) DownloadTo(ctx context.Context, filePath string) error {
 
 	_, err = io.Copy(f, r)
 	return errors.WithStack(err)
-}
-
-func (h *FileHandle) Upload(ctx context.Context, source string) error {
-	file, err := os.Open(source)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	defer file.Close()
-
-	hasher := sha256.New()
-	length, err := io.Copy(hasher, file)
-	if err != nil {
-		return errors.Wrap(err, "failed to hash contents")
-	}
-
-	digest := hasher.Sum(nil)
-
-	if _, err := file.Seek(0, 0); err != nil {
-		return errors.WithStack(err)
-	}
-
-	path := path.Join("/api/v3/datasets", h.dataset.id, "files", h.file)
-	req, err := h.dataset.client.newRequest(ctx, http.MethodPut, path, nil, file)
-	if err != nil {
-		return err
-	}
-	req.ContentLength = length
-	req.Header.Set("Digest", "SHA256 "+base64.StdEncoding.EncodeToString(digest))
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return errorFromResponse(resp)
 }
 
 // Delete removes a file from an uncommitted datastore.
