@@ -15,8 +15,6 @@ import (
 type streamFileOptions struct {
 	dataset string
 	file    string
-	offset  int64
-	length  int64
 }
 
 func newStreamCmd(
@@ -36,8 +34,6 @@ func newStreamCmd(
 
 	cmd.Arg("dataset", "Dataset name or ID").Required().StringVar(&o.dataset)
 	cmd.Arg("file", "File in dataset to fetch. Optional for single-file datasets.").StringVar(&o.file)
-	cmd.Flag("offset", "Offset in bytes.").Int64Var(&o.offset)
-	cmd.Flag("length", "Number of bytes to read.").Int64Var(&o.length)
 }
 
 func (o *streamFileOptions) run(beaker *beaker.Client) error {
@@ -62,19 +58,8 @@ func (o *streamFileOptions) run(beaker *beaker.Client) error {
 		}
 		filename = manifest.Files[0].File
 	}
-	fileRef := dataset.FileRef(filename)
 
-	var r io.ReadCloser
-	if o.offset != 0 || o.length != 0 {
-		if o.length == 0 {
-			// Length not specified; read the rest of the file.
-			r, err = fileRef.DownloadRange(ctx, o.offset, -1)
-		} else {
-			r, err = fileRef.DownloadRange(ctx, o.offset, o.length)
-		}
-	} else {
-		r, err = fileRef.Download(ctx)
-	}
+	r, err := dataset.FileRef(filename).Download(ctx)
 	if err != nil {
 		return err
 	}
