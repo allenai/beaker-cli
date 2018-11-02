@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -217,6 +218,11 @@ func downloadFile(
 	target string,
 	fileSize int64,
 ) error {
+	link, err := fileRef.PresignLink(ctx, false)
+	if err != nil {
+		return err
+	}
+
 	// Make sure the directory exists.
 	if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
 		return errors.WithStack(err)
@@ -230,19 +236,29 @@ func downloadFile(
 
 	info, err := f.Stat()
 	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	if info.Size() == fileSize {
-		// Nothing to sync.
-		return nil
-	}
-
-	body, err := fileRef.DownloadRange(ctx, info.Size(), fileSize)
-	if err != nil {
 		return err
 	}
 
-	_, err = io.Copy(f, body)
+	req, err := http.NewRequest(http.MethodGet, link.URL, nil)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if size := info.Size(); size > 0 {
+		if size == fileSize {
+			// Nothing to sync.
+			return nil
+		}
+		req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", size, fileSize))
+	}
+
+	httpClient := http.Client{}
+	resp, err := httpClient.Do(req.WithContext(ctx))
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	defer resp.Body.Close()
+
+	_, err = io.Copy(f, resp.Body)
 	return errors.WithStack(err)
 }
