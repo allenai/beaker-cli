@@ -113,27 +113,22 @@ func (h *FileHandle) DownloadTo(ctx context.Context, filePath string) error {
 	return errors.WithStack(err)
 }
 
-func (h *FileHandle) Upload(ctx context.Context, source string) error {
-	file, err := os.Open(source)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	defer file.Close()
-
+// Upload creates or overwrites a file.
+func (h *FileHandle) Upload(ctx context.Context, source io.ReadSeeker) error {
 	hasher := sha256.New()
-	length, err := io.Copy(hasher, file)
+	length, err := io.Copy(hasher, source)
 	if err != nil {
 		return errors.Wrap(err, "failed to hash contents")
 	}
 
 	digest := hasher.Sum(nil)
 
-	if _, err := file.Seek(0, 0); err != nil {
+	if _, err := source.Seek(0, 0); err != nil {
 		return errors.WithStack(err)
 	}
 
 	// Only read as many bytes as were hashed.
-	body := io.LimitReader(file, length)
+	body := io.LimitReader(source, length)
 	path := path.Join("/api/v3/datasets", h.dataset.id, "files", h.file)
 	req, err := h.dataset.client.newRequest(ctx, http.MethodPut, path, nil, body)
 	if err != nil {

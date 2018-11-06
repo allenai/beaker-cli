@@ -77,7 +77,7 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 	if info.IsDir() {
 		err = uploadDirectory(ctx, dataset, o.source, !o.quiet)
 	} else {
-		err = dataset.FileRef(info.Name()).Upload(ctx, o.source)
+		err = uploadFile(ctx, dataset.FileRef(info.Name()), o.source)
 	}
 	if err != nil {
 		return err
@@ -139,8 +139,18 @@ func uploadDirectory(
 			return nil
 		}
 
-		return dataset.FileRef(relpath).Upload(ctx, path)
+		return uploadFile(ctx, dataset.FileRef(relpath), path)
 	}
 
 	return filepath.Walk(directory, visitor)
+}
+
+func uploadFile(ctx context.Context, fileRef *beaker.FileHandle, source string) error {
+	file, err := os.Open(source)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	defer file.Close()
+
+	return fileRef.Upload(ctx, file)
 }
