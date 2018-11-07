@@ -2,6 +2,9 @@ package client
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -27,6 +30,7 @@ func (h *DatasetHandle) FileRef(filePath string) *FileHandle {
 }
 
 // PresignLink creates a pre-signed URL link to a file.
+// Deprecated. Use Upload and Download instead.
 func (h *FileHandle) PresignLink(ctx context.Context, forWrite bool) (*api.DatasetFileLink, error) {
 	path := path.Join("/api/v3/datasets", h.dataset.id, "links", h.file)
 	query := map[string]string{"upload": strconv.FormatBool(forWrite)}
@@ -45,20 +49,44 @@ func (h *FileHandle) PresignLink(ctx context.Context, forWrite bool) (*api.Datas
 
 // Download gets a file from a datastore.
 func (h *FileHandle) Download(ctx context.Context) (io.ReadCloser, error) {
-	link, err := h.PresignLink(ctx, false)
+	path := path.Join("/api/v3/datasets", h.dataset.id, "files", h.file)
+	req, err := h.dataset.client.newRequest(ctx, http.MethodGet, path, nil, nil)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	if err := errorFromResponse(resp); err != nil {
+		return nil, err
+	}
+	return resp.Body, nil
+}
+
+// DownloadRange reads a range of bytes from a file.
+// If length is negative, the file is read until the end.
+func (h *FileHandle) DownloadRange(ctx context.Context, offset, length int64) (io.ReadCloser, error) {
+	path := path.Join("/api/v3/datasets", h.dataset.id, "files", h.file)
+	req, err := h.dataset.client.newRequest(ctx, http.MethodGet, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
+	if length < 0 {
+		req.Header.Set("Range", fmt.Sprintf("bytes=%d-", offset))
+	} else {
+		req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", offset, offset+length-1))
+	}
 
-	req, err := http.NewRequest(http.MethodGet, link.URL, nil)
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-
-	httpClient := http.Client{}
-	resp, err := httpClient.Do(req.WithContext(ctx))
-	if err != nil {
-		return nil, errors.WithStack(err)
+	if err := errorFromResponse(resp); err != nil {
+		return nil, err
 	}
 	return resp.Body, nil
 }
@@ -83,6 +111,38 @@ func (h *FileHandle) DownloadTo(ctx context.Context, filePath string) error {
 
 	_, err = io.Copy(f, r)
 	return errors.WithStack(err)
+}
+
+// Upload creates or overwrites a file.
+func (h *FileHandle) Upload(ctx context.Context, source io.ReadSeeker) error {
+	hasher := sha256.New()
+	length, err := io.Copy(hasher, source)
+	if err != nil {
+		return errors.Wrap(err, "failed to hash contents")
+	}
+
+	digest := hasher.Sum(nil)
+
+	if _, err := source.Seek(0, 0); err != nil {
+		return errors.WithStack(err)
+	}
+
+	// Only read as many bytes as were hashed.
+	body := io.LimitReader(source, length)
+	path := path.Join("/api/v3/datasets", h.dataset.id, "files", h.file)
+	req, err := h.dataset.client.newRequest(ctx, http.MethodPut, path, nil, body)
+	if err != nil {
+		return err
+	}
+	req.ContentLength = length
+	req.Header.Set("Digest", "SHA256 "+base64.StdEncoding.EncodeToString(digest))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return errorFromResponse(resp)
 }
 
 // Delete removes a file from an uncommitted datastore.

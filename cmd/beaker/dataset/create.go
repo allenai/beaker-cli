@@ -3,7 +3,6 @@ package dataset
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 
@@ -147,35 +146,11 @@ func uploadDirectory(
 }
 
 func uploadFile(ctx context.Context, fileRef *beaker.FileHandle, source string) error {
-	url, err := fileRef.PresignLink(ctx, true)
-	if err != nil {
-		return err
-	}
-
-	info, err := os.Stat(source)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	// The HTTP Do() function guarantees this will be closed, so don't defer it.
 	file, err := os.Open(source)
 	if err != nil {
 		return errors.WithStack(err)
 	}
+	defer file.Close()
 
-	req, err := http.NewRequest(http.MethodPut, url.URL, file)
-	if err != nil {
-		_ = file.Close()
-		return errors.WithStack(err)
-	}
-	req.ContentLength = info.Size()
-
-	client := http.Client{}
-	resp, err := client.Do(req.WithContext(ctx))
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	defer resp.Body.Close()
-
-	return nil
+	return fileRef.Upload(ctx, file)
 }
