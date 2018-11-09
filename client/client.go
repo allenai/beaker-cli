@@ -128,7 +128,10 @@ func (c *Client) sendRequest(
 
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{
+		Timeout:       30 * time.Second,
+		CheckRedirect: copyRedirectHeader,
+	}
 	return client.Do(req.WithContext(ctx))
 }
 
@@ -155,12 +158,20 @@ func (c *Client) newRequest(
 
 	req.Header.Set(api.VersionHeader, version)
 	if len(c.userToken) > 0 {
-		req.AddCookie(&http.Cookie{Name: "User-Token", Value: c.userToken})
-		// cookie will eventually be deprecated, so populating Bearer token
 		req.Header.Set("Authorization", "Bearer "+c.userToken)
 	}
 
 	return req.WithContext(ctx), nil
+}
+
+func copyRedirectHeader(req *http.Request, via []*http.Request) error {
+	if len(via) == 0 {
+		return nil
+	}
+	for key, val := range via[0].Header {
+		req.Header[key] = val
+	}
+	return nil
 }
 
 // errorFromResponse creates an error from an HTTP response, or nil on success.
