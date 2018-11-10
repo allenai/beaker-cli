@@ -55,7 +55,7 @@ func (h *FileHandle) Download(ctx context.Context) (io.ReadCloser, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	client := &http.Client{}
+	client := &http.Client{CheckRedirect: copyRedirectHeader}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -80,7 +80,7 @@ func (h *FileHandle) DownloadRange(ctx context.Context, offset, length int64) (i
 		req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", offset, offset+length-1))
 	}
 
-	client := &http.Client{}
+	client := &http.Client{CheckRedirect: copyRedirectHeader}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -137,7 +137,7 @@ func (h *FileHandle) Upload(ctx context.Context, source io.ReadSeeker) error {
 	req.ContentLength = length
 	req.Header.Set("Digest", "SHA256 "+base64.StdEncoding.EncodeToString(digest))
 
-	client := &http.Client{}
+	client := &http.Client{CheckRedirect: copyRedirectHeader}
 	resp, err := client.Do(req)
 	if err != nil {
 		return errors.WithStack(err)
