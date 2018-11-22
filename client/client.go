@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"math"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"path"
@@ -30,6 +32,15 @@ var idPattern = regexp.MustCompile(`^\w\w_[a-z0-9]{12}$`)
 type Client struct {
 	baseURL   url.URL
 	userToken string
+
+	// Maximum number of attempts to make for each request.
+	maxAttempts int
+	// Maximum number of milliseconds to wait between attempts.
+	maxBackoff float64
+	// Maximum number of milliseconds to wait after the first failed attempt.
+	backoffBase float64
+	// Source of randomness for generating jitter.
+	random *rand.Rand
 }
 
 // NewClient creates a new Beaker client bound to a single user.
@@ -43,7 +54,14 @@ func NewClient(address string, userToken string) (*Client, error) {
 		return nil, errors.New("address must be base server address in the form [scheme://]host[:port]")
 	}
 
-	return &Client{baseURL: *u, userToken: userToken}, nil
+	return &Client{
+		baseURL:     *u,
+		userToken:   userToken,
+		maxAttempts: 10,
+		maxBackoff:  30000,
+		backoffBase: 5,
+		random:      rand.New(rand.NewSource(time.Now().UnixNano())),
+	}, nil
 }
 
 // Address returns a client's host and port.
@@ -107,6 +125,28 @@ func (c *Client) canonicalizeRef(ctx context.Context, reference string) (string,
 	return path.Join(userPart, namePart), nil
 }
 
+// doWithRetry sends a request and retries if the client returns an error
+// or if a 5xx status code is received. Up to maxAttempts are made,
+// waiting up to maxBackoff milliseconds between each attempt.
+//
+// Uses exponential backoff with full jitter as described here:
+// https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
+func (c *Client) doWithRetry(
+	client *http.Client,
+	req *http.Request,
+) (resp *http.Response, err error) {
+	for i := 0; i < c.maxAttempts; i++ {
+		resp, err = client.Do(req)
+		if err == nil && resp.StatusCode != 0 && resp.StatusCode < 500 {
+			return
+		}
+
+		backoff := math.Min(c.maxBackoff, c.backoffBase*math.Exp2(float64(i))) * c.random.Float64()
+		time.Sleep(time.Duration(backoff * float64(time.Millisecond)))
+	}
+	return
+}
+
 func (c *Client) sendRequest(
 	ctx context.Context,
 	method string,
@@ -132,7 +172,8 @@ func (c *Client) sendRequest(
 		Timeout:       30 * time.Second,
 		CheckRedirect: copyRedirectHeader,
 	}
-	return client.Do(req.WithContext(ctx))
+
+	return c.doWithRetry(client, req.WithContext(ctx))
 }
 
 func (c *Client) newRequest(
