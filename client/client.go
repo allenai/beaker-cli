@@ -141,6 +141,10 @@ func (c *Client) doWithRetry(
 			return
 		}
 
+		// Drain the body to reuse the connection. Ignore errors.
+		io.Copy(ioutil.Discard, resp.Body)
+		resp.Body.Close()
+
 		backoff := math.Min(c.maxBackoff, c.backoffBase*math.Exp2(float64(i))) * c.random.Float64()
 		time.Sleep(time.Duration(backoff * float64(time.Millisecond)))
 	}
