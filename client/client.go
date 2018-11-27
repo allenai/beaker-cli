@@ -158,7 +158,7 @@ func (c *Client) newRetryableRequest(
 	method string,
 	path string,
 	query map[string]string,
-	body io.Reader,
+	body interface{},
 ) (*retryablehttp.Request, error) {
 	req, err := retryablehttp.NewRequest(method, c.getURL(path, query), body)
 	if err != nil {
