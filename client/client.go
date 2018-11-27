@@ -7,6 +7,8 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -57,11 +59,11 @@ func NewClient(address string, userToken string) (*Client, error) {
 				CheckRedirect: copyRedirectHeader,
 			},
 			Logger:       log.New(os.Stderr, "", log.LstdFlags),
-			RetryWaitMin: 1 * time.Second,
+			RetryWaitMin: 100 * time.Millisecond,
 			RetryWaitMax: 30 * time.Second,
 			RetryMax:     10,
 			CheckRetry:   retryablehttp.DefaultRetryPolicy,
-			Backoff:      retryablehttp.DefaultBackoff,
+			Backoff:      exponentialJitterBackoff,
 		},
 	}, nil
 }
@@ -126,34 +128,6 @@ func (c *Client) canonicalizeRef(ctx context.Context, reference string) (string,
 	}
 	return path.Join(userPart, namePart), nil
 }
-
-/*
-// doWithRetry sends a request and retries if the client returns an error
-// or if a 5xx status code is received. Up to maxAttempts are made,
-// waiting up to maxBackoff milliseconds between each attempt.
-//
-// Uses exponential backoff with full jitter as described here:
-// https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
-func (c *Client) doWithRetry(
-	client *http.Client,
-	req *http.Request,
-) (resp *http.Response, err error) {
-	for i := 0; i < c.maxAttempts; i++ {
-		resp, err = client.Do(req)
-		if err == nil && resp.StatusCode != 0 && resp.StatusCode < 500 {
-			return
-		}
-
-		// Drain the body to reuse the connection. Ignore errors.
-		io.Copy(ioutil.Discard, resp.Body)
-		resp.Body.Close()
-
-		backoff := math.Min(c.maxBackoff, c.backoffBase*math.Exp2(float64(i))) * c.random.Float64()
-		time.Sleep(time.Duration(backoff * float64(time.Millisecond)))
-	}
-	return
-}
-*/
 
 func (c *Client) sendRequest(
 	ctx context.Context,
@@ -283,4 +257,20 @@ func safeClose(closer io.Closer) {
 		return
 	}
 	_ = closer.Close()
+}
+
+var random = rand.New(rand.NewSource(time.Now().UnixNano()))
+
+// exponentialJitterBackoff implements exponential backoff with full jitter as described here:
+// https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
+func exponentialJitterBackoff(
+	minDuration, maxDuration time.Duration,
+	attempt int,
+	resp *http.Response,
+) time.Duration {
+	min := float64(minDuration)
+	max := float64(maxDuration)
+
+	backoff := min + math.Min(max-min, min*math.Exp2(float64(attempt)))*random.Float64()
+	return time.Duration(backoff)
 }
