@@ -58,14 +58,24 @@ func NewClient(address string, userToken string) (*Client, error) {
 				Timeout:       30 * time.Second,
 				CheckRedirect: copyRedirectHeader,
 			},
-			Logger:       log.New(os.Stderr, "", log.LstdFlags),
+			Logger:       &errorLogger{Logger: log.New(os.Stderr, "", log.LstdFlags)},
 			RetryWaitMin: 100 * time.Millisecond,
 			RetryWaitMax: 30 * time.Second,
-			RetryMax:     10,
+			RetryMax:     9,
 			CheckRetry:   retryablehttp.DefaultRetryPolicy,
 			Backoff:      exponentialJitterBackoff,
 		},
 	}, nil
+}
+
+type errorLogger struct {
+	Logger *log.Logger
+}
+
+func (l *errorLogger) Printf(template string, args ...interface{}) {
+	if strings.HasPrefix(template, "[ERR]") {
+		l.Logger.Printf(template, args...)
+	}
 }
 
 // Address returns a client's host and port.

@@ -55,4 +55,4 @@
 
 [[constraint]]
   name = "github.com/hashicorp/go-retryablehttp"
-  version = "0.5.0"
+  revision = "dfbae6744eb4c188d26ef53f1d39444c0c68b60c"
