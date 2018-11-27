@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
-	"math"
-	"math/rand"
+	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"regexp"
 	"strings"
@@ -19,6 +19,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/allenai/beaker/api"
+
+	retryablehttp "github.com/hashicorp/go-retryablehttp"
 )
 
 // We encode the version as a manually-assigned constant for now. This must be
@@ -30,17 +32,9 @@ var idPattern = regexp.MustCompile(`^\w\w_[a-z0-9]{12}$`)
 
 // Client is a Beaker HTTP client.
 type Client struct {
-	baseURL   url.URL
-	userToken string
-
-	// Maximum number of attempts to make for each request.
-	maxAttempts int
-	// Maximum number of milliseconds to wait between attempts.
-	maxBackoff float64
-	// Maximum number of milliseconds to wait after the first failed attempt.
-	backoffBase float64
-	// Source of randomness for generating jitter.
-	random *rand.Rand
+	baseURL         url.URL
+	userToken       string
+	retryableClient *retryablehttp.Client
 }
 
 // NewClient creates a new Beaker client bound to a single user.
@@ -55,12 +49,20 @@ func NewClient(address string, userToken string) (*Client, error) {
 	}
 
 	return &Client{
-		baseURL:     *u,
-		userToken:   userToken,
-		maxAttempts: 10,
-		maxBackoff:  30000,
-		backoffBase: 5,
-		random:      rand.New(rand.NewSource(time.Now().UnixNano())),
+		baseURL:   *u,
+		userToken: userToken,
+		retryableClient: &retryablehttp.Client{
+			HTTPClient: &http.Client{
+				Timeout:       30 * time.Second,
+				CheckRedirect: copyRedirectHeader,
+			},
+			Logger:       log.New(os.Stderr, "", log.LstdFlags),
+			RetryWaitMin: 1 * time.Second,
+			RetryWaitMax: 30 * time.Second,
+			RetryMax:     10,
+			CheckRetry:   retryablehttp.DefaultRetryPolicy,
+			Backoff:      retryablehttp.DefaultBackoff,
+		},
 	}, nil
 }
 
@@ -125,6 +127,7 @@ func (c *Client) canonicalizeRef(ctx context.Context, reference string) (string,
 	return path.Join(userPart, namePart), nil
 }
 
+/*
 // doWithRetry sends a request and retries if the client returns an error
 // or if a 5xx status code is received. Up to maxAttempts are made,
 // waiting up to maxBackoff milliseconds between each attempt.
@@ -150,6 +153,7 @@ func (c *Client) doWithRetry(
 	}
 	return
 }
+*/
 
 func (c *Client) sendRequest(
 	ctx context.Context,
@@ -165,38 +169,24 @@ func (c *Client) sendRequest(
 		}
 	}
 
-	req, err := c.newRequest(ctx, method, path, query, b)
+	req, err := c.newRetryableRequest(ctx, method, path, query, b)
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{
-		Timeout:       30 * time.Second,
-		CheckRedirect: copyRedirectHeader,
-	}
-
-	return c.doWithRetry(client, req.WithContext(ctx))
+	return c.retryableClient.Do(req.WithContext(ctx))
 }
 
-func (c *Client) newRequest(
+func (c *Client) newRetryableRequest(
 	ctx context.Context,
 	method string,
 	path string,
 	query map[string]string,
 	body io.Reader,
-) (*http.Request, error) {
-	var q url.Values
-	if len(query) != 0 {
-		q = url.Values{}
-		for k, v := range query {
-			q.Add(k, v)
-		}
-	}
-
-	u := url.URL{Scheme: c.baseURL.Scheme, Host: c.baseURL.Host, Path: path, RawQuery: q.Encode()}
-	req, err := http.NewRequest(method, u.String(), body)
+) (*retryablehttp.Request, error) {
+	req, err := retryablehttp.NewRequest(method, c.getURL(path, query), body)
 	if err != nil {
 		return nil, err
 	}
@@ -207,6 +197,39 @@ func (c *Client) newRequest(
 	}
 
 	return req.WithContext(ctx), nil
+}
+
+func (c *Client) newRequest(
+	ctx context.Context,
+	method string,
+	path string,
+	query map[string]string,
+	body io.Reader,
+) (*http.Request, error) {
+	req, err := http.NewRequest(method, c.getURL(path, query), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set(api.VersionHeader, version)
+	if len(c.userToken) > 0 {
+		req.Header.Set("Authorization", "Bearer "+c.userToken)
+	}
+
+	return req.WithContext(ctx), nil
+}
+
+func (c *Client) getURL(path string, query map[string]string) string {
+	var q url.Values
+	if len(query) != 0 {
+		q = url.Values{}
+		for k, v := range query {
+			q.Add(k, v)
+		}
+	}
+
+	u := url.URL{Scheme: c.baseURL.Scheme, Host: c.baseURL.Host, Path: path, RawQuery: q.Encode()}
+	return u.String()
 }
 
 func copyRedirectHeader(req *http.Request, via []*http.Request) error {
