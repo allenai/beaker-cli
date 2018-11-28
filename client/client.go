@@ -143,7 +143,7 @@ func (c *Client) sendRequest(
 	ctx context.Context,
 	method string,
 	path string,
-	query map[string]string,
+	query url.Values,
 	body interface{},
 ) (*http.Response, error) {
 	b := new(bytes.Buffer)
@@ -167,10 +167,11 @@ func (c *Client) newRetryableRequest(
 	ctx context.Context,
 	method string,
 	path string,
-	query map[string]string,
+	query url.Values,
 	body interface{},
 ) (*retryable.Request, error) {
-	req, err := retryable.NewRequest(method, c.getURL(path, query), body)
+	u := c.baseURL.ResolveReference(&url.URL{Path: path, RawQuery: query.Encode()})
+	req, err := retryable.NewRequest(method, u.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -187,10 +188,11 @@ func (c *Client) newRequest(
 	ctx context.Context,
 	method string,
 	path string,
-	query map[string]string,
+	query url.Values,
 	body io.Reader,
 ) (*http.Request, error) {
-	req, err := http.NewRequest(method, c.getURL(path, query), body)
+	u := c.baseURL.ResolveReference(&url.URL{Path: path, RawQuery: query.Encode()})
+	req, err := http.NewRequest(method, u.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -201,19 +203,6 @@ func (c *Client) newRequest(
 	}
 
 	return req.WithContext(ctx), nil
-}
-
-func (c *Client) getURL(path string, query map[string]string) string {
-	var q url.Values
-	if len(query) != 0 {
-		q = url.Values{}
-		for k, v := range query {
-			q.Add(k, v)
-		}
-	}
-
-	u := url.URL{Scheme: c.baseURL.Scheme, Host: c.baseURL.Host, Path: path, RawQuery: q.Encode()}
-	return u.String()
 }
 
 func copyRedirectHeader(req *http.Request, via []*http.Request) error {

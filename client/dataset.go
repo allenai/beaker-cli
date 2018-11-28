@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"path"
 	"strconv"
 
@@ -23,9 +24,9 @@ func (c *Client) CreateDataset(
 	spec api.DatasetSpec,
 	name string,
 ) (*DatasetHandle, error) {
-	var query map[string]string
+	var query url.Values
 	if name != "" {
-		query = map[string]string{"name": name}
+		query.Set("name", name)
 	}
 
 	resp, err := c.sendRequest(ctx, http.MethodPost, "/api/v3/datasets", query, spec)
@@ -151,7 +152,8 @@ func (c *Client) SearchDatasets(
 	searchOptions api.DatasetSearchOptions,
 	page int,
 ) ([]api.Dataset, error) {
-	query := map[string]string{"page": strconv.Itoa(page)}
+	var query url.Values
+	query.Set("page", strconv.Itoa(page))
 	resp, err := c.sendRequest(ctx, http.MethodPost, "/api/v3/datasets/search", query, searchOptions)
 	if err != nil {
 		return nil, err
