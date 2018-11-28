@@ -34,8 +34,7 @@ func (h *DatasetHandle) FileRef(filePath string) *FileHandle {
 // Deprecated. Use Upload and Download instead.
 func (h *FileHandle) PresignLink(ctx context.Context, forWrite bool) (*api.DatasetFileLink, error) {
 	path := path.Join("/api/v3/datasets", h.dataset.id, "links", h.file)
-	var query url.Values
-	query.Set("upload", strconv.FormatBool(forWrite))
+	query := url.Values{"upload": {strconv.FormatBool(forWrite)}}
 	resp, err := h.dataset.client.sendRequest(ctx, http.MethodPost, path, query, nil)
 	if err != nil {
 		return nil, err

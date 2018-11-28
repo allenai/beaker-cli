@@ -152,8 +152,7 @@ func (c *Client) SearchDatasets(
 	searchOptions api.DatasetSearchOptions,
 	page int,
 ) ([]api.Dataset, error) {
-	var query url.Values
-	query.Set("page", strconv.Itoa(page))
+	query := url.Values{"page": {strconv.Itoa(page)}}
 	resp, err := c.sendRequest(ctx, http.MethodPost, "/api/v3/datasets/search", query, searchOptions)
 	if err != nil {
 		return nil, err
