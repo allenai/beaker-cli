@@ -153,7 +153,7 @@ func (c *Client) sendRequest(
 		}
 	}
 
-	req, err := c.newRetryableRequest(ctx, method, path, query, b)
+	req, err := c.newRetryableRequest(method, path, query, b)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +164,6 @@ func (c *Client) sendRequest(
 }
 
 func (c *Client) newRetryableRequest(
-	ctx context.Context,
 	method string,
 	path string,
 	query url.Values,
@@ -181,11 +180,10 @@ func (c *Client) newRetryableRequest(
 		req.Header.Set("Authorization", "Bearer "+c.userToken)
 	}
 
-	return req.WithContext(ctx), nil
+	return req, nil
 }
 
 func (c *Client) newRequest(
-	ctx context.Context,
 	method string,
 	path string,
 	query url.Values,
@@ -202,7 +200,7 @@ func (c *Client) newRequest(
 		req.Header.Set("Authorization", "Bearer "+c.userToken)
 	}
 
-	return req.WithContext(ctx), nil
+	return req, nil
 }
 
 func copyRedirectHeader(req *http.Request, via []*http.Request) error {
