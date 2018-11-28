@@ -51,12 +51,12 @@ func (h *FileHandle) PresignLink(ctx context.Context, forWrite bool) (*api.Datas
 // Download gets a file from a datastore.
 func (h *FileHandle) Download(ctx context.Context) (io.ReadCloser, error) {
 	path := path.Join("/api/v3/datasets", h.dataset.id, "files", h.file)
-	req, err := h.dataset.client.newRequest(http.MethodGet, path, nil, nil)
+	req, err := h.dataset.client.newRetryableRequest(http.MethodGet, path, nil, nil)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	client := &http.Client{CheckRedirect: copyRedirectHeader}
+	client := newRetryableClient(&http.Client{CheckRedirect: copyRedirectHeader})
 	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
 		return nil, errors.WithStack(err)
