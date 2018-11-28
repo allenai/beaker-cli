@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"path"
 
 	"github.com/pkg/errors"
@@ -22,7 +23,7 @@ func (c *Client) CreateExperiment(
 	spec api.ExperimentSpec,
 	name string,
 ) (*ExperimentHandle, error) {
-	query := map[string]string{"name": name}
+	query := url.Values{"name": {name}}
 	resp, err := c.sendRequest(ctx, http.MethodPost, "/api/v3/experiments", query, spec)
 	if err != nil {
 		return nil, err

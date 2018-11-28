@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"path"
 	"strconv"
 
@@ -23,9 +24,9 @@ func (c *Client) CreateBlueprint(
 	spec api.BlueprintSpec,
 	name string,
 ) (*BlueprintHandle, error) {
-	var query map[string]string
+	var query url.Values
 	if name != "" {
-		query = map[string]string{"name": name}
+		query.Set("name", name)
 	}
 
 	resp, err := c.sendRequest(ctx, http.MethodPost, "/api/v3/blueprints", query, spec)
@@ -81,7 +82,7 @@ func (h *BlueprintHandle) Repository(
 	upload bool,
 ) (*api.BlueprintRepository, error) {
 	path := path.Join("/api/v3/blueprints", h.id, "repository")
-	query := map[string]string{"upload": strconv.FormatBool(upload)}
+	query := url.Values{"upload": {strconv.FormatBool(upload)}}
 	resp, err := h.client.sendRequest(ctx, http.MethodPost, path, query, nil)
 	if err != nil {
 		return nil, err
@@ -156,7 +157,7 @@ func (c *Client) SearchBlueprints(
 	searchOptions api.BlueprintSearchOptions,
 	page int,
 ) ([]api.Blueprint, error) {
-	query := map[string]string{"page": strconv.Itoa(page)}
+	query := url.Values{"page": {strconv.Itoa(page)}}
 	resp, err := c.sendRequest(ctx, http.MethodPost, "/api/v3/blueprints/search", query, searchOptions)
 	if err != nil {
 		return nil, err

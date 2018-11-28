@@ -6,8 +6,12 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"log"
+	"math"
+	"math/rand"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"regexp"
 	"strings"
@@ -17,6 +21,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/allenai/beaker/api"
+
+	retryable "github.com/hashicorp/go-retryablehttp"
 )
 
 // We encode the version as a manually-assigned constant for now. This must be
@@ -28,8 +34,9 @@ var idPattern = regexp.MustCompile(`^\w\w_[a-z0-9]{12}$`)
 
 // Client is a Beaker HTTP client.
 type Client struct {
-	baseURL   url.URL
-	userToken string
+	baseURL         url.URL
+	userToken       string
+	retryableClient *retryable.Client
 }
 
 // NewClient creates a new Beaker client bound to a single user.
@@ -43,7 +50,32 @@ func NewClient(address string, userToken string) (*Client, error) {
 		return nil, errors.New("address must be base server address in the form [scheme://]host[:port]")
 	}
 
-	return &Client{baseURL: *u, userToken: userToken}, nil
+	return &Client{
+		baseURL:   *u,
+		userToken: userToken,
+		retryableClient: &retryable.Client{
+			HTTPClient: &http.Client{
+				Timeout:       30 * time.Second,
+				CheckRedirect: copyRedirectHeader,
+			},
+			Logger:       &errorLogger{Logger: log.New(os.Stderr, "", log.LstdFlags)},
+			RetryWaitMin: 100 * time.Millisecond,
+			RetryWaitMax: 30 * time.Second,
+			RetryMax:     9,
+			CheckRetry:   retryable.DefaultRetryPolicy,
+			Backoff:      exponentialJitterBackoff,
+		},
+	}, nil
+}
+
+type errorLogger struct {
+	Logger *log.Logger
+}
+
+func (l *errorLogger) Printf(template string, args ...interface{}) {
+	if strings.HasPrefix(template, "[ERR]") {
+		l.Logger.Printf(template, args...)
+	}
 }
 
 // Address returns a client's host and port.
@@ -111,7 +143,7 @@ func (c *Client) sendRequest(
 	ctx context.Context,
 	method string,
 	path string,
-	query map[string]string,
+	query url.Values,
 	body interface{},
 ) (*http.Response, error) {
 	b := new(bytes.Buffer)
@@ -121,36 +153,43 @@ func (c *Client) sendRequest(
 		}
 	}
 
-	req, err := c.newRequest(ctx, method, path, query, b)
+	req, err := c.newRetryableRequest(method, path, query, b)
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{
-		Timeout:       30 * time.Second,
-		CheckRedirect: copyRedirectHeader,
+	return c.retryableClient.Do(req.WithContext(ctx))
+}
+
+func (c *Client) newRetryableRequest(
+	method string,
+	path string,
+	query url.Values,
+	body interface{},
+) (*retryable.Request, error) {
+	u := c.baseURL.ResolveReference(&url.URL{Path: path, RawQuery: query.Encode()})
+	req, err := retryable.NewRequest(method, u.String(), body)
+	if err != nil {
+		return nil, err
 	}
-	return client.Do(req.WithContext(ctx))
+
+	req.Header.Set(api.VersionHeader, version)
+	if len(c.userToken) > 0 {
+		req.Header.Set("Authorization", "Bearer "+c.userToken)
+	}
+
+	return req, nil
 }
 
 func (c *Client) newRequest(
-	ctx context.Context,
 	method string,
 	path string,
-	query map[string]string,
+	query url.Values,
 	body io.Reader,
 ) (*http.Request, error) {
-	var q url.Values
-	if len(query) != 0 {
-		q = url.Values{}
-		for k, v := range query {
-			q.Add(k, v)
-		}
-	}
-
-	u := url.URL{Scheme: c.baseURL.Scheme, Host: c.baseURL.Host, Path: path, RawQuery: q.Encode()}
+	u := c.baseURL.ResolveReference(&url.URL{Path: path, RawQuery: query.Encode()})
 	req, err := http.NewRequest(method, u.String(), body)
 	if err != nil {
 		return nil, err
@@ -161,7 +200,7 @@ func (c *Client) newRequest(
 		req.Header.Set("Authorization", "Bearer "+c.userToken)
 	}
 
-	return req.WithContext(ctx), nil
+	return req, nil
 }
 
 func copyRedirectHeader(req *http.Request, via []*http.Request) error {
@@ -215,4 +254,20 @@ func safeClose(closer io.Closer) {
 		return
 	}
 	_ = closer.Close()
+}
+
+var random = rand.New(rand.NewSource(time.Now().UnixNano()))
+
+// exponentialJitterBackoff implements exponential backoff with full jitter as described here:
+// https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
+func exponentialJitterBackoff(
+	minDuration, maxDuration time.Duration,
+	attempt int,
+	resp *http.Response,
+) time.Duration {
+	min := float64(minDuration)
+	max := float64(maxDuration)
+
+	backoff := min + math.Min(max-min, min*math.Exp2(float64(attempt)))*random.Float64()
+	return time.Duration(backoff)
 }

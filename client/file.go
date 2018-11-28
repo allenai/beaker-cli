@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -33,7 +34,7 @@ func (h *DatasetHandle) FileRef(filePath string) *FileHandle {
 // Deprecated. Use Upload and Download instead.
 func (h *FileHandle) PresignLink(ctx context.Context, forWrite bool) (*api.DatasetFileLink, error) {
 	path := path.Join("/api/v3/datasets", h.dataset.id, "links", h.file)
-	query := map[string]string{"upload": strconv.FormatBool(forWrite)}
+	query := url.Values{"upload": {strconv.FormatBool(forWrite)}}
 	resp, err := h.dataset.client.sendRequest(ctx, http.MethodPost, path, query, nil)
 	if err != nil {
 		return nil, err
@@ -50,13 +51,13 @@ func (h *FileHandle) PresignLink(ctx context.Context, forWrite bool) (*api.Datas
 // Download gets a file from a datastore.
 func (h *FileHandle) Download(ctx context.Context) (io.ReadCloser, error) {
 	path := path.Join("/api/v3/datasets", h.dataset.id, "files", h.file)
-	req, err := h.dataset.client.newRequest(ctx, http.MethodGet, path, nil, nil)
+	req, err := h.dataset.client.newRequest(http.MethodGet, path, nil, nil)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
 	client := &http.Client{CheckRedirect: copyRedirectHeader}
-	resp, err := client.Do(req)
+	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -70,7 +71,7 @@ func (h *FileHandle) Download(ctx context.Context) (io.ReadCloser, error) {
 // If length is negative, the file is read until the end.
 func (h *FileHandle) DownloadRange(ctx context.Context, offset, length int64) (io.ReadCloser, error) {
 	path := path.Join("/api/v3/datasets", h.dataset.id, "files", h.file)
-	req, err := h.dataset.client.newRequest(ctx, http.MethodGet, path, nil, nil)
+	req, err := h.dataset.client.newRequest(http.MethodGet, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +82,7 @@ func (h *FileHandle) DownloadRange(ctx context.Context, offset, length int64) (i
 	}
 
 	client := &http.Client{CheckRedirect: copyRedirectHeader}
-	resp, err := client.Do(req)
+	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -130,7 +131,7 @@ func (h *FileHandle) Upload(ctx context.Context, source io.ReadSeeker) error {
 	// Only read as many bytes as were hashed.
 	body := io.LimitReader(source, length)
 	path := path.Join("/api/v3/datasets", h.dataset.id, "files", h.file)
-	req, err := h.dataset.client.newRequest(ctx, http.MethodPut, path, nil, body)
+	req, err := h.dataset.client.newRequest(http.MethodPut, path, nil, body)
 	if err != nil {
 		return err
 	}
@@ -138,7 +139,7 @@ func (h *FileHandle) Upload(ctx context.Context, source io.ReadSeeker) error {
 	req.Header.Set("Digest", "SHA256 "+base64.StdEncoding.EncodeToString(digest))
 
 	client := &http.Client{CheckRedirect: copyRedirectHeader}
-	resp, err := client.Do(req)
+	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
 		return errors.WithStack(err)
 	}
