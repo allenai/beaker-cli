@@ -71,7 +71,7 @@ func (h *FileHandle) Download(ctx context.Context) (io.ReadCloser, error) {
 // If length is negative, the file is read until the end.
 func (h *FileHandle) DownloadRange(ctx context.Context, offset, length int64) (io.ReadCloser, error) {
 	path := path.Join("/api/v3/datasets", h.dataset.id, "files", h.file)
-	req, err := h.dataset.client.newRequest(http.MethodGet, path, nil, nil)
+	req, err := h.dataset.client.newRetryableRequest(http.MethodGet, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (h *FileHandle) DownloadRange(ctx context.Context, offset, length int64) (i
 		req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", offset, offset+length-1))
 	}
 
-	client := &http.Client{CheckRedirect: copyRedirectHeader}
+	client := newRetryableClient(&http.Client{CheckRedirect: copyRedirectHeader})
 	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -94,12 +94,6 @@ func (h *FileHandle) DownloadRange(ctx context.Context, offset, length int64) (i
 
 // DownloadTo downloads a file and writes it to disk.
 func (h *FileHandle) DownloadTo(ctx context.Context, filePath string) error {
-	r, err := h.Download(ctx)
-	if err != nil {
-		return err
-	}
-	defer safeClose(r)
-
 	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
 		return errors.WithStack(err)
 	}
@@ -110,8 +104,20 @@ func (h *FileHandle) DownloadTo(ctx context.Context, filePath string) error {
 	}
 	defer safeClose(f)
 
-	_, err = io.Copy(f, r)
-	return errors.WithStack(err)
+	var written int64
+	for {
+		r, err := h.DownloadRange(ctx, written, -1)
+		if err != nil {
+			return err
+		}
+
+		n, err := io.Copy(f, r)
+		safeClose(r)
+		if err == nil {
+			return nil
+		}
+		written += n
+	}
 }
 
 // Upload creates or overwrites a file.
