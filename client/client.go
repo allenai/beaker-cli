@@ -22,7 +22,7 @@ import (
 
 	"github.com/allenai/beaker/api"
 
-	retryablehttp "github.com/hashicorp/go-retryablehttp"
+	retryable "github.com/hashicorp/go-retryablehttp"
 )
 
 // We encode the version as a manually-assigned constant for now. This must be
@@ -36,7 +36,7 @@ var idPattern = regexp.MustCompile(`^\w\w_[a-z0-9]{12}$`)
 type Client struct {
 	baseURL         url.URL
 	userToken       string
-	retryableClient *retryablehttp.Client
+	retryableClient *retryable.Client
 }
 
 // NewClient creates a new Beaker client bound to a single user.
@@ -53,7 +53,7 @@ func NewClient(address string, userToken string) (*Client, error) {
 	return &Client{
 		baseURL:   *u,
 		userToken: userToken,
-		retryableClient: &retryablehttp.Client{
+		retryableClient: &retryable.Client{
 			HTTPClient: &http.Client{
 				Timeout:       30 * time.Second,
 				CheckRedirect: copyRedirectHeader,
@@ -62,7 +62,7 @@ func NewClient(address string, userToken string) (*Client, error) {
 			RetryWaitMin: 100 * time.Millisecond,
 			RetryWaitMax: 30 * time.Second,
 			RetryMax:     9,
-			CheckRetry:   retryablehttp.DefaultRetryPolicy,
+			CheckRetry:   retryable.DefaultRetryPolicy,
 			Backoff:      exponentialJitterBackoff,
 		},
 	}, nil
@@ -169,8 +169,8 @@ func (c *Client) newRetryableRequest(
 	path string,
 	query map[string]string,
 	body interface{},
-) (*retryablehttp.Request, error) {
-	req, err := retryablehttp.NewRequest(method, c.getURL(path, query), body)
+) (*retryable.Request, error) {
+	req, err := retryable.NewRequest(method, c.getURL(path, query), body)
 	if err != nil {
 		return nil, err
 	}
