@@ -34,9 +34,8 @@ var idPattern = regexp.MustCompile(`^\w\w_[a-z0-9]{12}$`)
 
 // Client is a Beaker HTTP client.
 type Client struct {
-	baseURL         url.URL
-	userToken       string
-	retryableClient *retryable.Client
+	baseURL   url.URL
+	userToken string
 }
 
 // NewClient creates a new Beaker client bound to a single user.
@@ -53,19 +52,19 @@ func NewClient(address string, userToken string) (*Client, error) {
 	return &Client{
 		baseURL:   *u,
 		userToken: userToken,
-		retryableClient: &retryable.Client{
-			HTTPClient: &http.Client{
-				Timeout:       30 * time.Second,
-				CheckRedirect: copyRedirectHeader,
-			},
-			Logger:       &errorLogger{Logger: log.New(os.Stderr, "", log.LstdFlags)},
-			RetryWaitMin: 100 * time.Millisecond,
-			RetryWaitMax: 30 * time.Second,
-			RetryMax:     9,
-			CheckRetry:   retryable.DefaultRetryPolicy,
-			Backoff:      exponentialJitterBackoff,
-		},
 	}, nil
+}
+
+func newRetryableClient(httpClient *http.Client) *retryable.Client {
+	return &retryable.Client{
+		HTTPClient:   httpClient,
+		Logger:       &errorLogger{Logger: log.New(os.Stderr, "", log.LstdFlags)},
+		RetryWaitMin: 100 * time.Millisecond,
+		RetryWaitMax: 30 * time.Second,
+		RetryMax:     9,
+		CheckRetry:   retryable.DefaultRetryPolicy,
+		Backoff:      exponentialJitterBackoff,
+	}
 }
 
 type errorLogger struct {
@@ -160,7 +159,10 @@ func (c *Client) sendRequest(
 
 	req.Header.Set("Content-Type", "application/json")
 
-	return c.retryableClient.Do(req.WithContext(ctx))
+	return newRetryableClient(&http.Client{
+		Timeout:       30 * time.Second,
+		CheckRedirect: copyRedirectHeader,
+	}).Do(req.WithContext(ctx))
 }
 
 func (c *Client) newRetryableRequest(
@@ -227,7 +229,7 @@ func errorFromResponse(resp *http.Response) error {
 
 	var apiErr api.Error
 	if err := json.Unmarshal(bytes, &apiErr); err != nil {
-		return errors.Errorf("failed to parse response: %v", err)
+		return errors.Errorf("failed to parse response: %s", string(bytes))
 	}
 
 	return apiErr
