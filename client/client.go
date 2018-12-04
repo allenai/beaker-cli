@@ -64,6 +64,9 @@ func newRetryableClient(httpClient *http.Client) *retryable.Client {
 		RetryMax:     9,
 		CheckRetry:   retryable.DefaultRetryPolicy,
 		Backoff:      exponentialJitterBackoff,
+		ErrorHandler: func(resp *http.Response, err error, numTries int) (*http.Response, error) {
+			return resp, err
+		},
 	}
 }
 
