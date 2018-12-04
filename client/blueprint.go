@@ -24,7 +24,7 @@ func (c *Client) CreateBlueprint(
 	spec api.BlueprintSpec,
 	name string,
 ) (*BlueprintHandle, error) {
-	var query url.Values
+	query := url.Values{}
 	if name != "" {
 		query.Set("name", name)
 	}
