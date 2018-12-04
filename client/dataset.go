@@ -24,7 +24,7 @@ func (c *Client) CreateDataset(
 	spec api.DatasetSpec,
 	name string,
 ) (*DatasetHandle, error) {
-	var query url.Values
+	query := url.Values{}
 	if name != "" {
 		query.Set("name", name)
 	}
