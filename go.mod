@@ -12,6 +12,7 @@ require (
 	github.com/docker/go-units v0.3.3 // indirect
 	github.com/fatih/color v1.7.0
 	github.com/goware/urlx v0.0.0-20171129014730-06d8eeb3ce17
+	github.com/hashicorp/go-retryablehttp v0.5.1-0.20181126172515-dfbae6744eb4
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.4 // indirect
 	github.com/pkg/errors v0.8.0
