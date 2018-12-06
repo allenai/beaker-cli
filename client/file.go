@@ -7,15 +7,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"path"
 	"path/filepath"
-	"strconv"
 
 	"github.com/pkg/errors"
-
-	"github.com/allenai/beaker/api"
 )
 
 // FileHandle provides operations on a file within a dataset.
@@ -28,24 +24,6 @@ type FileHandle struct {
 // This call doesn't perform any network operations.
 func (h *DatasetHandle) FileRef(filePath string) *FileHandle {
 	return &FileHandle{h, filePath}
-}
-
-// PresignLink creates a pre-signed URL link to a file.
-// Deprecated. Use Upload and Download instead.
-func (h *FileHandle) PresignLink(ctx context.Context, forWrite bool) (*api.DatasetFileLink, error) {
-	path := path.Join("/api/v3/datasets", h.dataset.id, "links", h.file)
-	query := url.Values{"upload": {strconv.FormatBool(forWrite)}}
-	resp, err := h.dataset.client.sendRequest(ctx, http.MethodPost, path, query, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer safeClose(resp.Body)
-
-	var body api.DatasetFileLink
-	if err = parseResponse(resp, &body); err != nil {
-		return nil, err
-	}
-	return &body, nil
 }
 
 // Download gets a file from a datastore.
