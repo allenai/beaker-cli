@@ -7,15 +7,15 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/pkg/errors"
-
 	"github.com/allenai/beaker/api"
+	fileheap "github.com/allenai/fileheap-client/client"
 )
 
 // DatasetHandle provides operations on a dataset.
 type DatasetHandle struct {
 	client *Client
 	id     string
+	pkg    *fileheap.PackageRef
 }
 
 // CreateDataset creates a new dataset with an optional name.
@@ -39,19 +39,49 @@ func (c *Client) CreateDataset(
 	if err := parseResponse(resp, &body); err != nil {
 		return nil, err
 	}
-	return &DatasetHandle{client: c, id: body.ID}, nil
+
+	var pkg *fileheap.PackageRef
+	if body.PackageAddress != "" && body.PackageID != "" {
+		fileheap, err := fileheap.New(body.PackageAddress)
+		if err != nil {
+			return nil, err
+		}
+		pkg = fileheap.Package(body.PackageID)
+	}
+
+	return &DatasetHandle{client: c, id: body.ID, pkg: pkg}, nil
 }
 
 // Dataset gets a handle for a dataset by name or ID. The returned handle is
 // guaranteed throughout its lifetime to refer to the same object, even if that
 // object is later renamed.
 func (c *Client) Dataset(ctx context.Context, reference string) (*DatasetHandle, error) {
-	id, err := c.resolveRef(ctx, "/api/v3/datasets", reference)
+	canonicalRef, err := c.canonicalizeRef(ctx, reference)
 	if err != nil {
-		return nil, errors.WithMessage(err, "could not resolve dataset reference "+reference)
+		return nil, err
 	}
 
-	return &DatasetHandle{client: c, id: id}, nil
+	resp, err := c.sendRequest(ctx, http.MethodGet, path.Join("/api/v3/datasets", canonicalRef), nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer safeClose(resp.Body)
+
+	var body api.Dataset
+	if err := parseResponse(resp, &body); err != nil {
+		return nil, err
+	}
+
+	var pkg *fileheap.PackageRef
+	if body.PackageAddress != "" && body.PackageID != "" {
+		fileheap, err := fileheap.New(body.PackageAddress)
+		if err != nil {
+			return nil, err
+		}
+		pkg = fileheap.Package(body.PackageID)
+	}
+
+	return &DatasetHandle{client: c, id: body.ID, pkg: pkg}, nil
 }
 
 // ID returns a dataset's stable, unique ID.
