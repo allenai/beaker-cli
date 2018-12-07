@@ -5,15 +5,25 @@ import (
 	"time"
 )
 
+// PackageReference is a reference to a FileHeap package.
+type PackageReference struct {
+	PackageAddress string `json:"packageAddress,omitempty"`
+	PackageID      string `json:"packageID,omitempty"`
+}
+
 // CreateDatasetResponse is a service response returned when a new dataset is
 // created. For now it's just the dataset ID, but may be expanded in the future.
 type CreateDatasetResponse struct {
+	PackageReference
+
 	ID string `json:"id"`
 }
 
 // Dataset is a file or collection of files. It may be the result of a task or
 // uploaded directly by a user.
 type Dataset struct {
+	PackageReference
+
 	// The unique ID of the dataset.
 	ID   string `json:"id"`
 	User User   `json:"user"`
