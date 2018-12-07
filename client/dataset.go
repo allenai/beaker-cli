@@ -135,8 +135,8 @@ type FileIterator interface {
 func (h *DatasetHandle) Files(ctx context.Context, path string) (FileIterator, error) {
 	if h.pkg != nil {
 		return &packageFileIterator{
-			dataset:    h,
-			fhIterator: h.pkg.Files(ctx, path),
+			dataset:  h,
+			iterator: h.pkg.Files(ctx, path),
 		}, nil
 	}
 
@@ -168,12 +168,12 @@ var ErrDone = errors.New("no more items in iterator")
 
 // packageFileIterator is an iterator over files within a FileHeap package.
 type packageFileIterator struct {
-	dataset    *DatasetHandle
-	fhIterator *fileheap.FileIterator
+	dataset  *DatasetHandle
+	iterator *fileheap.FileIterator
 }
 
 func (i *packageFileIterator) Next() (*FileHandle, *FileInfo, error) {
-	ref, info, err := i.fhIterator.Next()
+	ref, info, err := i.iterator.Next()
 	if err == fileheap.ErrDone {
 		return nil, nil, ErrDone
 	}
