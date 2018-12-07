@@ -25,7 +25,11 @@ type FileHandle struct {
 // FileRef creates an actor for an existing file within a dataset.
 // This call doesn't perform any network operations.
 func (h *DatasetHandle) FileRef(filePath string) *FileHandle {
-	return &FileHandle{h, filePath, h.pkg.File(filePath)}
+	var fileRef *fileheap.FileRef
+	if h.pkg != nil {
+		fileRef = h.pkg.File(filePath)
+	}
+	return &FileHandle{h, filePath, fileRef}
 }
 
 // Download gets a file from a datastore.
