@@ -18,11 +18,10 @@ import (
 	"time"
 
 	"github.com/goware/urlx"
+	retryable "github.com/hashicorp/go-retryablehttp"
 	"github.com/pkg/errors"
 
 	"github.com/allenai/beaker/api"
-
-	retryable "github.com/hashicorp/go-retryablehttp"
 )
 
 // We encode the version as a manually-assigned constant for now. This must be

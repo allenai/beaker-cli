@@ -9,9 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/allenai/beaker/api"
 	fileheap "github.com/allenai/fileheap-client/client"
 	"github.com/pkg/errors"
+
+	"github.com/allenai/beaker/api"
 )
 
 // DatasetHandle provides operations on a dataset.
