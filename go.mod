@@ -4,7 +4,7 @@ require (
 	code.cloudfoundry.org/bytefmt v0.0.0-20180108190415-b31f603f5e1e
 	github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc // indirect
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
-	github.com/allenai/fileheap-client v0.0.0-20181206011434-e72ab14bbd6d // indirect
+	github.com/allenai/fileheap-client v0.0.0-20181206224701-024872243b71
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/distribution v2.6.2+incompatible // indirect
 	github.com/docker/docker v1.13.1
