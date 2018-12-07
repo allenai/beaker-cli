@@ -135,7 +135,7 @@ func (h *FileHandle) Upload(ctx context.Context, source io.ReadSeeker) error {
 		}
 
 		// Ignore error; handle on close.
-		io.Copy(w, body)
+		_, _ = io.Copy(w, body)
 
 		return errors.WithStack(w.Close())
 	}
