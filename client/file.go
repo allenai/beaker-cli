@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 
+	fileheap "github.com/allenai/fileheap-client/client"
 	"github.com/pkg/errors"
 )
 
@@ -18,16 +19,21 @@ import (
 type FileHandle struct {
 	dataset *DatasetHandle
 	file    string
+	fileRef *fileheap.FileRef
 }
 
 // FileRef creates an actor for an existing file within a dataset.
 // This call doesn't perform any network operations.
 func (h *DatasetHandle) FileRef(filePath string) *FileHandle {
-	return &FileHandle{h, filePath}
+	return &FileHandle{h, filePath, h.pkg.File(filePath)}
 }
 
 // Download gets a file from a datastore.
 func (h *FileHandle) Download(ctx context.Context) (io.ReadCloser, error) {
+	if h.fileRef != nil {
+		return h.fileRef.NewReader(ctx)
+	}
+
 	path := path.Join("/api/v3/datasets", h.dataset.id, "files", h.file)
 	req, err := h.dataset.client.newRetryableRequest(http.MethodGet, path, nil, nil)
 	if err != nil {
@@ -48,6 +54,10 @@ func (h *FileHandle) Download(ctx context.Context) (io.ReadCloser, error) {
 // DownloadRange reads a range of bytes from a file.
 // If length is negative, the file is read until the end.
 func (h *FileHandle) DownloadRange(ctx context.Context, offset, length int64) (io.ReadCloser, error) {
+	if h.fileRef != nil {
+		return h.fileRef.NewRangeReader(ctx, offset, length)
+	}
+
 	path := path.Join("/api/v3/datasets", h.dataset.id, "files", h.file)
 	req, err := h.dataset.client.newRetryableRequest(http.MethodGet, path, nil, nil)
 	if err != nil {
@@ -114,6 +124,22 @@ func (h *FileHandle) Upload(ctx context.Context, source io.ReadSeeker) error {
 
 	// Only read as many bytes as were hashed.
 	body := io.LimitReader(source, length)
+
+	if h.fileRef != nil {
+		w, err := h.fileRef.NewWriter(ctx, &fileheap.WriteOpts{
+			Length: length,
+			Digest: digest,
+		})
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		// Ignore error; handle on close.
+		io.Copy(w, body)
+
+		return errors.WithStack(w.Close())
+	}
+
 	path := path.Join("/api/v3/datasets", h.dataset.id, "files", h.file)
 	req, err := h.dataset.client.newRequest(http.MethodPut, path, nil, body)
 	if err != nil {
@@ -132,6 +158,10 @@ func (h *FileHandle) Upload(ctx context.Context, source io.ReadSeeker) error {
 
 // Delete removes a file from an uncommitted datastore.
 func (h *FileHandle) Delete(ctx context.Context) error {
+	if h.fileRef != nil {
+		return h.fileRef.Delete(ctx)
+	}
+
 	path := path.Join("/api/v3/datasets", h.dataset.id, "files", h.file)
 	resp, err := h.dataset.client.sendRequest(ctx, http.MethodDelete, path, nil, nil)
 	if err != nil {
