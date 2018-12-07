@@ -140,8 +140,9 @@ func (h *FileHandle) Upload(ctx context.Context, source io.ReadSeeker) error {
 			return errors.WithStack(err)
 		}
 
-		// Ignore error; handle on close.
-		_, _ = io.Copy(w, body)
+		if _, err = io.Copy(w, body); err != nil {
+			return errors.WithStack(err)
+		}
 
 		return errors.WithStack(w.Close())
 	}
