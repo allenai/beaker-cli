@@ -94,7 +94,13 @@ func (h *FileHandle) DownloadTo(ctx context.Context, filePath string) error {
 
 	var written int64
 	for {
-		r, err := h.DownloadRange(ctx, written, -1)
+		var r io.ReadCloser
+		var err error
+		if written == 0 {
+			r, err = h.Download(ctx)
+		} else {
+			r, err = h.DownloadRange(ctx, written, -1)
+		}
 		if err != nil {
 			return err
 		}
