@@ -54,4 +54,4 @@ Beaker can also be installed from source using standard [Go](https://golang.org/
 go get -u github.com/allenai/beaker/...
 ```
 ## Notices
-[Beaker dependencies and licenses](https://app.fossa.io/attribution/f1f9d4d2-22b8-4662-9f50-51a5f925af69)
+[Beaker dependencies and licenses](https://app.fossa.io/attribution/a462337b-67c8-418e-8a05-9b6f67de4626)
