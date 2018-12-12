@@ -2,47 +2,33 @@
 SHELL=/bin/bash -o pipefail
 
 # Project variables
-PACKAGE = github.com/allenai/beaker
-BASE    = $(GOPATH)/src/$(PACKAGE)
+BASE    = $(realpath .)
+GOPATH  = $(shell go env GOPATH)
 DIST    = $(BASE)/dist
+
 VERSION = $(shell git describe --tags --abbrev=0 --match=v* 2> /dev/null || echo v0.0.0)
 COMMIT  = $(shell git rev-parse HEAD)
 
-# Standard paths
-GOPATH = $(shell go env GOPATH)
-GOBIN = $(GOPATH)/bin
-
 # List of non-vendor packages. Can be overridden with a list of packages or the PKG variable.
-PKGS = $(or $(PKG), $(PACKAGE)/...)
+PKGS = $(or $(PKG), $(BASE)/...)
 DIRS = $(shell go list -f '{{ .Dir }}' $(PKGS))
 
 # Go tools
-DEP = $(GOBIN)/dep
-GOIMPORTS = $(GOBIN)/goimports
-GOMETALINTER = $(GOBIN)/gometalinter
+GOIMPORTS = $(GOPATH)/bin/goimports
 
 # Go
 GO_SRC_FILES = $(shell find $(BASE) -type f -name '*.go')
 
-# Dep is the soon-to-be-standard dependency management tool.
-$(DEP):
-	go get -u github.com/golang/dep/cmd/dep
-
 # Goimports is an improvement over the gofmt tool which groups imports removes unused imports.
 $(GOIMPORTS):
 	go get -u golang.org/x/tools/cmd/goimports
-
-# gometalinter combines multiple go linters.
-$(GOMETALINTER):
-	go get -u github.com/alecthomas/gometalinter
-	gometalinter --install
 
 #
 # Meta targets
 #
 
 # Artificial targets declared in the order they appear below.
-.PHONY: clean git-hooks dev release dep test vet check-format format
+.PHONY: clean git-hooks dev release test check-format format
 .DEFAULT_GOAL := dev
 
 # TODO: Split clean into clean-all to also clean the dependencies
@@ -51,7 +37,6 @@ clean:
 	@if [ -f "$(BASE)/Gopkg.lock" ]; then rm "$(BASE)/Gopkg.lock"; fi
 	@if [ -d "$(BASE)/vendor" ]; then rm -rf "$(BASE)/vendor"; fi
 	@if [ -d "$(DIST)" ]; then rm -rf "$(DIST)"; fi
-	@if [ -f "$(GOBIN)/beaker" ]; then rm "$(GOBIN)/beaker"; fi
 
 git-hooks: | $(GOIMPORTS)
 	cp -f "$(BASE)/scripts/pre-commit" "$(BASE)/.git/hooks/pre-commit"
@@ -61,8 +46,8 @@ git-hooks: | $(GOIMPORTS)
 #
 
 # Build a dev binary against the current platform and place it.
-dev: dep $(GOBIN)/beaker
-$(GOBIN)/beaker: $(GO_SRC_FILES)
+dev: beaker
+beaker: $(GO_SRC_FILES)
 	@echo "Building for local development..."
 	@go build -v --tags dev -o $@ -ldflags "\
 		-X main.version=$(VERSION) \
@@ -70,7 +55,7 @@ $(GOBIN)/beaker: $(GO_SRC_FILES)
 
 # Build release binaries for Beaker.
 # This requires a github token to be set.
-release: dep
+release:
 	$(eval TEMP := $(shell mktemp -d))
 ifeq ($(shell uname -s),Darwin)
 	$(eval ARCHIVE := goreleaser_Darwin_x86_64.tar.gz)
@@ -82,27 +67,15 @@ endif
 	$(TEMP)/goreleaser release --rm-dist
 	rm -rf $(TEMP)
 
-# Ensure dependencies
-dep: $(BASE)/Gopkg.lock
-$(BASE)/Gopkg.lock: Gopkg.toml | $(DEP)
-	@$(DEP) ensure -v
-	@touch -m $@
-
 #
 # Validation targets
 #
 
-test: dep | vet
+test: check-format
 	@echo Testing...
 	@go test $(ARGS) $(PKGS)
-
-# Run static analysis tools.
-vet: check-format dep | $(GOMETALINTER)
 	@echo Running 'go vet'...
 	@go vet $(PKGS)
-
-	@echo Running 'gometalinter'...
-	@$(GOMETALINTER) --config=gometalinter-config.json $(DIRS)
 
 # Validate or automatically correct formatting.
 check-format: | $(GOIMPORTS)
