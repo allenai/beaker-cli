@@ -42,6 +42,7 @@ tar -xvzf beaker_*.tar.gz -C /usr/local/bin
 
 OS X users can install Beaker through [Homebrew](https://brew.sh/) with a custom tap.
 
+
 ```bash
 brew tap allenai/homebrew-beaker https://github.com/allenai/homebrew-beaker.git
 brew install beaker
@@ -52,3 +53,5 @@ Beaker can also be installed from source using standard [Go](https://golang.org/
 ```bash
 go get -u github.com/allenai/beaker/...
 ```
+## Notices
+[Beaker dependencies and licenses](https://app.fossa.io/attribution/a462337b-67c8-418e-8a05-9b6f67de4626)
