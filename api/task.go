@@ -20,8 +20,12 @@ type Task struct {
 	// Creation parameters
 	Spec TaskSpec `json:"spec"`
 
+	// Cost
+	Bill *Bill `json:"bill,omitempty"`
+
 	// Results
 	ResultID string `json:"result_id"`
+	ExitCode int    `json:"exit_code,omitempty"`
 }
 
 type TaskLogUploadLink struct {
@@ -108,4 +112,15 @@ type TaskStatusSpec struct {
 	// (optional) Exit code of the task's process.
 	// It is recommended to provide when entering Succeeded and Failed states.
 	ExitCode *int `json:"exitCode,omitempty"`
+}
+
+type TaskEvents struct {
+	Task   string      `json:"task"`
+	Events []TaskEvent `json:"events"`
+}
+
+type TaskEvent struct {
+	Status  TaskStatus `json:"status"`
+	Message string     `json:"message,omitempty"`
+	Time    time.Time  `json:"time"`
 }

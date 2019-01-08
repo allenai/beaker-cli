@@ -8,10 +8,22 @@ import (
 type User struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
-	DisplayName string `json:"display_name"`
+	DisplayName string `json:"displayName"`
 	Institution string `json:"institution,omitempty"`
 	Role        string `json:"role,omitempty"`
 	Email       string `json:"email,omitempty"`
+
+	// Deprecated: snake_case version(s) of above
+	OldDN string `json:"display_name,omitempty"`
+}
+
+// UserPage is a page of results from a batch user API.
+type UserPage struct {
+	// Results of a batch query.
+	Data []User `json:"data"`
+
+	// Opaque token to the element after Data, provided only if more data is available.
+	NextCursor string `json:"nextCursor,omitempty"`
 }
 
 // UserPatchSpec describes a patch to apply to a user's editable fields.
@@ -29,15 +41,6 @@ type UserPatchSpec struct {
 
 	// (optional) Assign an authorization level to the user.
 	Role *string `json:"role,omitempty"`
-}
-
-// UserSpec contains information for creating new Beaker user accounts.
-// The "Name," "DisplayName," and "Email" fields are required.
-type UserSpec struct {
-	Name        *string `json:"name"`
-	DisplayName *string `json:"display_name,omitempty"`
-	Institution *string `json:"institution,omitempty"`
-	Email       *string `json:"email"`
 }
 
 // UserStats describes usage metrics attached to a particular user.
