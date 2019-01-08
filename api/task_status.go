@@ -8,23 +8,6 @@ type TaskStatus string
 
 // TODO: Remove DEPRECATED values
 const (
-	// TaskStatusCreated means the task is accepted by Beaker.
-	// DEPRECATED.
-	// The task will automatically start when eligible.
-	TaskStatusCreated TaskStatus = "created"
-
-	// TaskStatusStarting means the task is attempting to start, but is not yet running.
-	// DEPRECATED.
-	TaskStatusStarting TaskStatus = "starting"
-
-	// TaskStatusSuccessful means the task has completed successfully.
-	// DEPRECATED.
-	TaskStatusSuccessful TaskStatus = "successful"
-
-	// TaskStatusCanceled means the task was aborted.
-	// DEPRECATED.
-	TaskStatusCanceled TaskStatus = "canceled"
-
 	// TaskStatusSubmitted means a task is accepted by Beaker.
 	// The task will automatically start when eligible.
 	TaskStatusSubmitted TaskStatus = "submitted"
@@ -38,6 +21,10 @@ const (
 
 	// TaskStatusRunning means a task is executing.
 	TaskStatusRunning TaskStatus = "running"
+
+	// TaskStatusTerminating means a task has finished executing,
+	// and Beaker is processing the end results (e.g. logs, result data).
+	TaskStatusTerminating TaskStatus = "terminating"
 
 	// TaskStatusSucceeded means a task has completed successfully.
 	TaskStatusSucceeded TaskStatus = "succeeded"
@@ -55,10 +42,6 @@ const (
 // IsEndState is true if the TaskStatus is canceled, failed, or successful
 func (ts TaskStatus) IsEndState() bool {
 	switch ts {
-	// TODO: Delete this when the deprecated states go away.
-	case TaskStatusSuccessful, TaskStatusCanceled:
-		fallthrough
-	// New end states
 	case TaskStatusSucceeded, TaskStatusSkipped, TaskStatusStopped, TaskStatusFailed:
 		return true
 	default:
