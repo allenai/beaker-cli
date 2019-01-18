@@ -9,6 +9,7 @@ import (
 type PackageReference struct {
 	PackageAddress string `json:"packageAddress,omitempty"`
 	PackageID      string `json:"packageID,omitempty"`
+	Token          string `json:"token,omitempty"`
 }
 
 // CreateDatasetResponse is a service response returned when a new dataset is
