@@ -43,7 +43,7 @@ func (c *Client) CreateDataset(
 
 	var pkg *fileheap.PackageRef
 	if body.PackageAddress != "" && body.PackageID != "" {
-		fileheap, err := fileheap.New(body.PackageAddress)
+		fileheap, err := fileheap.New(body.PackageAddress, fileheap.WithToken(body.Token))
 		if err != nil {
 			return nil, err
 		}
@@ -75,7 +75,7 @@ func (c *Client) Dataset(ctx context.Context, reference string) (*DatasetHandle,
 
 	var pkg *fileheap.PackageRef
 	if body.PackageAddress != "" && body.PackageID != "" {
-		fileheap, err := fileheap.New(body.PackageAddress)
+		fileheap, err := fileheap.New(body.PackageAddress, fileheap.WithToken(body.Token))
 		if err != nil {
 			return nil, err
 		}
