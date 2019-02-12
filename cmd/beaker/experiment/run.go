@@ -36,6 +36,7 @@ type specArgs struct {
 	cpu        float64
 	memory     string
 	gpuCount   int
+	gpuType    string
 }
 
 func newRunCmd(
@@ -72,6 +73,7 @@ func newRunCmd(
 	cmd.Flag("cpu", "CPUs to reserve for this experiment (e.g., 0.5)").FloatVar(&o.specArgs.cpu)
 	cmd.Flag("memory", "Memory to reserve for this experiment (e.g., 1GB)").StringVar(&o.specArgs.memory)
 	cmd.Flag("gpu-count", "GPUs to use for this experiment (e.g., 2)").IntVar(&o.specArgs.gpuCount)
+	cmd.Flag("gpu-type", "GPU type to use for this experiment (e.g., 'p100' or 'v100')").StringVar(&o.specArgs.gpuType)
 
 	cmd.Arg("arg", "Argument to the Docker image").StringsVar(&o.specArgs.args)
 }
@@ -134,6 +136,7 @@ func specFromArgs(args specArgs) (*ExperimentSpec, error) {
 			CPU:      args.cpu,
 			Memory:   args.memory,
 			GPUCount: args.gpuCount,
+			GPUType:  args.gpuType,
 		},
 	}
 
