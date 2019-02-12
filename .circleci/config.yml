@@ -5,4 +5,4 @@ jobs:
       - image: circleci/golang:1.11.2
     steps:
       - checkout
-      - run: make test
+      - run: make dev test --output-sync=target
