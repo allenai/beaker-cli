@@ -164,7 +164,7 @@ type Requirements struct {
 	GPUCount int `yaml:"gpuCount,omitempty"`
 
 	// (optional) GPU variant to prefer when scheduling task.
-	GPUType string `json:"gpu_type,omitempty"`
+	GPUType string `json:"gpuType,omitempty"`
 }
 
 // ToAPI converts to an API-compatible struct.
