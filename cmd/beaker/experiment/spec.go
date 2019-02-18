@@ -162,13 +162,21 @@ type Requirements struct {
 
 	// (optional) GPUs required, in increments of one full core.
 	GPUCount int `yaml:"gpuCount,omitempty"`
+
+	// (optional) GPU variant to prefer when scheduling task.
+	GPUType string `yaml:"gpuType,omitempty"`
 }
 
 // ToAPI converts to an API-compatible struct.
 func (r Requirements) ToAPI() (api.TaskRequirements, error) {
+	if r.CPU < 0 {
+		return api.TaskRequirements{}, errors.Errorf("couldn't parse cpu argument '%.2f' because it was negative", r.CPU)
+	}
+
 	result := api.TaskRequirements{
 		MilliCPU: int(r.CPU * 1000),
 		GPUCount: r.GPUCount,
+		GPUType:  r.GPUType,
 	}
 
 	if r.Memory != "" {

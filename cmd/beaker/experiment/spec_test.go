@@ -19,8 +19,8 @@ func TestRequirementsToAPI(t *testing.T) {
 
 		// All values provided
 		{
-			input:    Requirements{1.5, "2m", 1},
-			expected: api.TaskRequirements{MilliCPU: 1500, Memory: 2 * 1024 * 1024, GPUCount: 1},
+			input:    Requirements{1.5, "2m", 1, "p100"},
+			expected: api.TaskRequirements{MilliCPU: 1500, Memory: 2 * 1024 * 1024, GPUCount: 1, GPUType: "p100"},
 		},
 
 		// Variations on memory string
@@ -40,6 +40,12 @@ func TestRequirementsToAPI(t *testing.T) {
 		{
 			input:       Requirements{Memory: "g!bb3rish"},
 			expectedErr: `invalid memory value "g!bb3rish": byte quantity must be a positive integer with a unit of measurement like M, MB, MiB, G, GiB, or GB`,
+		},
+
+		// Bad CPU values
+		{
+			input:       Requirements{Memory: "1GB", CPU: -4},
+			expectedErr: `couldn't parse cpu argument '-4.00' because it was negative`,
 		},
 	}
 
