@@ -10,4 +10,5 @@ const (
 	ExperimentCreated           Experiment = "created"
 	ExperimentCreatingUser      Experiment = "user"
 	ExperimentStatus            Experiment = "status"
+	ExperimentOwner             Experiment = "owner"
 )

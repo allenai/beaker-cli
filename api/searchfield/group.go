@@ -10,4 +10,5 @@ const (
 	GroupCreatingUser      Group = "user"
 	GroupCreated           Group = "created"
 	GroupModified          Group = "modified"
+	GroupOwner             Group = "owner"
 )
