@@ -9,4 +9,5 @@ const (
 	DatasetNameOrDescription Dataset = "name_or_description"
 	DatasetCommitted         Dataset = "committed"
 	DatasetCreatingUser      Dataset = "user"
+	DatasetOwner             Dataset = "owner"
 )
