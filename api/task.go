@@ -8,8 +8,12 @@ import (
 type Task struct {
 	// Identity
 	ID           string `json:"id"`
-	User         User   `json:"user"`
 	ExperimentID string `json:"experiment_id"`
+
+	// Ownership
+	Owner  Identity `json:"owner"`
+	Author Identity `json:"author"`
+	User   Identity `json:"user"` // TODO: Deprecated.
 
 	// Status
 	Status  TaskStatus `json:"status"`
@@ -26,6 +30,7 @@ type Task struct {
 	// Results
 	ResultID string `json:"result_id"`
 	ExitCode int    `json:"exit_code,omitempty"`
+	CometURL string `json:"cometUrl,omitempty"`
 }
 
 type TaskLogUploadLink struct {
@@ -41,8 +46,9 @@ type TaskResults struct {
 
 // TaskSpec contains all information necessary to create a new task.
 type TaskSpec struct {
-	// (required) Blueprint describing the code to be run.
-	Blueprint string `json:"blueprint"`
+	// (required) Image containing the code to be run.
+	Image     string `json:"image"`
+	Blueprint string `json:"blueprint"` // DEPRECATED.
 
 	// (required) Container path in which the task will save results. Files
 	// written to this location will be persisted as a dataset upon task
@@ -93,8 +99,7 @@ type DatasetMount struct {
 	ContainerPath string `json:"container_path"`
 }
 
-// TaskPatchSpec describes a patch to apply to a task's editable fields. Only
-// one field may be set in a single request.
+// TaskPatchSpec describes a patch to apply to a task's editable fields.
 type TaskPatchSpec struct {
 	// (optional) Description to assign to the task or empty string to delete an
 	// existing description.

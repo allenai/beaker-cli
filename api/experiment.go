@@ -7,9 +7,15 @@ import (
 
 // Experiment describes an experiment and its tasks.
 type Experiment struct {
-	ID          string           `json:"id"`
-	User        User             `json:"user"`
-	Name        string           `json:"name,omitempty"`
+	// Identity
+	ID   string `json:"id"`
+	Name string `json:"name,omitempty"`
+
+	// Ownership
+	Owner  Identity `json:"owner"`
+	Author Identity `json:"author"`
+	User   Identity `json:"user"` // TODO: Deprecated.
+
 	Description string           `json:"description,omitempty"`
 	Nodes       []ExperimentNode `json:"nodes"`
 	Created     time.Time        `json:"created"`
@@ -27,6 +33,11 @@ func (e *Experiment) DisplayID() string {
 // ExperimentSpec describes a set of tasks with optional dependencies.
 // This set represents a (potentially disconnected) directed acyclic graph.
 type ExperimentSpec struct {
+	// (optional) Organization on behalf of whom this resource is created. The
+	// user issuing the request must be a member of the organization. If omitted,
+	// the resource will be owned by the requestor.
+	Organization string `json:"org,omitempty"`
+
 	// (optional) Text description of the experiment.
 	Description string `json:"description,omitempty"`
 
@@ -35,8 +46,12 @@ type ExperimentSpec struct {
 	Tasks []ExperimentTaskSpec `json:"tasks"`
 
 	// (optional) A token representing the user to which the object should be attributed.
-	// If omitted attribution will be given to the user issuing request.
+	// If omitted attribution will be given to the user issuing the request.
 	AuthorToken string `json:"author_token,omitempty"`
+
+	// (optional) Whether Comet.ML integration should be enabled for this experiment.
+	// If ommitted, defaults to false.
+	EnableComet bool `json:"enableComet"`
 }
 
 // ExperimentNode describes a task along with its links within an experiment.

@@ -177,7 +177,7 @@ func (c *Client) newRetryableRequest(
 		return nil, err
 	}
 
-	req.Header.Set(api.VersionHeader, version)
+	req.Header.Set(api.HeaderVersion, version)
 	if len(c.userToken) > 0 {
 		req.Header.Set("Authorization", "Bearer "+c.userToken)
 	}
@@ -197,7 +197,7 @@ func (c *Client) newRequest(
 		return nil, err
 	}
 
-	req.Header.Set(api.VersionHeader, version)
+	req.Header.Set(api.HeaderVersion, version)
 	if len(c.userToken) > 0 {
 		req.Header.Set("Authorization", "Bearer "+c.userToken)
 	}

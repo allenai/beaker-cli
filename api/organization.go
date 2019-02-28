@@ -20,9 +20,7 @@ type OrganizationSpec struct {
 
 // Organization describes an organization, or group of users.
 type Organization struct {
-	ID          string    `json:"id"`
-	Name        string    `json:"name"`
-	DisplayName string    `json:"displayName"`
+	Identity
 	Created     time.Time `json:"created"`
 	Description string    `json:"description,omitempty"`
 }
@@ -45,5 +43,5 @@ type OrgMembership struct {
 	Organization Organization `json:"organization"`
 
 	// User holding a membership in the org.
-	User User `json:"user"`
+	User UserDetail `json:"user"`
 }
