@@ -37,6 +37,7 @@ type specArgs struct {
 	memory     string
 	gpuCount   int
 	gpuType    string
+	org        string
 }
 
 func newRunCmd(
@@ -74,6 +75,7 @@ func newRunCmd(
 	cmd.Flag("memory", "Memory to reserve for this experiment (e.g., 1GB)").StringVar(&o.specArgs.memory)
 	cmd.Flag("gpu-count", "GPUs to use for this experiment (e.g., 2)").IntVar(&o.specArgs.gpuCount)
 	cmd.Flag("gpu-type", "GPU type to use for this experiment (e.g., 'p100' or 'v100')").StringVar(&o.specArgs.gpuType)
+	cmd.Flag("org", "Org that will own the created experiment").Short('o').StringVar(&o.specArgs.org)
 
 	cmd.Arg("arg", "Argument to the Docker image").StringsVar(&o.specArgs.args)
 }
@@ -167,6 +169,7 @@ func specFromArgs(args specArgs) (*ExperimentSpec, error) {
 
 	return &ExperimentSpec{
 		Description: args.desc,
+		Org:         args.org,
 		Tasks:       []ExperimentTaskSpec{{Spec: spec}},
 	}, nil
 }

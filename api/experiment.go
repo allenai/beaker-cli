@@ -37,6 +37,11 @@ type ExperimentSpec struct {
 	// (optional) A token representing the user to which the object should be attributed.
 	// If omitted attribution will be given to the user issuing request.
 	AuthorToken string `json:"author_token,omitempty"`
+
+	// (optional) The name of the org to which the object should belong.  If omitted the object
+	// will belong to the default org set in the config file.  If no default org is set, the
+	// object will belong to the user issuing the request.
+	Org string `json:"org,omitempty"`
 }
 
 // ExperimentNode describes a task along with its links within an experiment.
