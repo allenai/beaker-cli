@@ -112,6 +112,30 @@ func Create(
 	} else {
 		url := experimentURL(beaker.Address(), experiment.ID())
 		fmt.Fprintf(w, "Experiment %s submitted. See progress at %s\n", color.BlueString(experiment.ID()), url)
+		if apiSpec.EnableComet {
+			// get the Experiment from Beaker to show the Comet URL(s)
+			createdExp, err := experiment.Get(ctx)
+			if err != nil {
+				// TODO: Return error instead? But the return value is still good...
+				errorMsg := fmt.Sprintf("error getting additional experiment details: %s", err.Error())
+				fmt.Fprintf(w, "%s\n", color.RedString(errorMsg))
+				return experiment.ID(), nil
+			}
+			// TODO: This supposes nothing went wrong creating everything Comet-side.
+			fmt.Fprintf(w, "Comet.ML experiments were created for each task in this experiment.\n")
+			// Arbitrary cutoff so Beaker doesn't spam the user's console on very large experiments.
+			if len(createdExp.Nodes) < 20 {
+				for _, node := range createdExp.Nodes {
+					url := node.CometURL
+					if url == "" {
+						url = "N/A"
+					}
+					fmt.Fprintf(w, "%s: %s\n", color.BlueString(node.TaskID), url)
+				}
+			} else {
+				fmt.Fprintf(w, "View the Experiment page in your browser for Comet.ML links.\n")
+			}
+		}
 	}
 
 	return experiment.ID(), nil

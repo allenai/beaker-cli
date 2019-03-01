@@ -13,6 +13,9 @@ type ExperimentSpec struct {
 	// (optional) Text description of the experiment.
 	Description string `yaml:"description,omitempty"`
 
+	// (optional) If true, create Comet.ML experiments per task in this experiment.
+	EnableComet bool `yaml:"enableComet,omitempty"`
+
 	// (required) Tasks to create. Tasks may be defined in any order, though all
 	// dependencies must be internally resolvable within the experiment.
 	Tasks []ExperimentTaskSpec `yaml:"tasks"`
@@ -28,7 +31,7 @@ func (s ExperimentSpec) ToAPI() (api.ExperimentSpec, error) {
 		}
 		tasks = append(tasks, apiTask)
 	}
-	return api.ExperimentSpec{Description: s.Description, Tasks: tasks}, nil
+	return api.ExperimentSpec{Description: s.Description, EnableComet: s.EnableComet, Tasks: tasks}, nil
 }
 
 // ExperimentTaskSpec describes a task spec with optional dependencies on other

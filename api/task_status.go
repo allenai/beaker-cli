@@ -6,7 +6,6 @@ package api
 // "initializing" if the node it's running on is terminated.
 type TaskStatus string
 
-// TODO: Remove DEPRECATED values
 const (
 	// TaskStatusSubmitted means a task is accepted by Beaker.
 	// The task will automatically start when eligible.
