@@ -21,7 +21,7 @@ GO_SRC_FILES = $(shell find $(BASE) -type f -name '*.go')
 
 # Goimports is an improvement over the gofmt tool which groups imports removes unused imports.
 $(GOIMPORTS):
-	go get -u golang.org/x/tools/cmd/goimports
+	go get golang.org/x/tools/cmd/goimports@1c3d964395ce8f04f3b03b30aaed0b096c08c3c6
 
 #
 # Meta targets
