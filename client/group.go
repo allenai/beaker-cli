@@ -17,7 +17,11 @@ type GroupHandle struct {
 }
 
 // CreateGroup creates a new group with an optional name.
-func (c *Client) CreateGroup(ctx context.Context, spec api.GroupSpec) (*GroupHandle, error) {
+func (c *Client) CreateGroup(ctx context.Context, spec api.GroupSpec, defaultOrg string) (*GroupHandle, error) {
+	if spec.Org == "" && defaultOrg != "" {
+		spec.Org = defaultOrg
+	}
+
 	resp, err := c.sendRequest(ctx, http.MethodPost, "/api/v3/groups", nil, spec)
 	if err != nil {
 		return nil, err
