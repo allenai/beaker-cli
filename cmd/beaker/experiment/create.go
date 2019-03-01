@@ -126,7 +126,11 @@ func Create(
 			// Arbitrary cutoff so Beaker doesn't spam the user's console on very large experiments.
 			if len(createdExp.Nodes) < 20 {
 				for _, node := range createdExp.Nodes {
-					fmt.Fprintf(w, "%s: %s\n", color.BlueString(node.TaskID), node.CometURL)
+					url := node.CometURL
+					if url == "" {
+						url = "N/A"
+					}
+					fmt.Fprintf(w, "%s: %s\n", color.BlueString(node.TaskID), url)
 				}
 			} else {
 				fmt.Fprintf(w, "View the Experiment page in your browser for Comet.ML links.\n")
