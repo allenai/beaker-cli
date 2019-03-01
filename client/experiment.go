@@ -22,7 +22,11 @@ func (c *Client) CreateExperiment(
 	ctx context.Context,
 	spec api.ExperimentSpec,
 	name string,
+	defaultOrg string,
 ) (*ExperimentHandle, error) {
+	if spec.Org == "" && defaultOrg != "" {
+		spec.Org = defaultOrg
+	}
 	query := url.Values{"name": {name}}
 	resp, err := c.sendRequest(ctx, http.MethodPost, "/api/v3/experiments", query, spec)
 	if err != nil {

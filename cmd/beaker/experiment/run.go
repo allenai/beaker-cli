@@ -52,7 +52,7 @@ func newRunCmd(
 		if err != nil {
 			return err
 		}
-		return o.run(beaker)
+		return o.run(beaker, config.DefaultOrg)
 	})
 
 	cmd.Flag("dry-run", "Show what will be submitted and exit.").BoolVar(&o.dryRun)
@@ -80,7 +80,7 @@ func newRunCmd(
 	cmd.Arg("arg", "Argument to the Docker image").StringsVar(&o.specArgs.args)
 }
 
-func (o *runOptions) run(beaker *beaker.Client) error {
+func (o *runOptions) run(beaker *beaker.Client, defaultOrg string) error {
 	ctx := context.TODO()
 
 	if o.specFile != nil {
@@ -124,7 +124,7 @@ func (o *runOptions) run(beaker *beaker.Client) error {
 		return printSpec(spec)
 	}
 
-	_, err = Create(ctx, os.Stdout, beaker, spec, &CreateOptions{Name: o.name, Quiet: o.quiet})
+	_, err = Create(ctx, os.Stdout, beaker, spec, &CreateOptions{Name: o.name, Quiet: o.quiet}, defaultOrg)
 	return err
 }
 

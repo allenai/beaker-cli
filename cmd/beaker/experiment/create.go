@@ -60,7 +60,7 @@ func newCreateCmd(
 			return err
 		}
 
-		_, err = Create(context.TODO(), os.Stdout, beaker, spec, opts)
+		_, err = Create(context.TODO(), os.Stdout, beaker, spec, opts, config.DefaultOrg)
 		return err
 	})
 }
@@ -72,6 +72,7 @@ func Create(
 	beaker *beaker.Client,
 	spec *ExperimentSpec,
 	opts *CreateOptions,
+	defaultOrg string,
 ) (string, error) {
 	if w == nil {
 		w = ioutil.Discard
@@ -102,7 +103,7 @@ func Create(
 		return "", err
 	}
 
-	experiment, err := beaker.CreateExperiment(ctx, apiSpec, opts.Name)
+	experiment, err := beaker.CreateExperiment(ctx, apiSpec, opts.Name, defaultOrg)
 	if err != nil {
 		return "", err
 	}
