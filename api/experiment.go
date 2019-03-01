@@ -60,6 +60,7 @@ type ExperimentNode struct {
 	TaskID   string     `json:"task_id"`
 	ResultID string     `json:"result_id"`
 	Status   TaskStatus `json:"status"`
+	CometURL string     `json:"cometUrl,omitempty"`
 
 	// Identifiers of tasks dependent on this node within the containing experiment.
 	ChildTasks []string `json:"child_task_ids"`
