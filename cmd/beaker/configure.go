@@ -41,8 +41,6 @@ func (o *configOptions) testConnection(_ *kingpin.ParseContext) error {
 		return errors.New("user token not configured")
 	}
 
-	fmt.Printf("Authenticating with user token: %q\n\n", config.UserToken)
-
 	beaker, err := beaker.NewClient(config.BeakerAddress, config.UserToken)
 	if err != nil {
 		return err
@@ -58,10 +56,10 @@ func (o *configOptions) testConnection(_ *kingpin.ParseContext) error {
 	fmt.Printf("Authenticated as user: %q (%s)\n\n", user.Name, user.ID)
 	fmt.Printf("Verifying default org: %q\n\n", config.DefaultOrg)
 
-	_, err = beaker.Org(context.TODO(), config.DefaultOrg)
+	err = beaker.Org(context.TODO(), config.DefaultOrg)
 	if err != nil {
 		fmt.Println("There was a problem verifying your default org.")
-		fmt.Println(helpWithDefaultOrg())
+		fmt.Println("Set the default organization in your config in the format `default_org: <org_name>`. Note that the name may be different from the name displayed in beaker UI.")
 		return err
 	}
 
@@ -71,8 +69,4 @@ func (o *configOptions) testConnection(_ *kingpin.ParseContext) error {
 
 func helpWithUserToken() string {
 	return "Login on the Beaker website and follow the instructions to configure this Beaker CLI client."
-}
-
-func helpWithDefaultOrg() string {
-	return "Set the default organization in your config in the format `default_org: <org_name>`.  Note that the name may be different from the name displayed in beaker UI."
 }

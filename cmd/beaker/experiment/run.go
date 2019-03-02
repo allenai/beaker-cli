@@ -23,6 +23,7 @@ type runOptions struct {
 	name       string
 	quiet      bool
 	specArgs   specArgs
+	org        string
 }
 
 type specArgs struct {
@@ -37,7 +38,6 @@ type specArgs struct {
 	memory     string
 	gpuCount   int
 	gpuType    string
-	org        string
 }
 
 func newRunCmd(
@@ -52,7 +52,10 @@ func newRunCmd(
 		if err != nil {
 			return err
 		}
-		return o.run(beaker, config.DefaultOrg)
+		if o.org == "" {
+			o.org = config.DefaultOrg
+		}
+		return o.run(beaker)
 	})
 
 	cmd.Flag("dry-run", "Show what will be submitted and exit.").BoolVar(&o.dryRun)
@@ -62,6 +65,7 @@ func newRunCmd(
 	cmd.Flag("file", "Load experiment spec from a file.").Short('f').FileVar(&o.specFile)
 	cmd.Flag("name", "Assign a name to the experiment").Short('n').StringVar(&o.name)
 	cmd.Flag("quiet", "Only display the experiment's unique ID").Short('q').BoolVar(&o.quiet)
+	cmd.Flag("org", "Org that will own the created experiment").Short('o').StringVar(&o.org)
 
 	// File spec alternatives
 	cmd.Flag("blueprint", "Blueprint containing code to run").StringVar(&o.specArgs.blueprint)
@@ -75,12 +79,11 @@ func newRunCmd(
 	cmd.Flag("memory", "Memory to reserve for this experiment (e.g., 1GB)").StringVar(&o.specArgs.memory)
 	cmd.Flag("gpu-count", "GPUs to use for this experiment (e.g., 2)").IntVar(&o.specArgs.gpuCount)
 	cmd.Flag("gpu-type", "GPU type to use for this experiment (e.g., 'p100' or 'v100')").StringVar(&o.specArgs.gpuType)
-	cmd.Flag("org", "Org that will own the created experiment").Short('o').StringVar(&o.specArgs.org)
 
 	cmd.Arg("arg", "Argument to the Docker image").StringsVar(&o.specArgs.args)
 }
 
-func (o *runOptions) run(beaker *beaker.Client, defaultOrg string) error {
+func (o *runOptions) run(beaker *beaker.Client) error {
 	ctx := context.TODO()
 
 	if o.specFile != nil {
@@ -124,7 +127,7 @@ func (o *runOptions) run(beaker *beaker.Client, defaultOrg string) error {
 		return printSpec(spec)
 	}
 
-	_, err = Create(ctx, os.Stdout, beaker, spec, &CreateOptions{Name: o.name, Quiet: o.quiet}, defaultOrg)
+	_, err = Create(ctx, os.Stdout, beaker, spec, &CreateOptions{Name: o.name, Quiet: o.quiet, Org: o.org})
 	return err
 }
 
@@ -169,7 +172,6 @@ func specFromArgs(args specArgs) (*ExperimentSpec, error) {
 
 	return &ExperimentSpec{
 		Description: args.desc,
-		Org:         args.org,
 		Tasks:       []ExperimentTaskSpec{{Spec: spec}},
 	}, nil
 }

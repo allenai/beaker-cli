@@ -32,7 +32,10 @@ func newCreateCmd(
 		if err != nil {
 			return err
 		}
-		return o.run(beaker, config.DefaultOrg)
+		if o.org == "" {
+			o.org = config.DefaultOrg
+		}
+		return o.run(beaker)
 	})
 
 	cmd.Flag("desc", "Assign a description to the group").StringVar(&o.description)
@@ -42,14 +45,14 @@ func newCreateCmd(
 	cmd.Arg("experiment", "ID of experiment to add to the group").StringsVar(&o.experiments)
 }
 
-func (o *createOptions) run(beaker *beaker.Client, defaultOrg string) error {
+func (o *createOptions) run(beaker *beaker.Client) error {
 	spec := api.GroupSpec{
 		Name:        o.name,
 		Description: o.description,
 		Org:         o.org,
 		Experiments: trimAndUnique(o.experiments),
 	}
-	group, err := beaker.CreateGroup(context.TODO(), spec, defaultOrg)
+	group, err := beaker.CreateGroup(context.TODO(), spec)
 	if err != nil {
 		return err
 	}

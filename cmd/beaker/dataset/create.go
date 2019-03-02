@@ -35,7 +35,10 @@ func newCreateCmd(
 		if err != nil {
 			return err
 		}
-		return o.run(beaker, config.DefaultOrg)
+		if o.org == "" {
+			o.org = config.DefaultOrg
+		}
+		return o.run(beaker)
 	})
 
 	cmd.Flag("desc", "Assign a description to the dataset").StringVar(&o.description)
@@ -46,7 +49,7 @@ func newCreateCmd(
 		Required().ExistingFileOrDirVar(&o.source)
 }
 
-func (o *createOptions) run(beaker *beaker.Client, defaultOrg string) error {
+func (o *createOptions) run(beaker *beaker.Client) error {
 	ctx := context.TODO()
 
 	info, err := os.Stat(o.source)
@@ -63,7 +66,7 @@ func (o *createOptions) run(beaker *beaker.Client, defaultOrg string) error {
 		spec.Filename = info.Name()
 	}
 
-	dataset, err := beaker.CreateDataset(ctx, spec, o.name, defaultOrg)
+	dataset, err := beaker.CreateDataset(ctx, spec, o.name)
 	if err != nil {
 		return err
 	}

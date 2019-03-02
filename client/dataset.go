@@ -24,12 +24,7 @@ func (c *Client) CreateDataset(
 	ctx context.Context,
 	spec api.DatasetSpec,
 	name string,
-	defaultOrg string,
 ) (*DatasetHandle, error) {
-	if spec.Org == "" && defaultOrg != "" {
-		spec.Org = defaultOrg
-	}
-
 	query := url.Values{}
 	if name != "" {
 		query.Set("name", name)
