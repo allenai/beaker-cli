@@ -41,8 +41,6 @@ func (o *configOptions) testConnection(_ *kingpin.ParseContext) error {
 		return errors.New("user token not configured")
 	}
 
-	fmt.Printf("Authenticating with user token: %q\n\n", config.UserToken)
-
 	beaker, err := beaker.NewClient(config.BeakerAddress, config.UserToken)
 	if err != nil {
 		return err
