@@ -8,14 +8,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Org gets a handle for an org by name or ID. The returned handle is
+// VerifyOrgExists gets a handle for an org by name or ID. The returned handle is
 // guaranteed throughout its lifetime to refer to the same object, even if that
 // object is later renamed.
-func (c *Client) Org(ctx context.Context, reference string) error {
-	resp, err := c.sendRequest(ctx, http.MethodGet, path.Join("/api/v3/orgs", reference), nil, nil)
+func (c *Client) VerifyOrgExists(ctx context.Context, org string) error {
+	resp, err := c.sendRequest(ctx, http.MethodGet, path.Join("/api/v3/orgs", org), nil, nil)
 	defer safeClose(resp.Body)
 	if err != nil {
-		return errors.WithMessage(err, "could not resolve org reference "+reference)
+		return errors.WithMessage(err, "could not resolve org reference "+org)
 	}
 
 	type idResult struct {
@@ -24,7 +24,7 @@ func (c *Client) Org(ctx context.Context, reference string) error {
 
 	var body idResult
 	if err := parseResponse(resp, &body); err != nil {
-		return errors.WithMessage(err, "could not parse org response "+reference)
+		return errors.WithMessage(err, "could not parse org response "+org)
 	}
 
 	return nil
