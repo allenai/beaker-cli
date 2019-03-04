@@ -47,10 +47,10 @@ func newCreateCmd(
 
 func (o *createOptions) run(beaker *beaker.Client) error {
 	spec := api.GroupSpec{
-		Name:        o.name,
-		Description: o.description,
-		Org:         o.org,
-		Experiments: trimAndUnique(o.experiments),
+		Name:         o.name,
+		Description:  o.description,
+		Organization: o.org,
+		Experiments:  trimAndUnique(o.experiments),
 	}
 	group, err := beaker.CreateGroup(context.TODO(), spec)
 	if err != nil {

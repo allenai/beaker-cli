@@ -27,7 +27,7 @@ import (
 // We encode the version as a manually-assigned constant for now. This must be
 // updated with each material change to how a client makes requests, and is
 // assumed to be monotonically increasing.
-const version = "v20190108"
+const version = "v20190301"
 
 var idPattern = regexp.MustCompile(`^\w\w_[a-z0-9]{12}$`)
 
@@ -177,7 +177,7 @@ func (c *Client) newRetryableRequest(
 		return nil, err
 	}
 
-	req.Header.Set(api.VersionHeader, version)
+	req.Header.Set(api.HeaderVersion, version)
 	if len(c.userToken) > 0 {
 		req.Header.Set("Authorization", "Bearer "+c.userToken)
 	}
@@ -197,7 +197,7 @@ func (c *Client) newRequest(
 		return nil, err
 	}
 
-	req.Header.Set(api.VersionHeader, version)
+	req.Header.Set(api.HeaderVersion, version)
 	if len(c.userToken) > 0 {
 		req.Header.Set("Authorization", "Bearer "+c.userToken)
 	}

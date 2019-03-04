@@ -60,7 +60,7 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 		return errors.Errorf("%s is a %s", o.source, modeToString(info.Mode()))
 	}
 
-	spec := api.DatasetSpec{Description: o.description, Org: o.org}
+	spec := api.DatasetSpec{Description: o.description, Organization: o.org}
 	if !info.IsDir() {
 		// If uploading a single file, treat it as a single-file dataset.
 		spec.Filename = info.Name()

@@ -3,12 +3,12 @@ package searchfield
 type Group string
 
 const (
-	GroupID                Group = "id"
-	GroupName              Group = "name"
-	GroupDescription       Group = "description"
-	GroupNameOrDescription Group = "name_or_description"
-	GroupCreatingUser      Group = "user"
 	GroupCreated           Group = "created"
+	GroupCreatingUser      Group = "user"
+	GroupDescription       Group = "description"
+	GroupID                Group = "id"
 	GroupModified          Group = "modified"
+	GroupName              Group = "name"
+	GroupNameOrDescription Group = "name_or_description"
 	GroupOwner             Group = "owner"
 )

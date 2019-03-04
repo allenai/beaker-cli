@@ -31,21 +31,21 @@ const (
 	CombinatorOr  FilterCombinator = "or"
 )
 
-type BlueprintSearchOptions struct {
-	SortClauses      []BlueprintSortClause   `json:"sort_clauses,omitempty"`
-	FilterClauses    []BlueprintFilterClause `json:"filter_clauses,omitempty"`
-	FilterCombinator FilterCombinator        `json:"filter_combinator,omitempty"`
+type ImageSearchOptions struct {
+	SortClauses      []ImageSortClause   `json:"sort_clauses,omitempty"`
+	FilterClauses    []ImageFilterClause `json:"filter_clauses,omitempty"`
+	FilterCombinator FilterCombinator    `json:"filter_combinator,omitempty"`
 }
 
-type BlueprintSortClause struct {
-	Field searchfield.Blueprint `json:"field"`
-	Order SortOrder             `json:"order"`
+type ImageSortClause struct {
+	Field searchfield.Image `json:"field"`
+	Order SortOrder         `json:"order"`
 }
 
-type BlueprintFilterClause struct {
-	Field    searchfield.Blueprint `json:"field"`
-	Operator SearchOperator        `json:"operator,omitempty"`
-	Value    interface{}           `json:"value"`
+type ImageFilterClause struct {
+	Field    searchfield.Image `json:"field"`
+	Operator SearchOperator    `json:"operator,omitempty"`
+	Value    interface{}       `json:"value"`
 }
 
 type DatasetSearchOptions struct {

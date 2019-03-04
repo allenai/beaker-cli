@@ -25,10 +25,14 @@ type CreateDatasetResponse struct {
 type Dataset struct {
 	PackageReference
 
-	// The unique ID of the dataset.
+	// Identity
 	ID   string `json:"id"`
-	User User   `json:"user"`
 	Name string `json:"name,omitempty"`
+
+	// Ownership
+	Owner  Identity `json:"owner"`
+	Author Identity `json:"author"`
+	User   Identity `json:"user"` // TODO: Deprecated.
 
 	// Status
 	Created   time.Time `json:"created"`
@@ -52,6 +56,11 @@ func (ds *Dataset) DisplayID() string {
 
 // DatasetSpec is a specification for creating a new Dataset.
 type DatasetSpec struct {
+	// (optional) Organization on behalf of whom this resource is created. The
+	// user issuing the request must be a member of the organization. If omitted,
+	// the resource will be owned by the requestor.
+	Organization string `json:"org,omitempty"`
+
 	// (optional) Text description for the dataset.
 	Description string `json:"description,omitempty"`
 
@@ -61,13 +70,8 @@ type DatasetSpec struct {
 	Filename string `json:"filename,omitempty"`
 
 	// (optional) A token representing the user to which the object should be attributed.
-	// If omitted attribution will be given to the user issuing request.
+	// If omitted attribution will be given to the user issuing the request.
 	AuthorToken string `json:"author_token,omitempty"`
-
-	// (optional) The name of the org to which the object should belong.  If omitted the object
-	// will belong to the default org set in the config file.  If no default org is set, the
-	// object will belong to the user issuing the request.
-	Org string `json:"org,omitempty"`
 }
 
 // DatasetFile dsecribes a file within a dataset.

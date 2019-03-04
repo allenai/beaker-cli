@@ -34,7 +34,7 @@ func (h *UserHandle) ID() string {
 }
 
 // Get retrieves a user's details.
-func (h *UserHandle) Get(ctx context.Context) (*api.User, error) {
+func (h *UserHandle) Get(ctx context.Context) (*api.UserDetail, error) {
 	uri := path.Join("/api/v3/users", h.id)
 	resp, err := h.client.sendRequest(ctx, http.MethodGet, uri, nil, nil)
 	if err != nil {
@@ -42,7 +42,7 @@ func (h *UserHandle) Get(ctx context.Context) (*api.User, error) {
 	}
 	defer safeClose(resp.Body)
 
-	var body api.User
+	var body api.UserDetail
 	if err := parseResponse(resp, &body); err != nil {
 		return nil, err
 	}

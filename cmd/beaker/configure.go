@@ -41,6 +41,8 @@ func (o *configOptions) testConnection(_ *kingpin.ParseContext) error {
 		return errors.New("user token not configured")
 	}
 
+	fmt.Printf("Authenticating with user token: %q\n\n", config.UserToken)
+
 	beaker, err := beaker.NewClient(config.BeakerAddress, config.UserToken)
 	if err != nil {
 		return err
@@ -56,6 +58,7 @@ func (o *configOptions) testConnection(_ *kingpin.ParseContext) error {
 	fmt.Printf("Authenticated as user: %q (%s)\n\n", user.Name, user.ID)
 
 	if config.DefaultOrg != "" {
+		fmt.Printf("Verifying default org: %q\n\n", config.DefaultOrg)
 		err = beaker.VerifyOrgExists(context.TODO(), config.DefaultOrg)
 		if err != nil {
 			fmt.Println("There was a problem verifying your default org.")

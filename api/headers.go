@@ -1,3 +1,3 @@
 package api
 
-const VersionHeader = "Beaker-Version"
+const HeaderVersion = "Beaker-Version"

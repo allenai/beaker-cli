@@ -77,7 +77,7 @@ func Create(
 		return "", errors.WithStack(err)
 	}
 
-	spec := api.BlueprintSpec{
+	spec := api.ImageSpec{
 		Description: opts.Description,
 		ImageID:     image.ID,
 		ImageTag:    imageTag,

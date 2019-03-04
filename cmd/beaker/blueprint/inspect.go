@@ -37,7 +37,7 @@ func newInspectCmd(
 func (o *inspectOptions) run(beaker *beaker.Client) error {
 	ctx := context.TODO()
 
-	var blueprints []*api.Blueprint
+	var blueprints []*api.Image
 	for _, name := range o.blueprints {
 		blueprint, err := beaker.Blueprint(ctx, name)
 		if err != nil {

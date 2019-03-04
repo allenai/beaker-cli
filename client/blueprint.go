@@ -21,7 +21,7 @@ type BlueprintHandle struct {
 // CreateBlueprint creates a new blueprint with an optional name.
 func (c *Client) CreateBlueprint(
 	ctx context.Context,
-	spec api.BlueprintSpec,
+	spec api.ImageSpec,
 	name string,
 ) (*BlueprintHandle, error) {
 	query := url.Values{}
@@ -35,7 +35,7 @@ func (c *Client) CreateBlueprint(
 	}
 	defer safeClose(resp.Body)
 
-	var body api.CreateBlueprintResponse
+	var body api.CreateImageResponse
 	if err := parseResponse(resp, &body); err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (h *BlueprintHandle) ID() string {
 }
 
 // Get retrieves a blueprint's details.
-func (h *BlueprintHandle) Get(ctx context.Context) (*api.Blueprint, error) {
+func (h *BlueprintHandle) Get(ctx context.Context) (*api.Image, error) {
 	uri := path.Join("/api/v3/blueprints", h.id)
 	resp, err := h.client.sendRequest(ctx, http.MethodGet, uri, nil, nil)
 	if err != nil {
@@ -69,7 +69,7 @@ func (h *BlueprintHandle) Get(ctx context.Context) (*api.Blueprint, error) {
 	}
 	defer safeClose(resp.Body)
 
-	var body api.Blueprint
+	var body api.Image
 	if err := parseResponse(resp, &body); err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (h *BlueprintHandle) Get(ctx context.Context) (*api.Blueprint, error) {
 func (h *BlueprintHandle) Repository(
 	ctx context.Context,
 	upload bool,
-) (*api.BlueprintRepository, error) {
+) (*api.ImageRepository, error) {
 	path := path.Join("/api/v3/blueprints", h.id, "repository")
 	query := url.Values{"upload": {strconv.FormatBool(upload)}}
 	resp, err := h.client.sendRequest(ctx, http.MethodPost, path, query, nil)
@@ -89,7 +89,7 @@ func (h *BlueprintHandle) Repository(
 	}
 	defer safeClose(resp.Body)
 
-	var body api.BlueprintRepository
+	var body api.ImageRepository
 	if err := parseResponse(resp, &body); err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (h *BlueprintHandle) Repository(
 // SetName sets a blueprint's name.
 func (h *BlueprintHandle) SetName(ctx context.Context, name string) error {
 	path := path.Join("/api/v3/blueprints", h.id)
-	body := api.BlueprintPatchSpec{Name: &name}
+	body := api.ImagePatchSpec{Name: &name}
 	resp, err := h.client.sendRequest(ctx, http.MethodPatch, path, nil, body)
 	if err != nil {
 		return err
@@ -111,7 +111,7 @@ func (h *BlueprintHandle) SetName(ctx context.Context, name string) error {
 // SetDescription sets a blueprint's description.
 func (h *BlueprintHandle) SetDescription(ctx context.Context, description string) error {
 	path := path.Join("/api/v3/blueprints", h.id)
-	body := api.BlueprintPatchSpec{Description: &description}
+	body := api.ImagePatchSpec{Description: &description}
 	resp, err := h.client.sendRequest(ctx, http.MethodPatch, path, nil, body)
 	if err != nil {
 		return err
@@ -124,7 +124,7 @@ func (h *BlueprintHandle) SetDescription(ctx context.Context, description string
 // writes. The blueprint is guaranteed to remain uncommitted on failure.
 func (h *BlueprintHandle) Commit(ctx context.Context) error {
 	path := path.Join("/api/v3/blueprints", h.id)
-	body := api.BlueprintPatchSpec{Commit: true}
+	body := api.ImagePatchSpec{Commit: true}
 	resp, err := h.client.sendRequest(ctx, http.MethodPatch, path, nil, body)
 	if err != nil {
 		return err
@@ -154,9 +154,9 @@ func (h *BlueprintHandle) PatchPermissions(
 
 func (c *Client) SearchBlueprints(
 	ctx context.Context,
-	searchOptions api.BlueprintSearchOptions,
+	searchOptions api.ImageSearchOptions,
 	page int,
-) ([]api.Blueprint, error) {
+) ([]api.Image, error) {
 	query := url.Values{"page": {strconv.Itoa(page)}}
 	resp, err := c.sendRequest(ctx, http.MethodPost, "/api/v3/blueprints/search", query, searchOptions)
 	if err != nil {
@@ -164,7 +164,7 @@ func (c *Client) SearchBlueprints(
 	}
 	defer safeClose(resp.Body)
 
-	var body []api.Blueprint
+	var body []api.Image
 	if err := parseResponse(resp, &body); err != nil {
 		return nil, err
 	}
