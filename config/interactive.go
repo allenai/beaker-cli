@@ -32,6 +32,9 @@ func InteractiveConfiguration() error {
 	if config.UserToken, err = promptValue("User token", config.UserToken); err != nil {
 		return err
 	}
+	if config.DefaultOrg, err = promptValue("Default organization", config.DefaultOrg); err != nil {
+		return err
+	}
 
 	config.UserToken = strings.TrimSpace(config.UserToken)
 	if config.UserToken == "" {
