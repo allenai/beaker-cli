@@ -39,7 +39,7 @@ func (o *inspectOptions) run(beaker *beaker.Client) error {
 
 	var blueprints []*api.Image
 	for _, name := range o.blueprints {
-		blueprint, err := beaker.Blueprint(ctx, name)
+		blueprint, err := beaker.Image(ctx, name)
 		if err != nil {
 			return err
 		}

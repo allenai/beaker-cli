@@ -52,7 +52,7 @@ func (o *pullOptions) run(beaker *beaker.Client) error {
 		return errors.Wrap(err, "failed to create Docker client")
 	}
 
-	blueprint, err := beaker.Blueprint(ctx, o.blueprint)
+	blueprint, err := beaker.Image(ctx, o.blueprint)
 	if err != nil {
 		return err
 	}

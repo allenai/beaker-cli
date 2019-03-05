@@ -12,18 +12,18 @@ import (
 	"github.com/allenai/beaker/api"
 )
 
-// BlueprintHandle provides operations on a blueprint.
-type BlueprintHandle struct {
+// ImageHandle provides operations on a image.
+type ImageHandle struct {
 	client *Client
 	id     string
 }
 
-// CreateBlueprint creates a new blueprint with an optional name.
-func (c *Client) CreateBlueprint(
+// CreateImage creates a new image with an optional name.
+func (c *Client) CreateImage(
 	ctx context.Context,
 	spec api.ImageSpec,
 	name string,
-) (*BlueprintHandle, error) {
+) (*ImageHandle, error) {
 	query := url.Values{}
 	if name != "" {
 		query.Set("name", name)
@@ -40,28 +40,28 @@ func (c *Client) CreateBlueprint(
 		return nil, err
 	}
 
-	return &BlueprintHandle{client: c, id: body.ID}, nil
+	return &ImageHandle{client: c, id: body.ID}, nil
 }
 
-// Blueprint gets a handle for a blueprint by name or ID. The returned handle is
+// Image gets a handle for a image by name or ID. The returned handle is
 // guaranteed throughout its lifetime to refer to the same object, even if that
 // object is later renamed.
-func (c *Client) Blueprint(ctx context.Context, reference string) (*BlueprintHandle, error) {
+func (c *Client) Image(ctx context.Context, reference string) (*ImageHandle, error) {
 	id, err := c.resolveRef(ctx, "/api/v3/blueprints", reference)
 	if err != nil {
-		return nil, errors.WithMessage(err, "could not resolve blueprint reference "+reference)
+		return nil, errors.WithMessage(err, "could not resolve image reference "+reference)
 	}
 
-	return &BlueprintHandle{client: c, id: id}, nil
+	return &ImageHandle{client: c, id: id}, nil
 }
 
-// ID returns a blueprint's stable, unique ID.
-func (h *BlueprintHandle) ID() string {
+// ID returns a image's stable, unique ID.
+func (h *ImageHandle) ID() string {
 	return h.id
 }
 
-// Get retrieves a blueprint's details.
-func (h *BlueprintHandle) Get(ctx context.Context) (*api.Image, error) {
+// Get retrieves a image's details.
+func (h *ImageHandle) Get(ctx context.Context) (*api.Image, error) {
 	uri := path.Join("/api/v3/blueprints", h.id)
 	resp, err := h.client.sendRequest(ctx, http.MethodGet, uri, nil, nil)
 	if err != nil {
@@ -76,8 +76,8 @@ func (h *BlueprintHandle) Get(ctx context.Context) (*api.Image, error) {
 	return &body, nil
 }
 
-// Repository returns information required to push a blueprint's Docker image.
-func (h *BlueprintHandle) Repository(
+// Repository returns information required to push a image's Docker image.
+func (h *ImageHandle) Repository(
 	ctx context.Context,
 	upload bool,
 ) (*api.ImageRepository, error) {
@@ -96,8 +96,8 @@ func (h *BlueprintHandle) Repository(
 	return &body, nil
 }
 
-// SetName sets a blueprint's name.
-func (h *BlueprintHandle) SetName(ctx context.Context, name string) error {
+// SetName sets a image's name.
+func (h *ImageHandle) SetName(ctx context.Context, name string) error {
 	path := path.Join("/api/v3/blueprints", h.id)
 	body := api.ImagePatchSpec{Name: &name}
 	resp, err := h.client.sendRequest(ctx, http.MethodPatch, path, nil, body)
@@ -108,8 +108,8 @@ func (h *BlueprintHandle) SetName(ctx context.Context, name string) error {
 	return errorFromResponse(resp)
 }
 
-// SetDescription sets a blueprint's description.
-func (h *BlueprintHandle) SetDescription(ctx context.Context, description string) error {
+// SetDescription sets a image's description.
+func (h *ImageHandle) SetDescription(ctx context.Context, description string) error {
 	path := path.Join("/api/v3/blueprints", h.id)
 	body := api.ImagePatchSpec{Description: &description}
 	resp, err := h.client.sendRequest(ctx, http.MethodPatch, path, nil, body)
@@ -120,9 +120,9 @@ func (h *BlueprintHandle) SetDescription(ctx context.Context, description string
 	return errorFromResponse(resp)
 }
 
-// Commit finalizes a blueprint, unblocking usage and locking it for further
-// writes. The blueprint is guaranteed to remain uncommitted on failure.
-func (h *BlueprintHandle) Commit(ctx context.Context) error {
+// Commit finalizes an image, unblocking usage and locking it for further
+// writes. The image is guaranteed to remain uncommitted on failure.
+func (h *ImageHandle) Commit(ctx context.Context) error {
 	path := path.Join("/api/v3/blueprints", h.id)
 	body := api.ImagePatchSpec{Commit: true}
 	resp, err := h.client.sendRequest(ctx, http.MethodPatch, path, nil, body)
@@ -133,13 +133,13 @@ func (h *BlueprintHandle) Commit(ctx context.Context) error {
 	return errorFromResponse(resp)
 }
 
-// GetPermissions gets a summary of the user's permissions on the blueprint.
-func (h *BlueprintHandle) GetPermissions(ctx context.Context) (*api.PermissionSummary, error) {
+// GetPermissions gets a summary of the user's permissions on the image.
+func (h *ImageHandle) GetPermissions(ctx context.Context) (*api.PermissionSummary, error) {
 	return getPermissions(ctx, h.client, path.Join("/api/v3/blueprints", h.ID(), "auth"))
 }
 
-// PatchPermissions ammends a blueprint's permissions.
-func (h *BlueprintHandle) PatchPermissions(
+// PatchPermissions ammends an image's permissions.
+func (h *ImageHandle) PatchPermissions(
 	ctx context.Context,
 	permissionPatch api.PermissionPatch,
 ) error {
@@ -152,7 +152,7 @@ func (h *BlueprintHandle) PatchPermissions(
 	return errorFromResponse(resp)
 }
 
-func (c *Client) SearchBlueprints(
+func (c *Client) SearchImages(
 	ctx context.Context,
 	searchOptions api.ImageSearchOptions,
 	page int,

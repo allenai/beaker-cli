@@ -37,7 +37,7 @@ func (o *renameOptions) run(parentOpts *blueprintOptions, userToken string) erro
 	if err != nil {
 		return err
 	}
-	blueprint, err := beaker.Blueprint(ctx, o.blueprint)
+	blueprint, err := beaker.Image(ctx, o.blueprint)
 	if err != nil {
 		return err
 	}

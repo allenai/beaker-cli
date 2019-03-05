@@ -82,7 +82,7 @@ func Create(
 		ImageID:     image.ID,
 		ImageTag:    imageTag,
 	}
-	blueprint, err := beaker.CreateBlueprint(ctx, spec, opts.Name)
+	blueprint, err := beaker.CreateImage(ctx, spec, opts.Name)
 	if err != nil {
 		return "", err
 	}
