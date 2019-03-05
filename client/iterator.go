@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	fileheap "github.com/allenai/fileheap-client/client"
+	fileheap "github.com/allenai/fileheap/client"
 	"github.com/pkg/errors"
 
 	"github.com/allenai/beaker/api"

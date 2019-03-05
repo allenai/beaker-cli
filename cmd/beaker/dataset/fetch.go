@@ -45,6 +45,8 @@ func (o *fetchOptions) run(beaker *beaker.Client) error {
 		return err
 	}
 
+	return dataset.DownloadTo(ctx, o.outputPath)
+
 	manifest, err := dataset.Manifest(ctx)
 	if err != nil {
 		return err

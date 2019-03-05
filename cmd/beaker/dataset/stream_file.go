@@ -65,16 +65,19 @@ func (o *streamFileOptions) run(beaker *beaker.Client) error {
 	fileRef := dataset.FileRef(filename)
 
 	var r io.ReadCloser
-	if o.offset != 0 || o.length != 0 {
-		if o.length == 0 {
-			// Length not specified; read the rest of the file.
-			r, err = fileRef.DownloadRange(ctx, o.offset, -1)
+	r, err = fileRef.DownloadRange(ctx, 0, -1)
+	/*
+		if o.offset != 0 || o.length != 0 {
+			if o.length == 0 {
+				// Length not specified; read the rest of the file.
+				r, err = fileRef.DownloadRange(ctx, o.offset, -1)
+			} else {
+				r, err = fileRef.DownloadRange(ctx, o.offset, o.length)
+			}
 		} else {
-			r, err = fileRef.DownloadRange(ctx, o.offset, o.length)
+			r, err = fileRef.Download(ctx)
 		}
-	} else {
-		r, err = fileRef.Download(ctx)
-	}
+	*/
 	if err != nil {
 		return err
 	}

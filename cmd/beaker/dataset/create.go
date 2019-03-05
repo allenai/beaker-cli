@@ -123,6 +123,8 @@ func uploadDirectory(
 	directory string,
 	showWarnings bool,
 ) error {
+	uploader := dataset.NewUploader(ctx)
+
 	visitor := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return errors.WithStack(err)
@@ -144,10 +146,20 @@ func uploadDirectory(
 			return nil
 		}
 
-		return uploadFile(ctx, dataset.FileRef(relpath), path)
+		file, err := os.Open(path)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		defer file.Close()
+
+		return uploader.UploadFile(dataset.FileRef(relpath), file)
 	}
 
-	return filepath.Walk(directory, visitor)
+	if err := filepath.Walk(directory, visitor); err != nil {
+		return err
+	}
+
+	return uploader.Close()
 }
 
 func uploadFile(ctx context.Context, fileRef *beaker.FileHandle, source string) error {

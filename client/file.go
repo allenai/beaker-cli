@@ -11,7 +11,7 @@ import (
 	"path"
 	"path/filepath"
 
-	fileheap "github.com/allenai/fileheap-client/client"
+	fileheap "github.com/allenai/fileheap/client"
 	"github.com/pkg/errors"
 )
 
