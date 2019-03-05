@@ -124,12 +124,9 @@ func (s *TaskSpec) ToAPI() (*api.TaskSpec, error) {
 		return nil, err
 	}
 
-	if s.Image != "" {
-		return nil, errors.New(`"image" field is deprecated; please define "blueprint" instead`)
-	}
-
 	return &api.TaskSpec{
-		Blueprint:    s.Blueprint,
+		Blueprint:    s.Blueprint, // TODO: don't pass blueprint
+		Image:        s.Image,
 		ResultPath:   s.ResultPath,
 		Description:  s.Description,
 		Arguments:    s.Arguments,
