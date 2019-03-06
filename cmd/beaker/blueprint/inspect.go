@@ -16,7 +16,7 @@ func newInspectCmd(
 	o := &image.InspectOptions{}
 	cmd := parent.Command("inspect", "Display detailed information about one or more blueprints")
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		// TODO message reminding to switch to image commands
+		PrintBeakerDeprecationWarning()
 		beaker, err := beaker.NewClient(parentOpts.Addr, config.UserToken)
 		if err != nil {
 			return err

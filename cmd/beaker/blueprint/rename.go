@@ -15,7 +15,7 @@ func newRenameCmd(
 	o := &image.RenameOptions{}
 	cmd := parent.Command("rename", "Rename an blueprint")
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		// TODO message reminding to switch to image commands
+		PrintBeakerDeprecationWarning()
 		return o.Run(parentOpts, config.UserToken)
 	})
 

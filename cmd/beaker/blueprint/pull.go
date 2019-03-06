@@ -20,7 +20,7 @@ func newPullCmd(
 	cmd.Arg("tag", "Name and optional tag in the 'name:tag' format").StringVar(&o.Tag)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		// TODO message reminding to switch to image commands
+		PrintBeakerDeprecationWarning()
 		beaker, err := beaker.NewClient(parentOpts.Addr, config.UserToken)
 		if err != nil {
 			return err
