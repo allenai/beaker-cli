@@ -12,7 +12,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	beaker "github.com/allenai/beaker/client"
-	"github.com/allenai/beaker/cmd/beaker/blueprint"
+	"github.com/allenai/beaker/cmd/beaker/image"
 	"github.com/allenai/beaker/config"
 )
 
@@ -98,25 +98,25 @@ func (o *runOptions) run(beaker *beaker.Client) error {
 	// Create blueprints in place of images.
 	images := map[string]string{} // Map image tags to blueprint IDs.
 	for i, task := range spec.Tasks {
-		image := task.Spec.Image
+		specImage := task.Spec.Image
 		spec.Tasks[i].Spec.Image = ""
 
 		// Blueprints take priority over images. Enforce that we have exactly one.
 		if task.Spec.Blueprint != "" {
 			continue
 		}
-		if image == "" {
+		if specImage == "" {
 			return errors.Errorf("task %q must declare either a blueprint or an image to run", task.Name)
 		}
 
-		blueprintID, ok := images[image]
+		blueprintID, ok := images[specImage]
 		if !ok {
 			var err error
-			blueprintID, err = blueprint.Create(ctx, os.Stdout, beaker, image, nil)
+			blueprintID, err = image.Create(ctx, os.Stdout, beaker, specImage, nil)
 			if err != nil {
-				return errors.WithMessage(err, "failed to create blueprint for image "+strconv.Quote(image))
+				return errors.WithMessage(err, "failed to create blueprint for image "+strconv.Quote(specImage))
 			}
-			images[image] = blueprintID
+			images[specImage] = blueprintID
 		}
 		spec.Tasks[i].Spec.Blueprint = blueprintID
 	}

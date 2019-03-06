@@ -3,14 +3,10 @@ package blueprint
 import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
+	"github.com/allenai/beaker/cmd/beaker/image"
 	"github.com/allenai/beaker/cmd/beaker/options"
 	"github.com/allenai/beaker/config"
 )
-
-type blueprintOptions struct {
-	*options.AppOptions
-	addr string
-}
 
 // NewBlueprintCmd creates the root command for this subpackage.
 func NewBlueprintCmd(
@@ -18,10 +14,11 @@ func NewBlueprintCmd(
 	parentOpts *options.AppOptions,
 	config *config.Config,
 ) {
-	o := &blueprintOptions{AppOptions: parentOpts}
+	o := &image.ImageOptions{AppOptions: parentOpts}
+	// TODO message reminding to switch to image commands
 	cmd := parent.Command("blueprint", "Manage blueprints")
 
-	cmd.Flag("addr", "Address of the Beaker service.").Default(config.BeakerAddress).StringVar(&o.addr)
+	cmd.Flag("addr", "Address of the Beaker service.").Default(config.BeakerAddress).StringVar(&o.Addr)
 
 	// Add automatic help generation for the command group.
 	var helpSubcommands []string

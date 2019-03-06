@@ -11,38 +11,42 @@ import (
 	"github.com/allenai/beaker/config"
 )
 
-type renameOptions struct {
-	quiet bool
-	image string
-	name  string
+// RenameOptions defines settings for image rename command
+// TODO: make RenameOptions and fields unexported once not needed by blueprint command
+type RenameOptions struct {
+	Quiet bool
+	Image string
+	Name  string
 }
 
 func newRenameCmd(
 	parent *kingpin.CmdClause,
-	parentOpts *imageOptions,
+	parentOpts *ImageOptions,
 	config *config.Config,
 ) {
-	o := &renameOptions{}
+	o := &RenameOptions{}
 	cmd := parent.Command("rename", "Rename an image")
-	cmd.Action(func(c *kingpin.ParseContext) error { return o.run(parentOpts, config.UserToken) })
+	cmd.Action(func(c *kingpin.ParseContext) error { return o.Run(parentOpts, config.UserToken) })
 
-	cmd.Flag("quiet", "Only display the image's unique ID").Short('q').BoolVar(&o.quiet)
-	cmd.Arg("image", "Name or ID of the image to rename").Required().StringVar(&o.image)
-	cmd.Arg("new-name", "Unqualified name to assign to the image").Required().StringVar(&o.name)
+	cmd.Flag("quiet", "Only display the image's unique ID").Short('q').BoolVar(&o.Quiet)
+	cmd.Arg("image", "Name or ID of the image to rename").Required().StringVar(&o.Image)
+	cmd.Arg("new-name", "Unqualified name to assign to the image").Required().StringVar(&o.Name)
 }
 
-func (o *renameOptions) run(parentOpts *imageOptions, userToken string) error {
+// Run executes beaker image rename command
+// TODO: make Run unexported once not needed by blueprint command
+func (o *RenameOptions) Run(parentOpts *ImageOptions, userToken string) error {
 	ctx := context.TODO()
-	beaker, err := beaker.NewClient(parentOpts.addr, userToken)
+	beaker, err := beaker.NewClient(parentOpts.Addr, userToken)
 	if err != nil {
 		return err
 	}
-	image, err := beaker.Image(ctx, o.image)
+	image, err := beaker.Image(ctx, o.Image)
 	if err != nil {
 		return err
 	}
 
-	if err := image.SetName(ctx, o.name); err != nil {
+	if err := image.SetName(ctx, o.Name); err != nil {
 		return err
 	}
 
@@ -52,7 +56,7 @@ func (o *renameOptions) run(parentOpts *imageOptions, userToken string) error {
 		return err
 	}
 
-	if o.quiet {
+	if o.Quiet {
 		fmt.Println(info.ID)
 	} else {
 		fmt.Printf("Renamed %s to %s\n", color.BlueString(info.ID), info.DisplayID())

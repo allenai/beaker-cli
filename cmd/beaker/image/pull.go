@@ -19,40 +19,44 @@ import (
 	"github.com/allenai/beaker/config"
 )
 
-type pullOptions struct {
-	image string
-	tag   string
-	quiet bool
+// PullOptions defines settings for image pull command
+// TODO: make PullOptions and fields unexported once not needed by blueprint command
+type PullOptions struct {
+	Image string
+	Tag   string
+	Quiet bool
 }
 
 func newPullCmd(
 	parent *kingpin.CmdClause,
-	parentOpts *imageOptions,
+	parentOpts *ImageOptions,
 	config *config.Config,
 ) {
-	o := &pullOptions{}
+	o := &PullOptions{}
 	cmd := parent.Command("pull", "Pull the image's Docker image")
-	cmd.Flag("quiet", "Only display the pulled image's tag").Short('q').BoolVar(&o.quiet)
-	cmd.Arg("image", "Image name or ID").Required().StringVar(&o.image)
-	cmd.Arg("tag", "Name and optional tag in the 'name:tag' format").StringVar(&o.tag)
+	cmd.Flag("quiet", "Only display the pulled image's tag").Short('q').BoolVar(&o.Quiet)
+	cmd.Arg("image", "Image name or ID").Required().StringVar(&o.Image)
+	cmd.Arg("tag", "Name and optional tag in the 'name:tag' format").StringVar(&o.Tag)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		beaker, err := beaker.NewClient(parentOpts.addr, config.UserToken)
+		beaker, err := beaker.NewClient(parentOpts.Addr, config.UserToken)
 		if err != nil {
 			return err
 		}
-		return o.run(beaker)
+		return o.Run(beaker)
 	})
 }
 
-func (o *pullOptions) run(beaker *beaker.Client) error {
+// Run executes image pull command
+// TODO: make Run unexported once not needed by blueprint command
+func (o *PullOptions) Run(beaker *beaker.Client) error {
 	ctx := context.TODO()
 	docker, err := docker.NewEnvClient()
 	if err != nil {
 		return errors.Wrap(err, "failed to create Docker client")
 	}
 
-	image, err := beaker.Image(ctx, o.image)
+	image, err := beaker.Image(ctx, o.Image)
 	if err != nil {
 		return err
 	}
@@ -62,7 +66,7 @@ func (o *pullOptions) run(beaker *beaker.Client) error {
 		return errors.WithMessage(err, "failed to retrieve credentials for remote repository")
 	}
 
-	if !o.quiet {
+	if !o.Quiet {
 		fmt.Printf("Pulling %s ...\n", repo.ImageTag)
 	}
 
@@ -85,7 +89,7 @@ func (o *pullOptions) run(beaker *beaker.Client) error {
 
 	// Display push responses as the Docker CLI would. This also translates remote errors.
 	var stream io.Writer = os.Stdout
-	if o.quiet {
+	if o.Quiet {
 		stream = ioutil.Discard
 	}
 	if err := jsonmessage.DisplayJSONMessagesStream(r, stream, 0, false, nil); err != nil {
@@ -93,22 +97,22 @@ func (o *pullOptions) run(beaker *beaker.Client) error {
 	}
 
 	tag := repo.ImageTag
-	if o.tag != "" {
-		if !o.quiet {
-			fmt.Printf("Renaming %s to %s ...\n", repo.ImageTag, o.tag)
+	if o.Tag != "" {
+		if !o.Quiet {
+			fmt.Printf("Renaming %s to %s ...\n", repo.ImageTag, o.Tag)
 		}
 
-		if err := docker.ImageTag(ctx, repo.ImageTag, o.tag); err != nil {
+		if err := docker.ImageTag(ctx, repo.ImageTag, o.Tag); err != nil {
 			return errors.Wrap(err, "failed to tag image")
 		}
 
 		// We ignore the error here intentionally. Cleaning up is best-effort
 		// and we can't do anything to recover if this fails.
 		_, _ = docker.ImageRemove(ctx, repo.ImageTag, types.ImageRemoveOptions{})
-		tag = o.tag
+		tag = o.Tag
 	}
 
-	if o.quiet {
+	if o.Quiet {
 		fmt.Println(tag)
 	} else {
 		fmt.Println("Done.")

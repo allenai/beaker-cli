@@ -30,7 +30,7 @@ type CreateOptions struct {
 
 func newCreateCmd(
 	parent *kingpin.CmdClause,
-	parentOpts *imageOptions,
+	parentOpts *ImageOptions,
 	config *config.Config,
 ) {
 	opts := &CreateOptions{}
@@ -43,7 +43,7 @@ func newCreateCmd(
 	cmd.Arg("image", "Docker image ID").Required().StringVar(image)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		beaker, err := beaker.NewClient(parentOpts.addr, config.UserToken)
+		beaker, err := beaker.NewClient(parentOpts.Addr, config.UserToken)
 		if err != nil {
 			return err
 		}
