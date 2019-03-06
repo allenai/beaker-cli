@@ -29,7 +29,7 @@ func (c *Client) CreateImage(
 		query.Set("name", name)
 	}
 
-	resp, err := c.sendRequest(ctx, http.MethodPost, "/api/v3/blueprints", query, spec)
+	resp, err := c.sendRequest(ctx, http.MethodPost, "/api/v3/images", query, spec)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (c *Client) CreateImage(
 // guaranteed throughout its lifetime to refer to the same object, even if that
 // object is later renamed.
 func (c *Client) Image(ctx context.Context, reference string) (*ImageHandle, error) {
-	id, err := c.resolveRef(ctx, "/api/v3/blueprints", reference)
+	id, err := c.resolveRef(ctx, "/api/v3/images", reference)
 	if err != nil {
 		return nil, errors.WithMessage(err, "could not resolve image reference "+reference)
 	}
@@ -62,7 +62,7 @@ func (h *ImageHandle) ID() string {
 
 // Get retrieves a image's details.
 func (h *ImageHandle) Get(ctx context.Context) (*api.Image, error) {
-	uri := path.Join("/api/v3/blueprints", h.id)
+	uri := path.Join("/api/v3/images", h.id)
 	resp, err := h.client.sendRequest(ctx, http.MethodGet, uri, nil, nil)
 	if err != nil {
 		return nil, err
@@ -81,7 +81,7 @@ func (h *ImageHandle) Repository(
 	ctx context.Context,
 	upload bool,
 ) (*api.ImageRepository, error) {
-	path := path.Join("/api/v3/blueprints", h.id, "repository")
+	path := path.Join("/api/v3/images", h.id, "repository")
 	query := url.Values{"upload": {strconv.FormatBool(upload)}}
 	resp, err := h.client.sendRequest(ctx, http.MethodPost, path, query, nil)
 	if err != nil {
@@ -98,7 +98,7 @@ func (h *ImageHandle) Repository(
 
 // SetName sets a image's name.
 func (h *ImageHandle) SetName(ctx context.Context, name string) error {
-	path := path.Join("/api/v3/blueprints", h.id)
+	path := path.Join("/api/v3/images", h.id)
 	body := api.ImagePatchSpec{Name: &name}
 	resp, err := h.client.sendRequest(ctx, http.MethodPatch, path, nil, body)
 	if err != nil {
@@ -110,7 +110,7 @@ func (h *ImageHandle) SetName(ctx context.Context, name string) error {
 
 // SetDescription sets a image's description.
 func (h *ImageHandle) SetDescription(ctx context.Context, description string) error {
-	path := path.Join("/api/v3/blueprints", h.id)
+	path := path.Join("/api/v3/images", h.id)
 	body := api.ImagePatchSpec{Description: &description}
 	resp, err := h.client.sendRequest(ctx, http.MethodPatch, path, nil, body)
 	if err != nil {
@@ -123,7 +123,7 @@ func (h *ImageHandle) SetDescription(ctx context.Context, description string) er
 // Commit finalizes an image, unblocking usage and locking it for further
 // writes. The image is guaranteed to remain uncommitted on failure.
 func (h *ImageHandle) Commit(ctx context.Context) error {
-	path := path.Join("/api/v3/blueprints", h.id)
+	path := path.Join("/api/v3/images", h.id)
 	body := api.ImagePatchSpec{Commit: true}
 	resp, err := h.client.sendRequest(ctx, http.MethodPatch, path, nil, body)
 	if err != nil {
@@ -135,7 +135,7 @@ func (h *ImageHandle) Commit(ctx context.Context) error {
 
 // GetPermissions gets a summary of the user's permissions on the image.
 func (h *ImageHandle) GetPermissions(ctx context.Context) (*api.PermissionSummary, error) {
-	return getPermissions(ctx, h.client, path.Join("/api/v3/blueprints", h.ID(), "auth"))
+	return getPermissions(ctx, h.client, path.Join("/api/v3/images", h.ID(), "auth"))
 }
 
 // PatchPermissions ammends an image's permissions.
@@ -143,7 +143,7 @@ func (h *ImageHandle) PatchPermissions(
 	ctx context.Context,
 	permissionPatch api.PermissionPatch,
 ) error {
-	path := path.Join("/api/v3/blueprints", h.id, "auth")
+	path := path.Join("/api/v3/images", h.id, "auth")
 	resp, err := h.client.sendRequest(ctx, http.MethodPatch, path, nil, permissionPatch)
 	if err != nil {
 		return err
@@ -158,7 +158,7 @@ func (c *Client) SearchImages(
 	page int,
 ) ([]api.Image, error) {
 	query := url.Values{"page": {strconv.Itoa(page)}}
-	resp, err := c.sendRequest(ctx, http.MethodPost, "/api/v3/blueprints/search", query, searchOptions)
+	resp, err := c.sendRequest(ctx, http.MethodPost, "/api/v3/images/search", query, searchOptions)
 	if err != nil {
 		return nil, err
 	}
