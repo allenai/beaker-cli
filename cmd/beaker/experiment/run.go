@@ -101,7 +101,7 @@ func (o *runOptions) run(beaker *beaker.Client) error {
 
 	// Create blueprints in place of images, assuming images do not refer to docker images.
 	images := map[string]string{} // Map image tags to blueprint IDs.
-	for i, task := range spec.Tasks {
+	for _, task := range spec.Tasks {
 		specImage := task.Spec.Image
 
 		// Blueprints take priority over images. Enforce that we have exactly one.
@@ -111,7 +111,6 @@ func (o *runOptions) run(beaker *beaker.Client) error {
 		if specImage == "" {
 			return errors.Errorf("task %q must declare either a blueprint or an image to run", task.Name)
 		}
-		spec.Tasks[i].Spec.Blueprint = specImage
 	}
 
 	if o.dryRun {

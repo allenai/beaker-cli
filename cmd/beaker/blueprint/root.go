@@ -38,5 +38,5 @@ func NewBlueprintCmd(
 
 // PrintBeakerDeprecationWarning prints a warning that blueprint commands will soon be deleted.
 func PrintBeakerDeprecationWarning() {
-	color.Yellow("Beaker \"blueprints\" are now called \"images\", and all \"blueprint\" commands will be removed on April 5.  Please update to \"image\" commands to ensure a smooth transition.\n")
+	color.Yellow("Beaker \"blueprints\" are now called \"images\", and all \"blueprint\" commands will be removed on April 5.\nPlease update to \"image\" commands to ensure a smooth transition.\n")
 }

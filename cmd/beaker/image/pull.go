@@ -33,7 +33,7 @@ func newPullCmd(
 	config *config.Config,
 ) {
 	o := &PullOptions{}
-	cmd := parent.Command("pull", "Pull the image's Docker image")
+	cmd := parent.Command("pull", "Pull the image's cooresponding Docker image")
 	cmd.Flag("quiet", "Only display the pulled image's tag").Short('q').BoolVar(&o.Quiet)
 	cmd.Arg("image", "Image name or ID").Required().StringVar(&o.Image)
 	cmd.Arg("tag", "Name and optional tag in the 'name:tag' format").StringVar(&o.Tag)
