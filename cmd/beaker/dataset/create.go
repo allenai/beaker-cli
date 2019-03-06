@@ -20,6 +20,7 @@ type createOptions struct {
 	name        string
 	quiet       bool
 	source      string
+	org         string
 }
 
 func newCreateCmd(
@@ -34,12 +35,16 @@ func newCreateCmd(
 		if err != nil {
 			return err
 		}
+		if o.org == "" {
+			o.org = config.DefaultOrg
+		}
 		return o.run(beaker)
 	})
 
 	cmd.Flag("desc", "Assign a description to the dataset").StringVar(&o.description)
 	cmd.Flag("name", "Assign a name to the dataset").Short('n').StringVar(&o.name)
 	cmd.Flag("quiet", "Only display created dataset's ID").Short('q').BoolVar(&o.quiet)
+	cmd.Flag("org", "Org that will own the created experiment").Short('o').StringVar(&o.org)
 	cmd.Arg("source", "Path to a file or directory containing the data").
 		Required().ExistingFileOrDirVar(&o.source)
 }
@@ -55,7 +60,7 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 		return errors.Errorf("%s is a %s", o.source, modeToString(info.Mode()))
 	}
 
-	spec := api.DatasetSpec{Description: o.description}
+	spec := api.DatasetSpec{Description: o.description, Organization: o.org}
 	if !info.IsDir() {
 		// If uploading a single file, treat it as a single-file dataset.
 		spec.Filename = info.Name()
