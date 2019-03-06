@@ -44,7 +44,7 @@ type Dataset struct {
 	SourceTask *string `json:"source_task,omitempty"`
 
 	// Included if the dataset is a single file.
-	IsFile bool `json:"is_file,omitempty"`
+	IsFile bool `json:"isFile,omitempty"`
 }
 
 // DisplayID returns the most human-friendly name available for a dataset while
