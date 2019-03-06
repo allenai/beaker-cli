@@ -50,10 +50,18 @@ func (o *streamFileOptions) run(beaker *beaker.Client) error {
 	// Single file dataset.
 	filename := o.file
 	if filename == "" {
-		if dataset.Filename() == "" {
+		if !dataset.IsFile() {
 			return errors.Errorf("filename required for multi-file dataset %s", dataset.ID())
 		}
-		filename = dataset.Filename()
+		files, err := dataset.Files(ctx, "")
+		if err != nil {
+			return err
+		}
+		_, info, err := files.Next()
+		if err != nil {
+			return err
+		}
+		filename = info.Path
 	}
 	fileRef := dataset.FileRef(filename)
 
