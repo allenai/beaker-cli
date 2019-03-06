@@ -42,6 +42,9 @@ type Dataset struct {
 
 	// Task for which this dataset is a result, i.e. provenance, if any.
 	SourceTask *string `json:"source_task,omitempty"`
+
+	// Included if the dataset is a single file.
+	Filename string
 }
 
 // DisplayID returns the most human-friendly name available for a dataset while
@@ -73,6 +76,7 @@ type DatasetSpec struct {
 	AuthorToken string `json:"author_token,omitempty"`
 
 	// (optional) If set, the dataset will be stored in FileHeap.
+	// This flag will eventually become the default and be removed.
 	FileHeap bool `json:"fileHeap,omitempty"`
 }
 
