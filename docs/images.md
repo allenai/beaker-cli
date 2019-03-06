@@ -1,13 +1,10 @@
-| Beaker "blueprints" are now called "images", and all "blueprint" commands will be removed on April 5. Please update to "image" commands to ensure a smooth transition |
-| --- |
+# Working with Images
 
-# Working with Blueprints
-
-Blueprints are Beaker's unit of executable code. A blueprint combines a Docker image with metadata,
+Images are Beaker's unit of executable code. A beaker image combines a Docker image with metadata,
 such as its author and description, and an optional richer narrative in markdown. Please refer to
-[the wordcount example](https://beaker-pub.allenai.org/bp/bp_qbjvcda1sed7) for an overview.
+[the wordcount example](https://beaker-pub.allenai.org/im/im_qbjvcda1sed7) for an overview.
 
-Like datasets, blueprints are immutable. The following example shows how to create and use blueprints.
+Like datasets, images are immutable. The following example shows how to create and use images.
 
 ## Preparation: Build a Docker Image
 
@@ -21,12 +18,12 @@ docker build -t wordcount <path/to/wordcount/directory>
 
 ## Create and Upload
 
-You can create and upload any image as a blueprint with a single command. Behind the scenes, Beaker pushes your
+You can create and upload any Docker image as a beaker image with a single command. Behind the scenes, Beaker pushes your
 Docker image to a private repository. This guarantees that the image will remain available and
 unchanged for future experiments.
 
 ```
-▶ beaker blueprint create --name wordcount wordcount
+▶ beaker image create --name wordcount wordcount
 Pushing wordcount as wordcount (bp_qbjvcda1sed7)...
 The push refers to repository [gcr.io/ai2-beaker-core/public/bduufrl06q5ner2l0440]
 172b7a93847f: Preparing
@@ -39,21 +36,21 @@ latest: digest: sha256:4c70545c15cca8d30b3adfd004a708fcdec910f162fa825861fe13820
 Done.
 ```
 
-Notice that each blueprint is assigned a unique ID in addition to the name we chose. Any object,
-including blueprints, can be referred to by its name or ID. Like any object, a blueprint can be
+Notice that each image is assigned a unique ID in addition to the name we chose. Any object,
+including images, can be referred to by its name or ID. Like any object, an image can be
 renamed, but its ID is guaranteed to remain stable. The following two commands are equivalent:
 
 ```bash
-beaker blueprint inspect examples/wordcount
-beaker blueprint inspect bp_qbjvcda1sed7
+beaker image inspect examples/wordcount
+beaker image inspect im_qbjvcda1sed7
 ```
 
 ## Inspect
 
-A blueprint's metadata can be retrieved with `beaker blueprint inspect`.
+An image's metadata can be retrieved with `beaker image inspect`.
 
 ```
-▶ beaker blueprint inspect examples/wordcount
+▶ beaker image inspect examples/wordcount
 [
     {
         "id": "bp_qbjvcda1sed7",
@@ -73,10 +70,10 @@ A blueprint's metadata can be retrieved with `beaker blueprint inspect`.
 
 ## Download
 
-You can pull a blueprint to your local machine at any time with `beaker blueprint pull`.
+You can pull an image to your local machine at any time with `beaker image pull`.
 
 ```
-▶ beaker blueprint pull examples/wordcount
+▶ beaker image pull examples/wordcount
 Pulling gcr.io/ai2-beaker-core/public/bduufrl06q5ner2l0440 ...
 latest: Pulling from ai2-beaker-core/public/bduufrl06q5ner2l0440
 Digest: sha256:4c70545c15cca8d30b3adfd004a708fcdec910f162fa825861fe138200f80e19
@@ -89,12 +86,12 @@ internally assigned tag  `gcr.io/ai2-beaker-core/public/bduufrl06q5ner2l0440` by
 a more human-friendly tag, set it with an additional argument:
 
 ```
-▶ beaker blueprint pull examples/wordcount friendly-name
+▶ beaker image pull examples/wordcount friendly-name
 ```
 
 ## Cleanup
 
-To clean up, simply `docker image rm` any images created above.
+To clean up, simply `docker image rm` any Docker images created above.
 
-Because blueprints are immutable, they can't be deleted. It will be possible to archive them in the
+Because images are immutable, they can't be deleted. It will be possible to archive them in the
 near future.
