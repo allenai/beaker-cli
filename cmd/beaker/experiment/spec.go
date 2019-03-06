@@ -84,7 +84,7 @@ type TaskSpec struct {
 	// (required) Blueprint describing the code to be run.
 	Blueprint string `yaml:"blueprint"`
 
-	// (deprecated) Name of the Docker image to run.
+	// Image describing code to be run or name of the Docker image to run (deprecated).
 	Image string `yaml:"image,omitempty"`
 
 	// (required) Container path in which experiment will save results.

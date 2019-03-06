@@ -7,7 +7,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/pkg/errors"
+
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	yaml "gopkg.in/yaml.v2"
 
@@ -28,6 +30,7 @@ type runOptions struct {
 
 type specArgs struct {
 	blueprint  string
+	docker     string
 	image      string
 	resultPath string
 	desc       string
@@ -70,6 +73,7 @@ func newRunCmd(
 	// File spec alternatives
 	cmd.Flag("blueprint", "Blueprint containing code to run").StringVar(&o.specArgs.blueprint)
 	cmd.Flag("image", "Docker image to run").StringVar(&o.specArgs.image)
+	cmd.Flag("docker", "Docker image to run").StringVar(&o.specArgs.docker)
 	cmd.Flag("desc", "Optional description for the experiment").StringVar(&o.specArgs.desc)
 	cmd.Flag("result-path", "Path within the container to which results will be written").
 		PlaceHolder("PATH").Required().StringVar(&o.specArgs.resultPath)
@@ -95,8 +99,36 @@ func (o *runOptions) run(beaker *beaker.Client) error {
 		return err
 	}
 
-	// Create blueprints in place of images.
+	// Create blueprints in place of images, assuming images do not refer to docker images.
 	images := map[string]string{} // Map image tags to blueprint IDs.
+	for i, task := range spec.Tasks {
+		specImage := task.Spec.Image
+
+		// Blueprints take priority over images. Enforce that we have exactly one.
+		if task.Spec.Blueprint != "" {
+			continue
+		}
+		if specImage == "" {
+			return errors.Errorf("task %q must declare either a blueprint or an image to run", task.Name)
+		}
+		spec.Tasks[i].Spec.Blueprint = specImage
+	}
+
+	if o.dryRun {
+		fmt.Println("Experiment spec to be submitted:")
+		fmt.Println()
+		return printSpec(spec)
+	}
+
+	_, err = Create(ctx, os.Stdout, beaker, spec, &CreateOptions{Name: o.name, Quiet: o.quiet, Org: o.org})
+	if err == nil {
+		return err
+	}
+
+	// Create blueprints in place of images, assuming images refer to docker images.
+	images = map[string]string{} // Map image tags to blueprint IDs.
+	color.Yellow("The --image flag should be used to specify the beaker image to use.  This flag will be deprecated to not accept Docker images.  Instead use the --docker flag\n")
+
 	for i, task := range spec.Tasks {
 		specImage := task.Spec.Image
 		spec.Tasks[i].Spec.Image = ""
@@ -121,20 +153,18 @@ func (o *runOptions) run(beaker *beaker.Client) error {
 		spec.Tasks[i].Spec.Blueprint = blueprintID
 	}
 
-	if o.dryRun {
-		fmt.Println("Experiment spec to be submitted:")
-		fmt.Println()
-		return printSpec(spec)
-	}
-
 	_, err = Create(ctx, os.Stdout, beaker, spec, &CreateOptions{Name: o.name, Quiet: o.quiet, Org: o.org})
 	return err
 }
 
 func specFromArgs(args specArgs) (*ExperimentSpec, error) {
+	image := args.image
+	if image == "" {
+		image = args.docker
+	}
 	spec := TaskSpec{
 		Blueprint:  args.blueprint,
-		Image:      args.image,
+		Image:      image,
 		ResultPath: args.resultPath,
 		Arguments:  args.args,
 		Requirements: Requirements{
