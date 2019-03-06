@@ -56,7 +56,7 @@ func newApp(config *config.Config) (*options.AppOptions, error) {
 
 	// Build out sub-command groups.
 	alpha.NewAlphaCmd(app, o, config)
-	blueprint.NewBlueprintCmd(app, o, config)  // TODO: delete blueprint command
+	blueprint.NewBlueprintCmd(app, o, config) // TODO: delete blueprint command
 	dataset.NewDatasetCmd(app, o, config)
 	experiment.NewExperimentCmd(app, o, config)
 	group.NewGroupCmd(app, o, config)
