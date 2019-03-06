@@ -14,8 +14,9 @@ import (
 
 // DatasetHandle provides operations on a dataset.
 type DatasetHandle struct {
-	client *Client
-	id     string
+	client   *Client
+	id       string
+	filename string
 
 	Storage *fileheap.DatasetRef
 }
@@ -51,7 +52,7 @@ func (c *Client) CreateDataset(
 		ds = fileheap.Dataset(body.Storage.ID)
 	}
 
-	return &DatasetHandle{client: c, id: body.ID, Storage: ds}, nil
+	return &DatasetHandle{client: c, id: body.ID, filename: spec.Filename, Storage: ds}, nil
 }
 
 // Dataset gets a handle for a dataset by name or ID. The returned handle is
@@ -83,12 +84,17 @@ func (c *Client) Dataset(ctx context.Context, reference string) (*DatasetHandle,
 		ds = fileheap.Dataset(body.Storage.ID)
 	}
 
-	return &DatasetHandle{client: c, id: body.ID, Storage: ds}, nil
+	return &DatasetHandle{client: c, id: body.ID, filename: body.Filename, Storage: ds}, nil
 }
 
 // ID returns a dataset's stable, unique ID.
 func (h *DatasetHandle) ID() string {
 	return h.id
+}
+
+// Filename of the dataset if it is a single file.
+func (h *DatasetHandle) Filename() string {
+	return h.filename
 }
 
 // Get retrieves a dataset's details.
