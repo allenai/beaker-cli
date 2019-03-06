@@ -2,16 +2,12 @@ package client
 
 import (
 	"context"
-	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
-	"path/filepath"
 	"strconv"
 
-	fileheap "github.com/allenai/fileheap/client"
-	"github.com/pkg/errors"
+	fileheap "github.com/beaker/fileheap/client"
 
 	"github.com/allenai/beaker/api"
 )
@@ -20,7 +16,8 @@ import (
 type DatasetHandle struct {
 	client *Client
 	id     string
-	pkg    *fileheap.PackageRef
+
+	Storage *fileheap.DatasetRef
 }
 
 // CreateDataset creates a new dataset with an optional name.
@@ -45,16 +42,16 @@ func (c *Client) CreateDataset(
 		return nil, err
 	}
 
-	var pkg *fileheap.PackageRef
-	if body.PackageAddress != "" && body.PackageID != "" {
-		fileheap, err := fileheap.New(body.PackageAddress, fileheap.WithToken(body.Token))
+	var ds *fileheap.DatasetRef
+	if body.Storage.ID != "" {
+		fileheap, err := fileheap.New(body.Storage.Address, fileheap.WithToken(body.Storage.Token))
 		if err != nil {
 			return nil, err
 		}
-		pkg = fileheap.Package(body.PackageID)
+		ds = fileheap.Dataset(body.Storage.ID)
 	}
 
-	return &DatasetHandle{client: c, id: body.ID, pkg: pkg}, nil
+	return &DatasetHandle{client: c, id: body.ID, Storage: ds}, nil
 }
 
 // Dataset gets a handle for a dataset by name or ID. The returned handle is
@@ -77,72 +74,21 @@ func (c *Client) Dataset(ctx context.Context, reference string) (*DatasetHandle,
 		return nil, err
 	}
 
-	var pkg *fileheap.PackageRef
-	if body.PackageAddress != "" && body.PackageID != "" {
-		fileheap, err := fileheap.New(body.PackageAddress, fileheap.WithToken(body.Token))
+	var ds *fileheap.DatasetRef
+	if body.Storage.ID != "" {
+		fileheap, err := fileheap.New(body.Storage.Address, fileheap.WithToken(body.Storage.Token))
 		if err != nil {
 			return nil, err
 		}
-		pkg = fileheap.Package(body.PackageID)
+		ds = fileheap.Dataset(body.Storage.ID)
 	}
 
-	return &DatasetHandle{client: c, id: body.ID, pkg: pkg}, nil
+	return &DatasetHandle{client: c, id: body.ID, Storage: ds}, nil
 }
 
 // ID returns a dataset's stable, unique ID.
 func (h *DatasetHandle) ID() string {
 	return h.id
-}
-
-func (h *DatasetHandle) NewUploader(ctx context.Context) *Uploader {
-	return &Uploader{h.pkg.NewBatchUploader(ctx)}
-}
-
-type Uploader struct {
-	uploader *fileheap.BatchUploader
-}
-
-func (u *Uploader) UploadFile(file *FileHandle, source io.ReadSeeker) error {
-	return u.uploader.UploadFile(file.fileRef, source)
-}
-
-func (u *Uploader) Close() error {
-	return u.uploader.Close()
-}
-
-func (h *DatasetHandle) DownloadTo(ctx context.Context, targetPath string) error {
-	i, err := h.pkg.GetFiles(ctx, h.pkg.Files(ctx, ""))
-	if err != nil {
-		return err
-	}
-
-	for {
-		ref, reader, err := i.Next()
-		if err == fileheap.ErrDone {
-			break
-		}
-		if err != nil {
-			return err
-		}
-
-		filePath := path.Join(targetPath, ref.Path())
-
-		if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
-			return errors.WithStack(err)
-		}
-
-		file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-		defer file.Close()
-
-		if _, err := io.Copy(file, reader); err != nil {
-			return errors.WithStack(err)
-		}
-	}
-
-	return nil
 }
 
 // Get retrieves a dataset's details.
@@ -180,10 +126,10 @@ func (h *DatasetHandle) Manifest(ctx context.Context) (*api.DatasetManifest, err
 
 // Files returns an iterator over all files in the dataset under the given path.
 func (h *DatasetHandle) Files(ctx context.Context, path string) (FileIterator, error) {
-	if h.pkg != nil {
-		return &packageFileIterator{
+	if h.Storage != nil {
+		return &fileHeapIterator{
 			dataset:  h,
-			iterator: h.pkg.Files(ctx, path),
+			iterator: h.Storage.Files(ctx, path),
 		}, nil
 	}
 

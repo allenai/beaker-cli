@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/beaker/fileheap/cli"
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
@@ -45,7 +46,14 @@ func (o *fetchOptions) run(beaker *beaker.Client) error {
 		return err
 	}
 
-	return dataset.DownloadTo(ctx, o.outputPath)
+	if dataset.Storage != nil {
+		c, err := cli.NewCLI(ctx)
+		if err != nil {
+			return err
+		}
+
+		return c.Download(dataset.Storage, "", o.outputPath, cli.NewDefaultTracker())
+	}
 
 	manifest, err := dataset.Manifest(ctx)
 	if err != nil {

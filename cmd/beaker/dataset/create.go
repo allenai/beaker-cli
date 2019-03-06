@@ -13,6 +13,7 @@ import (
 	"github.com/allenai/beaker/api"
 	beaker "github.com/allenai/beaker/client"
 	"github.com/allenai/beaker/config"
+	"github.com/beaker/fileheap/cli"
 )
 
 type createOptions struct {
@@ -21,6 +22,7 @@ type createOptions struct {
 	quiet       bool
 	source      string
 	org         string
+	fileheap    bool
 }
 
 func newCreateCmd(
@@ -45,6 +47,7 @@ func newCreateCmd(
 	cmd.Flag("name", "Assign a name to the dataset").Short('n').StringVar(&o.name)
 	cmd.Flag("quiet", "Only display created dataset's ID").Short('q').BoolVar(&o.quiet)
 	cmd.Flag("org", "Org that will own the created experiment").Short('o').StringVar(&o.org)
+	cmd.Flag("fileheap", "Store the dataset in FileHeap").BoolVar(&o.fileheap)
 	cmd.Arg("source", "Path to a file or directory containing the data").
 		Required().ExistingFileOrDirVar(&o.source)
 }
@@ -60,7 +63,11 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 		return errors.Errorf("%s is a %s", o.source, modeToString(info.Mode()))
 	}
 
-	spec := api.DatasetSpec{Description: o.description, Organization: o.org}
+	spec := api.DatasetSpec{
+		Description:  o.description,
+		Organization: o.org,
+		FileHeap:     o.fileheap,
+	}
 	if !info.IsDir() {
 		// If uploading a single file, treat it as a single-file dataset.
 		spec.Filename = info.Name()
@@ -79,10 +86,19 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 		}
 	}
 
+	if o.fileheap {
+		c, err := cli.NewCLI(ctx)
+		if err != nil {
+			return err
+		}
+
+		return c.Upload(o.source, dataset.Storage, "", cli.NewDefaultTracker())
+	}
+
 	if info.IsDir() {
 		err = uploadDirectory(ctx, dataset, o.source, !o.quiet)
 	} else {
-		err = uploadFile(ctx, dataset.FileRef(info.Name()), o.source)
+		err = uploadFile(ctx, dataset.FileRef(info.Name()), o.source, info.Size())
 	}
 	if err != nil {
 		return err
@@ -123,8 +139,6 @@ func uploadDirectory(
 	directory string,
 	showWarnings bool,
 ) error {
-	uploader := dataset.NewUploader(ctx)
-
 	visitor := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return errors.WithStack(err)
@@ -146,28 +160,18 @@ func uploadDirectory(
 			return nil
 		}
 
-		file, err := os.Open(path)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-		defer file.Close()
-
-		return uploader.UploadFile(dataset.FileRef(relpath), file)
+		return uploadFile(ctx, dataset.FileRef(relpath), path, info.Size())
 	}
 
-	if err := filepath.Walk(directory, visitor); err != nil {
-		return err
-	}
-
-	return uploader.Close()
+	return filepath.Walk(directory, visitor)
 }
 
-func uploadFile(ctx context.Context, fileRef *beaker.FileHandle, source string) error {
+func uploadFile(ctx context.Context, fileRef *beaker.FileHandle, source string, length int64) error {
 	file, err := os.Open(source)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 	defer file.Close()
 
-	return fileRef.Upload(ctx, file)
+	return fileRef.Upload(ctx, file, length)
 }

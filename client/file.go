@@ -2,8 +2,6 @@ package client
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,7 +9,6 @@ import (
 	"path"
 	"path/filepath"
 
-	fileheap "github.com/allenai/fileheap/client"
 	"github.com/pkg/errors"
 )
 
@@ -19,23 +16,18 @@ import (
 type FileHandle struct {
 	dataset *DatasetHandle
 	file    string
-	fileRef *fileheap.FileRef
 }
 
 // FileRef creates an actor for an existing file within a dataset.
 // This call doesn't perform any network operations.
 func (h *DatasetHandle) FileRef(filePath string) *FileHandle {
-	var fileRef *fileheap.FileRef
-	if h.pkg != nil {
-		fileRef = h.pkg.File(filePath)
-	}
-	return &FileHandle{h, filePath, fileRef}
+	return &FileHandle{h, filePath}
 }
 
 // Download gets a file from a datastore.
 func (h *FileHandle) Download(ctx context.Context) (io.ReadCloser, error) {
-	if h.fileRef != nil {
-		return h.fileRef.NewReader(ctx)
+	if h.dataset.Storage != nil {
+		return h.dataset.Storage.ReadFile(ctx, h.file)
 	}
 
 	path := path.Join("/api/v3/datasets", h.dataset.id, "files", h.file)
@@ -58,8 +50,8 @@ func (h *FileHandle) Download(ctx context.Context) (io.ReadCloser, error) {
 // DownloadRange reads a range of bytes from a file.
 // If length is negative, the file is read until the end.
 func (h *FileHandle) DownloadRange(ctx context.Context, offset, length int64) (io.ReadCloser, error) {
-	if h.fileRef != nil {
-		return h.fileRef.NewRangeReader(ctx, offset, length)
+	if h.dataset.Storage != nil {
+		return h.dataset.Storage.ReadFileRange(ctx, h.file, offset, length)
 	}
 
 	path := path.Join("/api/v3/datasets", h.dataset.id, "files", h.file)
@@ -119,44 +111,17 @@ func (h *FileHandle) DownloadTo(ctx context.Context, filePath string) error {
 }
 
 // Upload creates or overwrites a file.
-func (h *FileHandle) Upload(ctx context.Context, source io.ReadSeeker) error {
-	hasher := sha256.New()
-	length, err := io.Copy(hasher, source)
-	if err != nil {
-		return errors.Wrap(err, "failed to hash contents")
-	}
-
-	digest := hasher.Sum(nil)
-
-	if _, err := source.Seek(0, 0); err != nil {
-		return errors.WithStack(err)
-	}
-
-	// Only read as many bytes as were hashed.
-	body := io.LimitReader(source, length)
-
-	if h.fileRef != nil {
-		w, err := h.fileRef.NewWriter(ctx, &fileheap.WriteOpts{
-			Length: length,
-			Digest: digest,
-		})
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		// Ignore error; handle on close.
-		_, _ = io.Copy(w, body)
-
-		return errors.WithStack(w.Close())
+func (h *FileHandle) Upload(ctx context.Context, source io.Reader, length int64) error {
+	if h.dataset.Storage != nil {
+		return h.dataset.Storage.WriteFile(ctx, h.file, source, length)
 	}
 
 	path := path.Join("/api/v3/datasets", h.dataset.id, "files", h.file)
-	req, err := h.dataset.client.newRequest(http.MethodPut, path, nil, body)
+	req, err := h.dataset.client.newRequest(http.MethodPut, path, nil, source)
 	if err != nil {
 		return err
 	}
 	req.ContentLength = length
-	req.Header.Set("Digest", "SHA256 "+base64.StdEncoding.EncodeToString(digest))
 
 	client := &http.Client{CheckRedirect: copyRedirectHeader}
 	resp, err := client.Do(req.WithContext(ctx))
@@ -168,8 +133,8 @@ func (h *FileHandle) Upload(ctx context.Context, source io.ReadSeeker) error {
 
 // Delete removes a file from an uncommitted datastore.
 func (h *FileHandle) Delete(ctx context.Context) error {
-	if h.fileRef != nil {
-		return h.fileRef.Delete(ctx)
+	if h.dataset.Storage != nil {
+		return h.dataset.Storage.DeleteFile(ctx, h.file)
 	}
 
 	path := path.Join("/api/v3/datasets", h.dataset.id, "files", h.file)
