@@ -35,7 +35,7 @@ func newStreamCmd(
 	})
 
 	cmd.Arg("dataset", "Dataset name or ID").Required().StringVar(&o.dataset)
-	cmd.Arg("file", "File in dataset to fetch. Optional for single-file datasets.").StringVar(&o.file)
+	cmd.Arg("file", "File in dataset to fetch.").Required().StringVar(&o.file)
 	cmd.Flag("offset", "Offset in bytes.").Int64Var(&o.offset)
 	cmd.Flag("length", "Number of bytes to read.").Int64Var(&o.length)
 }
@@ -47,37 +47,18 @@ func (o *streamFileOptions) run(beaker *beaker.Client) error {
 		return err
 	}
 
-	manifest, err := dataset.Manifest(ctx)
-	if err != nil {
-		return err
-	}
-
-	var filename = o.file
-	if filename == "" {
-		if !manifest.SingleFile {
-			return errors.Errorf("filename required for multi-file dataset %s", manifest.ID)
-		}
-		if len(manifest.Files) == 0 {
-			return errors.Errorf("dataset %s has no files", manifest.ID)
-		}
-		filename = manifest.Files[0].File
-	}
-	fileRef := dataset.FileRef(filename)
-
+	fileRef := dataset.FileRef(o.file)
 	var r io.ReadCloser
-	r, err = fileRef.DownloadRange(ctx, 0, -1)
-	/*
-		if o.offset != 0 || o.length != 0 {
-			if o.length == 0 {
-				// Length not specified; read the rest of the file.
-				r, err = fileRef.DownloadRange(ctx, o.offset, -1)
-			} else {
-				r, err = fileRef.DownloadRange(ctx, o.offset, o.length)
-			}
+	if o.offset != 0 || o.length != 0 {
+		if o.length == 0 {
+			// Length not specified; read the rest of the file.
+			r, err = fileRef.DownloadRange(ctx, o.offset, -1)
 		} else {
-			r, err = fileRef.Download(ctx)
+			r, err = fileRef.DownloadRange(ctx, o.offset, o.length)
 		}
-	*/
+	} else {
+		r, err = fileRef.Download(ctx)
+	}
 	if err != nil {
 		return err
 	}
