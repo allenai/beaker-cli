@@ -1,14 +1,10 @@
 module github.com/allenai/beaker
 
-replace github.com/allenai/fileheap => ../fileheap
-
 require (
 	code.cloudfoundry.org/bytefmt v0.0.0-20180906201452-2aa6f33b730c
 	github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc // indirect
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
-	github.com/allenai/beaker-auth v0.0.0-20190121223248-6484e5796fcf // indirect
-	github.com/beaker/fileheap v0.0.0-20190306214204-e4c90bc0501e
-	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/beaker/fileheap v0.0.0-20190306225445-e36fa4cdc72f
 	github.com/docker/distribution v2.7.0+incompatible // indirect
 	github.com/docker/docker v1.13.1+incompatible
 	github.com/docker/go-connections v0.4.0 // indirect

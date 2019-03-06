@@ -47,12 +47,7 @@ func (o *fetchOptions) run(beaker *beaker.Client) error {
 	}
 
 	if dataset.Storage != nil {
-		c, err := cli.NewCLI(ctx)
-		if err != nil {
-			return err
-		}
-
-		return c.Download(dataset.Storage, "", o.outputPath, cli.NewDefaultTracker())
+		return cli.Download(ctx, dataset.Storage, "", o.outputPath, cli.NewDefaultTracker(), 32)
 	}
 
 	manifest, err := dataset.Manifest(ctx)
