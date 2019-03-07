@@ -1,4 +1,4 @@
-| Beaker "blueprints" are now called "images", and all "blueprint" commands will be removed on April 5. Please update to "image" commands to ensure a smooth transition |
+| Beaker "blueprints" are now called "images", and all "blueprint" commands will be removed soon. Please update to "image" commands to ensure a smooth transition |
 | --- |
 
 # Working with Blueprints
