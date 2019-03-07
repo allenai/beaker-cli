@@ -86,11 +86,10 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 		}
 	}
 
-	if o.fileheap {
-		return cli.Upload(ctx, o.source, dataset.Storage, "", cli.NewDefaultTracker(), 32)
-	}
-
 	if info.IsDir() {
+		if o.fileheap {
+			err = cli.Upload(ctx, o.source, dataset.Storage, "", cli.NewDefaultTracker(), 32)
+		}
 		err = uploadDirectory(ctx, dataset, o.source, !o.quiet)
 	} else {
 		err = uploadFile(ctx, dataset.FileRef(info.Name()), o.source, info.Size())
