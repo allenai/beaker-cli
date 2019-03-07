@@ -20,7 +20,7 @@ type InspectOptions struct {
 
 func newInspectCmd(
 	parent *kingpin.CmdClause,
-	parentOpts *ImageOptions,
+	parentOpts *CmdOptions,
 	config *config.Config,
 ) {
 	o := &InspectOptions{}

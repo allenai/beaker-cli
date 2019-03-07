@@ -21,7 +21,7 @@ type RenameOptions struct {
 
 func newRenameCmd(
 	parent *kingpin.CmdClause,
-	parentOpts *ImageOptions,
+	parentOpts *CmdOptions,
 	config *config.Config,
 ) {
 	o := &RenameOptions{}
@@ -35,7 +35,7 @@ func newRenameCmd(
 
 // Run executes beaker image rename command
 // TODO: make Run unexported once not needed by blueprint command
-func (o *RenameOptions) Run(parentOpts *ImageOptions, userToken string) error {
+func (o *RenameOptions) Run(parentOpts *CmdOptions, userToken string) error {
 	ctx := context.TODO()
 	beaker, err := beaker.NewClient(parentOpts.Addr, userToken)
 	if err != nil {

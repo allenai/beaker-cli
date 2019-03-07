@@ -10,13 +10,13 @@ import (
 
 func newInspectCmd(
 	parent *kingpin.CmdClause,
-	parentOpts *image.ImageOptions,
+	parentOpts *image.CmdOptions,
 	config *config.Config,
 ) {
 	o := &image.InspectOptions{}
 	cmd := parent.Command("inspect", "Display detailed information about one or more blueprints")
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		PrintBeakerDeprecationWarning()
+		printDeprecationWarning()
 		beaker, err := beaker.NewClient(parentOpts.Addr, config.UserToken)
 		if err != nil {
 			return err

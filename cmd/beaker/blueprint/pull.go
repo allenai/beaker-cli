@@ -10,7 +10,7 @@ import (
 
 func newPullCmd(
 	parent *kingpin.CmdClause,
-	parentOpts *image.ImageOptions,
+	parentOpts *image.CmdOptions,
 	config *config.Config,
 ) {
 	o := &image.PullOptions{}
@@ -20,7 +20,7 @@ func newPullCmd(
 	cmd.Arg("tag", "Name and optional tag in the 'name:tag' format").StringVar(&o.Tag)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		PrintBeakerDeprecationWarning()
+		printDeprecationWarning()
 		beaker, err := beaker.NewClient(parentOpts.Addr, config.UserToken)
 		if err != nil {
 			return err

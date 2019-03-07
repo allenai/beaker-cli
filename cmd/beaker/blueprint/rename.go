@@ -9,13 +9,13 @@ import (
 
 func newRenameCmd(
 	parent *kingpin.CmdClause,
-	parentOpts *image.ImageOptions,
+	parentOpts *image.CmdOptions,
 	config *config.Config,
 ) {
 	o := &image.RenameOptions{}
 	cmd := parent.Command("rename", "Rename an blueprint")
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		PrintBeakerDeprecationWarning()
+		printDeprecationWarning()
 		return o.Run(parentOpts, config.UserToken)
 	})
 

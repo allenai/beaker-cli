@@ -30,7 +30,7 @@ type CreateOptions struct {
 
 func newCreateCmd(
 	parent *kingpin.CmdClause,
-	parentOpts *ImageOptions,
+	parentOpts *CmdOptions,
 	config *config.Config,
 ) {
 	opts := &CreateOptions{}

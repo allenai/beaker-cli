@@ -29,7 +29,7 @@ type PullOptions struct {
 
 func newPullCmd(
 	parent *kingpin.CmdClause,
-	parentOpts *ImageOptions,
+	parentOpts *CmdOptions,
 	config *config.Config,
 ) {
 	o := &PullOptions{}

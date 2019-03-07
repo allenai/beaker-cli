@@ -15,7 +15,7 @@ func NewBlueprintCmd(
 	parentOpts *options.AppOptions,
 	config *config.Config,
 ) {
-	o := &image.ImageOptions{AppOptions: parentOpts}
+	o := &image.CmdOptions{AppOptions: parentOpts}
 	cmd := parent.Command("blueprint", "Manage blueprints")
 
 	cmd.Flag("addr", "Address of the Beaker service.").Default(config.BeakerAddress).StringVar(&o.Addr)
@@ -23,7 +23,7 @@ func NewBlueprintCmd(
 	// Add automatic help generation for the command group.
 	var helpSubcommands []string
 	cmd.Command("help", "Show help.").Hidden().Default().PreAction(func(c *kingpin.ParseContext) error {
-		PrintBeakerDeprecationWarning()
+		printDeprecationWarning()
 		fullCommand := append([]string{cmd.Model().Name}, helpSubcommands...)
 		parent.Usage(fullCommand)
 		return nil
@@ -36,7 +36,6 @@ func NewBlueprintCmd(
 	newPullCmd(cmd, o, config)
 }
 
-// PrintBeakerDeprecationWarning prints a warning that blueprint commands will soon be deleted.
-func PrintBeakerDeprecationWarning() {
+func printDeprecationWarning() {
 	color.Yellow("Beaker \"blueprints\" are now called \"images\", and all \"blueprint\" commands will be removed on April 5.\nPlease update to \"image\" commands to ensure a smooth transition.\n")
 }

@@ -7,9 +7,9 @@ import (
 	"github.com/allenai/beaker/config"
 )
 
-// ImageOptions defines the options for image commands
-// TODO: make ImageOptions and Addr unexported once not needed by blueprint command
-type ImageOptions struct {
+// CmdOptions defines the options for image commands
+// TODO: make CmdOptions and Addr unexported once not needed by blueprint command
+type CmdOptions struct {
 	*options.AppOptions
 	Addr string
 }
@@ -20,7 +20,7 @@ func NewImageCmd(
 	parentOpts *options.AppOptions,
 	config *config.Config,
 ) {
-	o := &ImageOptions{AppOptions: parentOpts}
+	o := &CmdOptions{AppOptions: parentOpts}
 	cmd := parent.Command("image", "Manage images")
 
 	cmd.Flag("addr", "Address of the Beaker service.").Default(config.BeakerAddress).StringVar(&o.Addr)

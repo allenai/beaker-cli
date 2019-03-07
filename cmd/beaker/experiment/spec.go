@@ -124,9 +124,13 @@ func (s *TaskSpec) ToAPI() (*api.TaskSpec, error) {
 		return nil, err
 	}
 
+	image := s.Image
+	if image == "" {
+		image = s.Blueprint
+	}
+
 	return &api.TaskSpec{
-		Blueprint:    s.Blueprint, // TODO: don't pass blueprint
-		Image:        s.Image,
+		Image:        image,
 		ResultPath:   s.ResultPath,
 		Description:  s.Description,
 		Arguments:    s.Arguments,

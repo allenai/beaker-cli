@@ -12,7 +12,7 @@ import (
 	"github.com/allenai/beaker/api"
 )
 
-// ImageHandle provides operations on a image.
+// ImageHandle provides operations on an image.
 type ImageHandle struct {
 	client *Client
 	id     string
@@ -43,7 +43,7 @@ func (c *Client) CreateImage(
 	return &ImageHandle{client: c, id: body.ID}, nil
 }
 
-// Image gets a handle for a image by name or ID. The returned handle is
+// Image gets a handle for an image by name or ID. The returned handle is
 // guaranteed throughout its lifetime to refer to the same object, even if that
 // object is later renamed.
 func (c *Client) Image(ctx context.Context, reference string) (*ImageHandle, error) {
@@ -55,12 +55,12 @@ func (c *Client) Image(ctx context.Context, reference string) (*ImageHandle, err
 	return &ImageHandle{client: c, id: id}, nil
 }
 
-// ID returns a image's stable, unique ID.
+// ID returns an image's stable, unique ID.
 func (h *ImageHandle) ID() string {
 	return h.id
 }
 
-// Get retrieves a image's details.
+// Get retrieves an image's details.
 func (h *ImageHandle) Get(ctx context.Context) (*api.Image, error) {
 	uri := path.Join("/api/v3/images", h.id)
 	resp, err := h.client.sendRequest(ctx, http.MethodGet, uri, nil, nil)
@@ -76,7 +76,7 @@ func (h *ImageHandle) Get(ctx context.Context) (*api.Image, error) {
 	return &body, nil
 }
 
-// Repository returns information required to push a image's Docker image.
+// Repository returns information required to push an image's Docker image.
 func (h *ImageHandle) Repository(
 	ctx context.Context,
 	upload bool,
@@ -96,7 +96,7 @@ func (h *ImageHandle) Repository(
 	return &body, nil
 }
 
-// SetName sets a image's name.
+// SetName sets an image's name.
 func (h *ImageHandle) SetName(ctx context.Context, name string) error {
 	path := path.Join("/api/v3/images", h.id)
 	body := api.ImagePatchSpec{Name: &name}
@@ -108,7 +108,7 @@ func (h *ImageHandle) SetName(ctx context.Context, name string) error {
 	return errorFromResponse(resp)
 }
 
-// SetDescription sets a image's description.
+// SetDescription sets an image's description.
 func (h *ImageHandle) SetDescription(ctx context.Context, description string) error {
 	path := path.Join("/api/v3/images", h.id)
 	body := api.ImagePatchSpec{Description: &description}
@@ -150,24 +150,4 @@ func (h *ImageHandle) PatchPermissions(
 	}
 	defer safeClose(resp.Body)
 	return errorFromResponse(resp)
-}
-
-func (c *Client) SearchImages(
-	ctx context.Context,
-	searchOptions api.ImageSearchOptions,
-	page int,
-) ([]api.Image, error) {
-	query := url.Values{"page": {strconv.Itoa(page)}}
-	resp, err := c.sendRequest(ctx, http.MethodPost, "/api/v3/images/search", query, searchOptions)
-	if err != nil {
-		return nil, err
-	}
-	defer safeClose(resp.Body)
-
-	var body []api.Image
-	if err := parseResponse(resp, &body); err != nil {
-		return nil, err
-	}
-
-	return body, nil
 }
