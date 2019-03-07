@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	beaker "github.com/allenai/beaker/client"
+	"github.com/allenai/beaker/client"
 	"github.com/allenai/beaker/config"
 )
 
@@ -27,7 +27,7 @@ func newStreamCmd(
 	o := &streamFileOptions{}
 	cmd := parent.Command("stream-file", "Stream a single file from an existing dataset to stdout")
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		beaker, err := beaker.NewClient(parentOpts.addr, config.UserToken)
+		beaker, err := client.NewClient(parentOpts.addr, config.UserToken)
 		if err != nil {
 			return err
 		}
@@ -40,16 +40,15 @@ func newStreamCmd(
 	cmd.Flag("length", "Number of bytes to read.").Int64Var(&o.length)
 }
 
-func (o *streamFileOptions) run(beaker *beaker.Client) error {
+func (o *streamFileOptions) run(beaker *client.Client) error {
 	ctx := context.TODO()
 	dataset, err := beaker.Dataset(ctx, o.dataset)
 	if err != nil {
 		return err
 	}
 
-	// Single file dataset.
-	filename := o.file
-	if filename == "" {
+	var fileRef *client.FileHandle
+	if o.file == "" {
 		if !dataset.IsFile() {
 			return errors.Errorf("filename required for multi-file dataset %s", dataset.ID())
 		}
@@ -57,13 +56,12 @@ func (o *streamFileOptions) run(beaker *beaker.Client) error {
 		if err != nil {
 			return err
 		}
-		_, info, err := files.Next()
-		if err != nil {
+		if fileRef, _, err = files.Next(); err != nil {
 			return err
 		}
-		filename = info.Path
+	} else {
+		fileRef = dataset.FileRef(o.file)
 	}
-	fileRef := dataset.FileRef(filename)
 
 	var r io.ReadCloser
 	if o.offset != 0 || o.length != 0 {
