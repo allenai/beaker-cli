@@ -30,7 +30,6 @@ type runOptions struct {
 
 type specArgs struct {
 	blueprint  string
-	docker     string
 	image      string
 	resultPath string
 	desc       string
@@ -73,7 +72,6 @@ func newRunCmd(
 	// File spec alternatives
 	cmd.Flag("blueprint", "Blueprint containing code to run").StringVar(&o.specArgs.blueprint)
 	cmd.Flag("image", "Beaker image containing code to run").StringVar(&o.specArgs.image)
-	cmd.Flag("docker", "Docker image to run").StringVar(&o.specArgs.docker)
 	cmd.Flag("desc", "Optional description for the experiment").StringVar(&o.specArgs.desc)
 	cmd.Flag("result-path", "Path within the container to which results will be written").
 		PlaceHolder("PATH").Required().StringVar(&o.specArgs.resultPath)
@@ -126,7 +124,7 @@ func (o *runOptions) run(beaker *beaker.Client) error {
 
 	// Create beaker images in place of Docker images, assuming spec images refer to Docker images.
 	images = map[string]string{} // Map Docker image tags to beaker image IDs.
-	color.Yellow("The --image flag should be used to specify the beaker image to use.  This flag will be deprecated to not accept Docker images.  Instead use the --docker flag\n")
+	color.Red("The --image flag should be used to specify the beaker image to use.\nPassing Docker images to the run command will be deprecated soon.\n")
 
 	for i, task := range spec.Tasks {
 		specImage := task.Spec.Image
@@ -158,9 +156,6 @@ func (o *runOptions) run(beaker *beaker.Client) error {
 
 func specFromArgs(args specArgs) (*ExperimentSpec, error) {
 	image := args.image
-	if image == "" {
-		image = args.docker
-	}
 	spec := TaskSpec{
 		Blueprint:  args.blueprint,
 		Image:      image,
