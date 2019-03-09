@@ -86,14 +86,14 @@ func (o *fetchOptions) run(beaker *beaker.Client) error {
 		return nil
 	}
 
-	fmt.Printf("Downloading dataset %s to directory %s/ ...", color.BlueString(dataset.ID()), target)
 	if dataset.Storage != nil {
-		err := cli.Download(ctx, dataset.Storage, "", o.outputPath, cli.NewDefaultTracker(), 32)
+		fmt.Printf("Downloading dataset %s to directory %s/\n", color.BlueString(dataset.ID()), target)
+		err := cli.Download(ctx, dataset.Storage, "", o.outputPath, cli.UnboundedTracker(ctx), 32)
 		if err != nil {
-			fmt.Printf(" %s.\n", color.RedString("Failed"))
 			return err
 		}
 	} else {
+		fmt.Printf("Downloading dataset %s to directory %s/ ...", color.BlueString(dataset.ID()), target)
 		files, err := dataset.Files(ctx, "")
 		if err != nil {
 			fmt.Printf(" %s.\n", color.RedString("Failed"))
@@ -114,8 +114,8 @@ func (o *fetchOptions) run(beaker *beaker.Client) error {
 				return err
 			}
 		}
+		fmt.Println(" done.")
 	}
 
-	fmt.Println(" done.")
 	return nil
 }
