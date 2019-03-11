@@ -1,57 +1,28 @@
 package blueprint
 
 import (
-	"context"
-	"encoding/json"
-	"os"
-
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/allenai/beaker/api"
 	beaker "github.com/allenai/beaker/client"
+	"github.com/allenai/beaker/cmd/beaker/image"
 	"github.com/allenai/beaker/config"
 )
 
-type inspectOptions struct {
-	blueprints []string
-}
-
 func newInspectCmd(
 	parent *kingpin.CmdClause,
-	parentOpts *blueprintOptions,
+	parentOpts *image.CmdOptions,
 	config *config.Config,
 ) {
-	o := &inspectOptions{}
+	o := &image.InspectOptions{}
 	cmd := parent.Command("inspect", "Display detailed information about one or more blueprints")
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		beaker, err := beaker.NewClient(parentOpts.addr, config.UserToken)
+		printDeprecationWarning()
+		beaker, err := beaker.NewClient(parentOpts.Addr, config.UserToken)
 		if err != nil {
 			return err
 		}
-		return o.run(beaker)
+		return o.Run(beaker)
 	})
 
-	cmd.Arg("blueprint", "Blueprint name or ID").Required().StringsVar(&o.blueprints)
-}
-
-func (o *inspectOptions) run(beaker *beaker.Client) error {
-	ctx := context.TODO()
-
-	var blueprints []*api.Image
-	for _, name := range o.blueprints {
-		blueprint, err := beaker.Blueprint(ctx, name)
-		if err != nil {
-			return err
-		}
-
-		info, err := blueprint.Get(ctx)
-		if err != nil {
-			return err
-		}
-		blueprints = append(blueprints, info)
-	}
-
-	encoder := json.NewEncoder(os.Stdout)
-	encoder.SetIndent("", "    ")
-	return encoder.Encode(blueprints)
+	cmd.Arg("blueprint", "Blueprint name or ID").Required().StringsVar(&o.Images)
 }

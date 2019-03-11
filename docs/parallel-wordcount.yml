@@ -3,7 +3,7 @@ tasks:
   - name: count-1
     spec:
       description: Count words in wordcount-1
-      blueprint: example/wordcount
+      image: example/wordcount
       resultPath: /output
       datasetMounts:
         - datasetId: example/wordcount-1
@@ -12,7 +12,7 @@ tasks:
   - name: count-2
     spec:
       description: Count words in wordcount-2
-      blueprint: example/wordcount
+      image: example/wordcount
       resultPath: /output
       datasetMounts:
         - datasetId: example/wordcount-2
@@ -21,7 +21,7 @@ tasks:
   - name: count-3
     spec:
       description: Count words in wordcount-3
-      blueprint: example/wordcount
+      image: example/wordcount
       resultPath: /output
       datasetMounts:
         - datasetId: example/wordcount-3
@@ -30,7 +30,7 @@ tasks:
   - name: merge
     spec:
       description: Merge wordcounts
-      blueprint: example/merge-wordcount
+      image: example/merge-wordcount
       resultPath: /output
     dependsOn:
      - parentName: count-1

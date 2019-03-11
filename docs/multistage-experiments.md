@@ -10,7 +10,7 @@ A task may depend on the results of another task in its experiment.
 In this example, the `merge` task depends on the results of the `count-1`, `count-2`, and `count-3` tasks.
 The count tasks are executed in parallel and the merge task runs automatically once they complete.
 
-This example uses two blueprints:
+This example uses two images:
 1. `example/wordcount`: Counts all words in the `/input` directory and produces a `word_count` metric.
 2. `example/merge-wordcount`: Sums the `word_count` metrics in the `/input` directory.
 
@@ -23,7 +23,7 @@ tasks:
   - name: count-1
     spec:
       description: Count words in wordcount-1
-      blueprint: example/wordcount
+      image: example/wordcount
       resultPath: /output
       datasetMounts:
         - datasetId: example/wordcount-1
@@ -34,7 +34,7 @@ tasks:
   - name: merge
     spec:
       description: Merge wordcounts
-      blueprint: example/merge-wordcount
+      image: example/merge-wordcount
       resultPath: /output
     dependsOn:
      - parentName: count-1

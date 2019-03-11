@@ -12,6 +12,7 @@ import (
 	"github.com/allenai/beaker/cmd/beaker/dataset"
 	"github.com/allenai/beaker/cmd/beaker/experiment"
 	"github.com/allenai/beaker/cmd/beaker/group"
+	"github.com/allenai/beaker/cmd/beaker/image"
 	"github.com/allenai/beaker/cmd/beaker/options"
 	"github.com/allenai/beaker/cmd/beaker/task"
 	"github.com/allenai/beaker/config"
@@ -55,10 +56,11 @@ func newApp(config *config.Config) (*options.AppOptions, error) {
 
 	// Build out sub-command groups.
 	alpha.NewAlphaCmd(app, o, config)
-	blueprint.NewBlueprintCmd(app, o, config)
+	blueprint.NewBlueprintCmd(app, o, config) // TODO: delete blueprint command
 	dataset.NewDatasetCmd(app, o, config)
 	experiment.NewExperimentCmd(app, o, config)
 	group.NewGroupCmd(app, o, config)
+	image.NewImageCmd(app, o, config)
 	task.NewTaskCmd(app, o, config)
 
 	// Attach sub-commands.

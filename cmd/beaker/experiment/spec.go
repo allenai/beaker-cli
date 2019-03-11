@@ -84,7 +84,7 @@ type TaskSpec struct {
 	// (required) Blueprint describing the code to be run.
 	Blueprint string `yaml:"blueprint"`
 
-	// (deprecated) Name of the Docker image to run.
+	// Image describing code to be run or name of the Docker image to run (deprecated).
 	Image string `yaml:"image,omitempty"`
 
 	// (required) Container path in which experiment will save results.
@@ -124,12 +124,13 @@ func (s *TaskSpec) ToAPI() (*api.TaskSpec, error) {
 		return nil, err
 	}
 
-	if s.Image != "" {
-		return nil, errors.New(`"image" field is deprecated; please define "blueprint" instead`)
+	image := s.Image
+	if image == "" {
+		image = s.Blueprint
 	}
 
 	return &api.TaskSpec{
-		Blueprint:    s.Blueprint,
+		Image:        image,
 		ResultPath:   s.ResultPath,
 		Description:  s.Description,
 		Arguments:    s.Arguments,
