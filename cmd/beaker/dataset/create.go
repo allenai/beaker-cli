@@ -92,7 +92,11 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 			if o.quiet {
 				tracker = cli.NoTracker
 			} else {
-				tracker = cli.UnboundedTracker(ctx)
+				files, bytes, err := cli.UploadStats(o.source)
+				if err != nil {
+					return err
+				}
+				tracker = cli.BoundedTracker(ctx, files, bytes)
 			}
 			err = cli.Upload(ctx, o.source, dataset.Storage, "", tracker, 32)
 		} else {
