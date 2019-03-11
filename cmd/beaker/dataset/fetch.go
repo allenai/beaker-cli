@@ -76,7 +76,7 @@ func (o *fetchOptions) run(beaker *beaker.Client) error {
 			return errors.Errorf("cannot overwrite directory %s with file %s", target, info.Path)
 		}
 
-		fmt.Printf("Downloading dataset %s to file %s ...", color.BlueString(dataset.ID()), target)
+		fmt.Printf("Downloading dataset %s to file %s ...", color.CyanString(dataset.ID()), color.GreenString(target))
 		if err := file.DownloadTo(ctx, target); err != nil {
 			fmt.Printf(" %s.\n", color.RedString("Failed"))
 			return err
@@ -86,14 +86,13 @@ func (o *fetchOptions) run(beaker *beaker.Client) error {
 		return nil
 	}
 
+	fmt.Printf("Downloading %s to %s\n", color.CyanString(dataset.ID()), color.GreenString(target+"/"))
 	if dataset.Storage != nil {
-		fmt.Printf("Downloading dataset %s to directory %s/\n", color.BlueString(dataset.ID()), target)
 		err := cli.Download(ctx, dataset.Storage, "", o.outputPath, cli.UnboundedTracker(ctx), 32)
 		if err != nil {
 			return err
 		}
 	} else {
-		fmt.Printf("Downloading dataset %s to directory %s/ ...", color.BlueString(dataset.ID()), target)
 		files, err := dataset.Files(ctx, "")
 		if err != nil {
 			fmt.Printf(" %s.\n", color.RedString("Failed"))

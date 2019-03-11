@@ -80,9 +80,9 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 
 	if !o.quiet {
 		if o.name == "" {
-			fmt.Printf("Uploading %s ...\n", color.BlueString(dataset.ID()))
+			fmt.Printf("Uploading %s to %s\n", color.GreenString(o.source), color.CyanString(dataset.ID()))
 		} else {
-			fmt.Printf("Uploading %s (%s)...\n", color.BlueString(o.name), dataset.ID())
+			fmt.Printf("Uploading %s to %s (%s)\n", color.GreenString(o.source), color.CyanString(o.name), dataset.ID())
 		}
 	}
 
@@ -111,7 +111,7 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 
 	if o.quiet {
 		fmt.Println(dataset.ID())
-	} else {
+	} else if !(info.IsDir() && o.fileheap) {
 		fmt.Println("Done.")
 	}
 	return nil
