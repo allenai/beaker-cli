@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	beaker "github.com/allenai/beaker/client"
+	"github.com/allenai/beaker/client"
 	"github.com/allenai/beaker/config"
 )
 
@@ -27,7 +27,7 @@ func newStreamCmd(
 	o := &streamFileOptions{}
 	cmd := parent.Command("stream-file", "Stream a single file from an existing dataset to stdout")
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		beaker, err := beaker.NewClient(parentOpts.addr, config.UserToken)
+		beaker, err := client.NewClient(parentOpts.addr, config.UserToken)
 		if err != nil {
 			return err
 		}
@@ -40,29 +40,28 @@ func newStreamCmd(
 	cmd.Flag("length", "Number of bytes to read.").Int64Var(&o.length)
 }
 
-func (o *streamFileOptions) run(beaker *beaker.Client) error {
+func (o *streamFileOptions) run(beaker *client.Client) error {
 	ctx := context.TODO()
 	dataset, err := beaker.Dataset(ctx, o.dataset)
 	if err != nil {
 		return err
 	}
 
-	manifest, err := dataset.Manifest(ctx)
-	if err != nil {
-		return err
-	}
-
-	var filename = o.file
-	if filename == "" {
-		if !manifest.SingleFile {
-			return errors.Errorf("filename required for multi-file dataset %s", manifest.ID)
+	var fileRef *client.FileHandle
+	if o.file == "" {
+		if !dataset.IsFile() {
+			return errors.Errorf("filename required for multi-file dataset %s", dataset.ID())
 		}
-		if len(manifest.Files) == 0 {
-			return errors.Errorf("dataset %s has no files", manifest.ID)
+		files, err := dataset.Files(ctx, "")
+		if err != nil {
+			return err
 		}
-		filename = manifest.Files[0].File
+		if fileRef, _, err = files.Next(); err != nil {
+			return err
+		}
+	} else {
+		fileRef = dataset.FileRef(o.file)
 	}
-	fileRef := dataset.FileRef(filename)
 
 	var r io.ReadCloser
 	if o.offset != 0 || o.length != 0 {

@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/beaker/fileheap/cli"
+	"github.com/beaker/fileheap/client"
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
@@ -45,17 +47,16 @@ func (o *fetchOptions) run(beaker *beaker.Client) error {
 		return err
 	}
 
-	manifest, err := dataset.Manifest(ctx)
-	if err != nil {
-		return err
-	}
-
 	target := o.outputPath
-	if manifest.SingleFile {
-		if len(manifest.Files) == 0 {
-			return errors.New("expected one file, but dataset is empty")
+	if dataset.IsFile() {
+		files, err := dataset.Files(ctx, "")
+		if err != nil {
+			return err
 		}
-		filename := manifest.Files[0].File
+		file, info, err := files.Next()
+		if err != nil {
+			return err
+		}
 
 		// Mimic 'cp' rules: Copying a file to a directory places the file into the target.
 		if os.IsPathSeparator(target[len(target)-1]) {
@@ -64,23 +65,19 @@ func (o *fetchOptions) run(beaker *beaker.Client) error {
 			if _, err := os.Stat(target); err != nil && !os.IsNotExist(err) {
 				return err
 			}
-			target = filepath.Join(target, filename)
+			target = filepath.Join(target, info.Path)
 		} else if f, err := os.Stat(target); err == nil && f.IsDir() {
 			// The target exists and is a directory.
-			target = filepath.Join(target, filename)
+			target = filepath.Join(target, info.Path)
 		}
 
 		// Check again, but error on collision. This is a no-op if target is unmodified.
 		if f, err := os.Stat(target); err == nil && f.IsDir() {
-			return errors.Errorf("cannot overwrite directory %s with file %s", target, filename)
+			return errors.Errorf("cannot overwrite directory %s with file %s", target, info.Path)
 		}
 
-		if len(manifest.Files) == 0 {
-			return errors.Errorf("file could not be found on remote server: %s", filename)
-		}
-
-		fmt.Printf("Downloading dataset %s to file %s ...", color.BlueString(manifest.ID), target)
-		if err := dataset.FileRef(manifest.Files[0].File).DownloadTo(ctx, target); err != nil {
+		fmt.Printf("Downloading dataset %s to file %s ...", color.CyanString(dataset.ID()), color.GreenString(target))
+		if err := file.DownloadTo(ctx, target); err != nil {
 			fmt.Printf(" %s.\n", color.RedString("Failed"))
 			return err
 		}
@@ -89,15 +86,35 @@ func (o *fetchOptions) run(beaker *beaker.Client) error {
 		return nil
 	}
 
-	fmt.Printf("Downloading dataset %s to directory %s/ ...", color.BlueString(manifest.ID), target)
-	for _, file := range manifest.Files {
-		fileTarget := filepath.Join(target, file.File)
-		if err := dataset.FileRef(file.File).DownloadTo(ctx, fileTarget); err != nil {
+	fmt.Printf("Downloading %s to %s\n", color.CyanString(dataset.ID()), color.GreenString(target+"/"))
+	if dataset.Storage != nil {
+		err := cli.Download(ctx, dataset.Storage, "", o.outputPath, cli.UnboundedTracker(ctx), 32)
+		if err != nil {
+			return err
+		}
+	} else {
+		files, err := dataset.Files(ctx, "")
+		if err != nil {
 			fmt.Printf(" %s.\n", color.RedString("Failed"))
 			return err
 		}
+
+		for {
+			file, info, err := files.Next()
+			if err == client.ErrDone {
+				break
+			}
+			if err != nil {
+				fmt.Printf(" %s.\n", color.RedString("Failed"))
+				return err
+			}
+			if err := file.DownloadTo(ctx, filepath.Join(target, info.Path)); err != nil {
+				fmt.Printf(" %s.\n", color.RedString("Failed"))
+				return err
+			}
+		}
+		fmt.Println(" done.")
 	}
 
-	fmt.Println(" done.")
 	return nil
 }

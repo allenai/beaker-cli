@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	fileheap "github.com/allenai/fileheap-client/client"
+	fileheap "github.com/beaker/fileheap/client"
 	"github.com/pkg/errors"
 
 	"github.com/allenai/beaker/api"
@@ -30,14 +30,14 @@ type FileInfo struct {
 // ErrDone indicates an iterator is expended.
 var ErrDone = errors.New("no more items in iterator")
 
-// packageFileIterator is an iterator over files within a FileHeap package.
-type packageFileIterator struct {
+// fileHeapIterator is an iterator over files within a FileHeap dataset.
+type fileHeapIterator struct {
 	dataset  *DatasetHandle
 	iterator *fileheap.FileIterator
 }
 
-func (i *packageFileIterator) Next() (*FileHandle, *FileInfo, error) {
-	ref, info, err := i.iterator.Next()
+func (i *fileHeapIterator) Next() (*FileHandle, *FileInfo, error) {
+	info, err := i.iterator.Next()
 	if err == fileheap.ErrDone {
 		return nil, nil, ErrDone
 	}
@@ -47,7 +47,6 @@ func (i *packageFileIterator) Next() (*FileHandle, *FileInfo, error) {
 	return &FileHandle{
 			dataset: i.dataset,
 			file:    info.Path,
-			fileRef: ref,
 		}, &FileInfo{
 			Path:    info.Path,
 			Size:    info.Size,

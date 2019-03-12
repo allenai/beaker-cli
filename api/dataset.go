@@ -5,17 +5,16 @@ import (
 	"time"
 )
 
-// PackageReference is a reference to a FileHeap package.
-type PackageReference struct {
-	PackageAddress string `json:"packageAddress,omitempty"`
-	PackageID      string `json:"packageID,omitempty"`
-	Token          string `json:"token,omitempty"`
+// DatasetStorage is a reference to a FileHeap dataset.
+type DatasetStorage struct {
+	Address string `json:"address,omitempty"`
+	ID      string `json:"id,omitempty"`
+	Token   string `json:"token,omitempty"`
 }
 
-// CreateDatasetResponse is a service response returned when a new dataset is
-// created. For now it's just the dataset ID, but may be expanded in the future.
+// CreateDatasetResponse is a service response returned when a new dataset is created.
 type CreateDatasetResponse struct {
-	PackageReference
+	Storage DatasetStorage `json:"storage,omitempty"`
 
 	ID string `json:"id"`
 }
@@ -23,7 +22,7 @@ type CreateDatasetResponse struct {
 // Dataset is a file or collection of files. It may be the result of a task or
 // uploaded directly by a user.
 type Dataset struct {
-	PackageReference
+	Storage DatasetStorage `json:"storage,omitempty"`
 
 	// Identity
 	ID   string `json:"id"`
@@ -43,6 +42,9 @@ type Dataset struct {
 
 	// Task for which this dataset is a result, i.e. provenance, if any.
 	SourceTask *string `json:"source_task,omitempty"`
+
+	// Included if the dataset is a single file.
+	IsFile bool `json:"isFile,omitempty"`
 }
 
 // DisplayID returns the most human-friendly name available for a dataset while
@@ -72,6 +74,10 @@ type DatasetSpec struct {
 	// (optional) A token representing the user to which the object should be attributed.
 	// If omitted attribution will be given to the user issuing the request.
 	AuthorToken string `json:"author_token,omitempty"`
+
+	// (optional) If set, the dataset will be stored in FileHeap.
+	// This flag will eventually become the default and be removed.
+	FileHeap bool `json:"fileHeap,omitempty"`
 }
 
 // DatasetFile dsecribes a file within a dataset.

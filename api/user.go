@@ -34,6 +34,9 @@ type UserPatchSpec struct {
 	// name, display names have no restrictions character set or uniqueness.
 	DisplayName *string `json:"display_name,omitempty"`
 
+	// (optional) Email address for sending notifications to the user.
+	Email *string `json:"email,omitempty"`
+
 	// (optional) User-submitted professional affiliation.
 	Institution *string `json:"institution,omitempty"`
 

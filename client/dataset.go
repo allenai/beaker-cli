@@ -7,7 +7,7 @@ import (
 	"path"
 	"strconv"
 
-	fileheap "github.com/allenai/fileheap-client/client"
+	fileheap "github.com/beaker/fileheap/client"
 
 	"github.com/allenai/beaker/api"
 )
@@ -16,7 +16,9 @@ import (
 type DatasetHandle struct {
 	client *Client
 	id     string
-	pkg    *fileheap.PackageRef
+	isFile bool
+
+	Storage *fileheap.DatasetRef
 }
 
 // CreateDataset creates a new dataset with an optional name.
@@ -41,16 +43,16 @@ func (c *Client) CreateDataset(
 		return nil, err
 	}
 
-	var pkg *fileheap.PackageRef
-	if body.PackageAddress != "" && body.PackageID != "" {
-		fileheap, err := fileheap.New(body.PackageAddress, fileheap.WithToken(body.Token))
+	var ds *fileheap.DatasetRef
+	if body.Storage.ID != "" {
+		fileheap, err := fileheap.New(body.Storage.Address, fileheap.WithToken(body.Storage.Token))
 		if err != nil {
 			return nil, err
 		}
-		pkg = fileheap.Package(body.PackageID)
+		ds = fileheap.Dataset(body.Storage.ID)
 	}
 
-	return &DatasetHandle{client: c, id: body.ID, pkg: pkg}, nil
+	return &DatasetHandle{client: c, id: body.ID, isFile: spec.Filename != "", Storage: ds}, nil
 }
 
 // Dataset gets a handle for a dataset by name or ID. The returned handle is
@@ -73,21 +75,26 @@ func (c *Client) Dataset(ctx context.Context, reference string) (*DatasetHandle,
 		return nil, err
 	}
 
-	var pkg *fileheap.PackageRef
-	if body.PackageAddress != "" && body.PackageID != "" {
-		fileheap, err := fileheap.New(body.PackageAddress, fileheap.WithToken(body.Token))
+	var ds *fileheap.DatasetRef
+	if body.Storage.ID != "" {
+		fileheap, err := fileheap.New(body.Storage.Address, fileheap.WithToken(body.Storage.Token))
 		if err != nil {
 			return nil, err
 		}
-		pkg = fileheap.Package(body.PackageID)
+		ds = fileheap.Dataset(body.Storage.ID)
 	}
 
-	return &DatasetHandle{client: c, id: body.ID, pkg: pkg}, nil
+	return &DatasetHandle{client: c, id: body.ID, isFile: body.IsFile, Storage: ds}, nil
 }
 
 // ID returns a dataset's stable, unique ID.
 func (h *DatasetHandle) ID() string {
 	return h.id
+}
+
+// IsFile returns true if the dataset is a single file.
+func (h *DatasetHandle) IsFile() bool {
+	return h.isFile
 }
 
 // Get retrieves a dataset's details.
@@ -125,10 +132,10 @@ func (h *DatasetHandle) Manifest(ctx context.Context) (*api.DatasetManifest, err
 
 // Files returns an iterator over all files in the dataset under the given path.
 func (h *DatasetHandle) Files(ctx context.Context, path string) (FileIterator, error) {
-	if h.pkg != nil {
-		return &packageFileIterator{
+	if h.Storage != nil {
+		return &fileHeapIterator{
 			dataset:  h,
-			iterator: h.pkg.Files(ctx, path),
+			iterator: h.Storage.Files(ctx, path),
 		}, nil
 	}
 
