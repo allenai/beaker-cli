@@ -88,10 +88,8 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 
 	if info.IsDir() {
 		if o.fileheap {
-			var tracker cli.ProgressTracker
-			if o.quiet {
-				tracker = cli.NoTracker
-			} else {
+			var tracker cli.ProgressTracker = cli.NoTracker
+			if !o.quiet {
 				files, bytes, err := cli.UploadStats(o.source)
 				if err != nil {
 					return err
