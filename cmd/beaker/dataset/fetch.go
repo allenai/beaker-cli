@@ -7,13 +7,13 @@ import (
 	"path/filepath"
 
 	"github.com/beaker/fileheap/cli"
+	"github.com/beaker/fileheap/client"
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	beaker "github.com/allenai/beaker/client"
 	"github.com/allenai/beaker/config"
-	"github.com/beaker/fileheap/client"
 )
 
 type fetchOptions struct {
