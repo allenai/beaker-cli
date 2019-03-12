@@ -7,12 +7,14 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/pkg/errors"
+
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	yaml "gopkg.in/yaml.v2"
 
 	beaker "github.com/allenai/beaker/client"
-	"github.com/allenai/beaker/cmd/beaker/blueprint"
+	"github.com/allenai/beaker/cmd/beaker/image"
 	"github.com/allenai/beaker/config"
 )
 
@@ -69,7 +71,7 @@ func newRunCmd(
 
 	// File spec alternatives
 	cmd.Flag("blueprint", "Blueprint containing code to run").StringVar(&o.specArgs.blueprint)
-	cmd.Flag("image", "Docker image to run").StringVar(&o.specArgs.image)
+	cmd.Flag("image", "Beaker image containing code to run").StringVar(&o.specArgs.image)
 	cmd.Flag("desc", "Optional description for the experiment").StringVar(&o.specArgs.desc)
 	cmd.Flag("result-path", "Path within the container to which results will be written").
 		PlaceHolder("PATH").Required().StringVar(&o.specArgs.resultPath)
@@ -95,30 +97,18 @@ func (o *runOptions) run(beaker *beaker.Client) error {
 		return err
 	}
 
-	// Create blueprints in place of images.
-	images := map[string]string{} // Map image tags to blueprint IDs.
-	for i, task := range spec.Tasks {
-		image := task.Spec.Image
-		spec.Tasks[i].Spec.Image = ""
+	// Assume spec images refer to beaker images.
+	images := map[string]string{} // Map Docker image tags to beaker image IDs.
+	for _, task := range spec.Tasks {
+		specImage := task.Spec.Image
 
 		// Blueprints take priority over images. Enforce that we have exactly one.
 		if task.Spec.Blueprint != "" {
 			continue
 		}
-		if image == "" {
-			return errors.Errorf("task %q must declare either a blueprint or an image to run", task.Name)
+		if specImage == "" {
+			return errors.Errorf("task %q must declare either a beaker image or Docker image to run", task.Name)
 		}
-
-		blueprintID, ok := images[image]
-		if !ok {
-			var err error
-			blueprintID, err = blueprint.Create(ctx, os.Stdout, beaker, image, nil)
-			if err != nil {
-				return errors.WithMessage(err, "failed to create blueprint for image "+strconv.Quote(image))
-			}
-			images[image] = blueprintID
-		}
-		spec.Tasks[i].Spec.Blueprint = blueprintID
 	}
 
 	if o.dryRun {
@@ -128,13 +118,47 @@ func (o *runOptions) run(beaker *beaker.Client) error {
 	}
 
 	_, err = Create(ctx, os.Stdout, beaker, spec, &CreateOptions{Name: o.name, Quiet: o.quiet, Org: o.org})
+	if err == nil {
+		return err
+	}
+
+	// Create beaker images in place of Docker images, assuming spec images refer to Docker images.
+	images = map[string]string{} // Map Docker image tags to beaker image IDs.
+	color.Red("The --image flag should be used to specify the beaker image to use.\nPassing Docker images to the run command will be deprecated soon.\n")
+
+	for i, task := range spec.Tasks {
+		specImage := task.Spec.Image
+		spec.Tasks[i].Spec.Image = ""
+
+		// Blueprints take priority over images. Enforce that we have exactly one.
+		if task.Spec.Blueprint != "" {
+			continue
+		}
+		if specImage == "" {
+			return errors.Errorf("task %q must declare either a beaker image or Docker image to run", task.Name)
+		}
+
+		imageID, ok := images[specImage]
+		if !ok {
+			var err error
+			imageID, err = image.Create(ctx, os.Stdout, beaker, specImage, nil)
+			if err != nil {
+				return errors.WithMessage(err, "failed to create beaker image for Docker image "+strconv.Quote(specImage))
+			}
+			images[specImage] = imageID
+		}
+		spec.Tasks[i].Spec.Blueprint = imageID
+	}
+
+	_, err = Create(ctx, os.Stdout, beaker, spec, &CreateOptions{Name: o.name, Quiet: o.quiet, Org: o.org})
 	return err
 }
 
 func specFromArgs(args specArgs) (*ExperimentSpec, error) {
+	image := args.image
 	spec := TaskSpec{
 		Blueprint:  args.blueprint,
-		Image:      args.image,
+		Image:      image,
 		ResultPath: args.resultPath,
 		Arguments:  args.args,
 		Requirements: Requirements{

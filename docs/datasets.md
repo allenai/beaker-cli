@@ -123,12 +123,12 @@ This is a single file.
 ## Use Datasets in an Experiment
 
 To demonstrate how to use a dataset in an experiment, we'll run the same find command we ran above
-as a Beaker experiment. The code for this experiment's blueprint can be found
+as a Beaker experiment. The code for this experiment's image can be found
 [here](../examples/list-files).
 
 ```bash
 beaker experiment run \
-    --blueprint example/list-files \
+    --image example/list-files \
     --env LIST_DIR=/data \
     --source my-file-dataset:/data/single \
     --source my-dir-dataset:/data/multi \
