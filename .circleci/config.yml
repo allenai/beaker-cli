@@ -6,3 +6,30 @@ jobs:
     steps:
       - checkout
       - run: make dev test --output-sync=target
+  release:
+    docker:
+      - image: circleci/golang:1.11.5
+    steps:
+      - checkout
+      - run:
+          command: |
+            export GITHUB_TOKEN=$GITHUB_ACCESS_TOKEN
+            go mod download
+            make release
+
+workflows:
+  version: 2
+  build-release:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*(-.*)*/
+      - release:
+          requires:
+            - build
+          filters:
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*(-.*)*/
