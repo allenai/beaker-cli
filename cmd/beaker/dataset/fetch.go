@@ -7,12 +7,11 @@ import (
 	"path/filepath"
 
 	"github.com/beaker/fileheap/cli"
-	"github.com/beaker/fileheap/client"
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	beaker "github.com/allenai/beaker/client"
+	"github.com/allenai/beaker/client"
 	"github.com/allenai/beaker/config"
 )
 
@@ -29,7 +28,7 @@ func newFetchCmd(
 	o := &fetchOptions{}
 	cmd := parent.Command("fetch", "Fetch an existing dataset")
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		beaker, err := beaker.NewClient(parentOpts.addr, config.UserToken)
+		beaker, err := client.NewClient(parentOpts.addr, config.UserToken)
 		if err != nil {
 			return err
 		}
@@ -40,7 +39,7 @@ func newFetchCmd(
 	cmd.Arg("dataset", "Dataset name or ID").Required().StringVar(&o.dataset)
 }
 
-func (o *fetchOptions) run(beaker *beaker.Client) error {
+func (o *fetchOptions) run(beaker *client.Client) error {
 	ctx := context.TODO()
 	dataset, err := beaker.Dataset(ctx, o.dataset)
 	if err != nil {
