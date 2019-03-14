@@ -26,10 +26,13 @@ workflows:
             branches:
               only: /.*/
             tags:
-              only: /v[0-9]+(\.[0-9]+)*(-.*)*/
+              only: /.*/
       - release:
           requires:
             - build
           filters:
+            # Only run the release on tags
+            branches:
+              ignore: /.*/
             tags:
-              only: /v[0-9]+(\.[0-9]+)*(-.*)*/
+              only: /.*/
