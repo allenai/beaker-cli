@@ -14,7 +14,11 @@ jobs:
       - run:
           command: |
             export GITHUB_TOKEN=$GITHUB_ACCESS_TOKEN
+            # goreleaser runs builds for darwin/linux together and module cache isn't safe against concurrent updates.
+            # This way we avoid running into issues during goreleaser builds.
             go mod download
+            # For some reason go.sum gets reordered all the time. This avoids "git is in a dirty state errors"
+            go mod tidy
             make release
 
 workflows:
