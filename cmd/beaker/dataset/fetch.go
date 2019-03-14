@@ -6,12 +6,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/allenai/beaker/client"
 	"github.com/beaker/fileheap/cli"
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
+	"github.com/allenai/beaker/client"
 	beaker "github.com/allenai/beaker/client"
 	"github.com/allenai/beaker/config"
 )
