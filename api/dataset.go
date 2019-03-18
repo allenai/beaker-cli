@@ -7,9 +7,10 @@ import (
 
 // DatasetStorage is a reference to a FileHeap dataset.
 type DatasetStorage struct {
-	Address string `json:"address,omitempty"`
-	ID      string `json:"id,omitempty"`
-	Token   string `json:"token,omitempty"`
+	Address      string    `json:"address,omitempty"`
+	ID           string    `json:"id,omitempty"`
+	Token        string    `json:"token,omitempty"`
+	TokenExpires time.Time `json:"tokenExpires,omitempty"`
 }
 
 // CreateDatasetResponse is a service response returned when a new dataset is created.
