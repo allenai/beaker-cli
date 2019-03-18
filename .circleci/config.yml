@@ -2,13 +2,13 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.11.5
+      - image: circleci/golang:1.12.1
     steps:
       - checkout
       - run: make dev test --output-sync=target
   release:
     docker:
-      - image: circleci/golang:1.11.5
+      - image: circleci/golang:1.12.1
     steps:
       - checkout
       - run:
