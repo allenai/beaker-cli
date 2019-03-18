@@ -49,9 +49,8 @@ type ExperimentSpec struct {
 	// If omitted attribution will be given to the user issuing the request.
 	AuthorToken string `json:"author_token,omitempty"`
 
-	// (optional) Whether Comet.ML integration should be enabled for this experiment.
-	// If ommitted, defaults to false.
-	EnableComet bool `json:"enableComet"`
+	// (optional) Settings for the Comet.ML integration, if it should be used for this experiment.
+	Comet ExperimentCometSpec `json:"comet,omitempty"`
 }
 
 // ExperimentNode describes a task along with its links within an experiment.
@@ -101,6 +100,20 @@ type TaskDependency struct {
 	// (optional) Path in the child task to which parent results will be mounted.
 	// If absent, this is treated as an order-only dependency.
 	ContainerPath string `json:"container_path,omitempty"`
+}
+
+type ExperimentCometSpec struct {
+	// (required) Whether or not to enable the integration for this experiment.
+	Enable bool `json:"enable"`
+
+	// (optional) The name of the experiment (shown in the Comet.ML interface)
+	ExperimentName string `json:"experiment,omitempty"`
+
+	// (optional) The name of the Comet.ML project for this experiment.
+	ProjectName string `json:"project,omitempty"`
+
+	// (optional) The name of the Comet.ML workspace for this experiment.
+	WorkspaceName string `json:"workspace,omitempty"`
 }
 
 // ExperimentPatchSpec describes a patch to apply to an experiment's editable
