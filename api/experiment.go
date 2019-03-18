@@ -50,7 +50,7 @@ type ExperimentSpec struct {
 	AuthorToken string `json:"author_token,omitempty"`
 
 	// (optional) Settings for the Comet.ML integration, if it should be used for this experiment.
-	Comet ExperimentCometSpec `json:"comet,omitempty"`
+	Comet *ExperimentCometSpec `json:"comet,omitempty"`
 }
 
 // ExperimentNode describes a task along with its links within an experiment.

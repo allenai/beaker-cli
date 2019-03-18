@@ -119,7 +119,7 @@ func Create(
 	} else {
 		url := experimentURL(beaker.Address(), experiment.ID())
 		fmt.Fprintf(w, "Experiment %s submitted. See progress at %s\n", color.BlueString(experiment.ID()), url)
-		if apiSpec.Comet.Enable {
+		if apiSpec.Comet != nil && apiSpec.Comet.Enable {
 			// get the Experiment from Beaker to show the Comet URL(s)
 			createdExp, err := experiment.Get(ctx)
 			if err != nil {
