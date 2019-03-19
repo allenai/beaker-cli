@@ -14,7 +14,7 @@ type ExperimentSpec struct {
 	Description string `yaml:"description,omitempty"`
 
 	// (optional) If true, create Comet.ML experiments per task in this experiment.
-	EnableComet bool `yaml:"enableComet,omitempty"`
+	Comet *ExperimentCometSpec `yaml:"comet,omitempty"`
 
 	// (required) Tasks to create. Tasks may be defined in any order, though all
 	// dependencies must be internally resolvable within the experiment.
@@ -31,7 +31,29 @@ func (s ExperimentSpec) ToAPI() (api.ExperimentSpec, error) {
 		}
 		tasks = append(tasks, apiTask)
 	}
-	return api.ExperimentSpec{Description: s.Description, EnableComet: s.EnableComet, Tasks: tasks}, nil
+
+	apiSpec := api.ExperimentSpec{Description: s.Description, Tasks: tasks}
+	if s.Comet != nil {
+		apiSpec.Comet = s.Comet.ToAPI()
+	}
+	return apiSpec, nil
+}
+
+type ExperimentCometSpec struct {
+	Enable         bool   `yaml:"enable"`
+	ExperimentName string `yaml:"experiment,omitempty"`
+	ProjectName    string `yaml:"project,omitempty"`
+	WorkspaceName  string `yaml:"workspace,omitempty"`
+}
+
+// ToAPI converts to an API-compatible struct.
+func (s ExperimentCometSpec) ToAPI() *api.ExperimentCometSpec {
+	return &api.ExperimentCometSpec{
+		Enable:         s.Enable,
+		ExperimentName: s.ExperimentName,
+		ProjectName:    s.ProjectName,
+		WorkspaceName:  s.WorkspaceName,
+	}
 }
 
 // ExperimentTaskSpec describes a task spec with optional dependencies on other
