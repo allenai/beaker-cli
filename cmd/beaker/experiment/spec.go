@@ -129,6 +129,9 @@ type TaskSpec struct {
 
 	// (optional) Experiment resource requirements for scheduling.
 	Requirements Requirements `yaml:"requirements,omitempty"`
+
+	// (optional) Use FileHeap to store results.
+	FileHeapResults bool `yaml:"fileheapResults"`
 }
 
 // ToAPI converts to an API-compatible struct.
@@ -152,13 +155,14 @@ func (s *TaskSpec) ToAPI() (*api.TaskSpec, error) {
 	}
 
 	return &api.TaskSpec{
-		Image:        image,
-		ResultPath:   s.ResultPath,
-		Description:  s.Description,
-		Arguments:    s.Arguments,
-		Env:          s.Env,
-		Mounts:       datasetMounts,
-		Requirements: requirements,
+		Image:           image,
+		ResultPath:      s.ResultPath,
+		Description:     s.Description,
+		Arguments:       s.Arguments,
+		Env:             s.Env,
+		Mounts:          datasetMounts,
+		Requirements:    requirements,
+		FileHeapResults: s.FileHeapResults,
 	}, nil
 }
 

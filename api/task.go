@@ -73,6 +73,9 @@ type TaskSpec struct {
 
 	// (optional) Task resource requirements for scheduling.
 	Requirements TaskRequirements `json:"requirements"`
+
+	// (optional) Use FileHeap to store results.
+	FileHeapResults bool `json:"fileheapResults"`
 }
 
 // TaskRequirements describes the runtime hardware requirements for a task.
