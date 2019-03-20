@@ -66,7 +66,7 @@ func (o *listOptions) run(beaker *client.Client) error {
 			buf, err := json.Marshal(fileInfo{
 				Path:    info.Path,
 				Size:    info.Size,
-				Updated: info.Updated.UnixNano(),
+				Updated: info.Updated,
 			})
 			if err != nil {
 				return err
@@ -90,7 +90,7 @@ func (o *listOptions) run(beaker *client.Client) error {
 }
 
 type fileInfo struct {
-	Path    string `json:"path"`
-	Size    int64  `json:"bytes"`
-	Updated int64  `json:"updated"`
+	Path    string    `json:"path"`
+	Size    int64     `json:"bytes"`
+	Updated time.Time `json:"updated"`
 }
