@@ -3,15 +3,13 @@ package dataset
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
 	bytefmt "github.com/beaker/fileheap/bytefmt"
-	fileheap "github.com/beaker/fileheap/client"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	beaker "github.com/allenai/beaker/client"
+	"github.com/allenai/beaker/client"
 	"github.com/allenai/beaker/config"
 )
 
@@ -29,7 +27,7 @@ func newListCmd(
 	o := &listOptions{}
 	cmd := parent.Command("ls", "List files in a dataset.")
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		beaker, err := beaker.NewClient(parentOpts.addr, config.UserToken)
+		beaker, err := client.NewClient(parentOpts.addr, config.UserToken)
 		if err != nil {
 			return err
 		}
@@ -41,22 +39,21 @@ func newListCmd(
 	cmd.Flag("json", "Output a JSON object for each file.").BoolVar(&o.json)
 }
 
-func (o *listOptions) run(beaker *beaker.Client) error {
+func (o *listOptions) run(beaker *client.Client) error {
 	ctx := context.Background()
 	dataset, err := beaker.Dataset(ctx, o.dataset)
 	if err != nil {
 		return err
 	}
 
-	if dataset.Storage == nil {
-		return errors.New("dataset ls is only supported for FileHeap datasets")
-	}
-
 	var totalFiles, totalBytes int64
-	files := dataset.Storage.Files(ctx, o.prefix)
+	files, err := dataset.Files(ctx, o.prefix)
+	if err != nil {
+		return err
+	}
 	for {
-		info, err := files.Next()
-		if err == fileheap.ErrDone {
+		_, info, err := files.Next()
+		if err == client.ErrDone {
 			break
 		}
 		if err != nil {
