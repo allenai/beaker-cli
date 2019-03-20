@@ -34,8 +34,8 @@ func newListCmd(
 		return o.run(beaker)
 	})
 
-	cmd.Arg("dataset", "Dataset name or ID.").Required().StringVar(&o.dataset)
-	cmd.Arg("prefix", "Path prefix.").StringVar(&o.prefix)
+	cmd.Arg("dataset", "Dataset name or ID").Required().StringVar(&o.dataset)
+	cmd.Arg("prefix", "Path prefix").StringVar(&o.prefix)
 	cmd.Flag("json", "Output a JSON object for each file.").BoolVar(&o.json)
 }
 
