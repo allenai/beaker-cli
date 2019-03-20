@@ -7,15 +7,15 @@ import (
 
 // DatasetStorage is a reference to a FileHeap dataset.
 type DatasetStorage struct {
-	Address      string    `json:"address,omitempty"`
-	ID           string    `json:"id,omitempty"`
-	Token        string    `json:"token,omitempty"`
-	TokenExpires time.Time `json:"tokenExpires,omitempty"`
+	Address      string    `json:"address"`
+	ID           string    `json:"id"`
+	Token        string    `json:"token"`
+	TokenExpires time.Time `json:"tokenExpires"`
 }
 
 // CreateDatasetResponse is a service response returned when a new dataset is created.
 type CreateDatasetResponse struct {
-	Storage DatasetStorage `json:"storage,omitempty"`
+	Storage *DatasetStorage `json:"storage,omitempty"`
 
 	ID string `json:"id"`
 }
@@ -23,7 +23,7 @@ type CreateDatasetResponse struct {
 // Dataset is a file or collection of files. It may be the result of a task or
 // uploaded directly by a user.
 type Dataset struct {
-	Storage DatasetStorage `json:"storage,omitempty"`
+	Storage *DatasetStorage `json:"storage,omitempty"`
 
 	// Identity
 	ID   string `json:"id"`
