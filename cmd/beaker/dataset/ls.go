@@ -77,8 +77,8 @@ func (o *listOptions) run(beaker *beaker.Client) error {
 			fmt.Println(string(buf))
 		} else {
 			fmt.Printf(
-				"%10d  %s  %s\n",
-				info.Size,
+				"%10s  %s  %s\n",
+				bytefmt.FormatBytes(info.Size),
 				info.Updated.Format(time.RFC3339),
 				info.Path,
 			)
@@ -86,7 +86,7 @@ func (o *listOptions) run(beaker *beaker.Client) error {
 	}
 
 	if !o.json {
-		fmt.Printf("Total: %d files, %d bytes (%s)\n", totalFiles, totalBytes, bytefmt.FormatBytes(totalBytes))
+		fmt.Printf("Total: %d files, %s\n", totalFiles, bytefmt.FormatBytes(totalBytes))
 	}
 
 	return nil
