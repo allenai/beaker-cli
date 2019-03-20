@@ -44,7 +44,7 @@ func (c *Client) CreateDataset(
 	}
 
 	var ds *fileheap.DatasetRef
-	if body.Storage.ID != "" {
+	if body.Storage != nil {
 		fileheap, err := fileheap.New(body.Storage.Address, fileheap.WithToken(body.Storage.Token))
 		if err != nil {
 			return nil, err
@@ -76,7 +76,7 @@ func (c *Client) Dataset(ctx context.Context, reference string) (*DatasetHandle,
 	}
 
 	var ds *fileheap.DatasetRef
-	if body.Storage.ID != "" {
+	if body.Storage != nil {
 		fileheap, err := fileheap.New(body.Storage.Address, fileheap.WithToken(body.Storage.Token))
 		if err != nil {
 			return nil, err
