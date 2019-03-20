@@ -91,6 +91,6 @@ func (o *listOptions) run(beaker *client.Client) error {
 
 type fileInfo struct {
 	Path    string    `json:"path"`
-	Size    int64     `json:"bytes"`
+	Size    int64     `json:"size"`
 	Updated time.Time `json:"updated"`
 }
