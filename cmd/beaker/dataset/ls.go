@@ -27,7 +27,7 @@ func newListCmd(
 	config *config.Config,
 ) {
 	o := &listOptions{}
-	cmd := parent.Command("ls", "List files in a dataset")
+	cmd := parent.Command("ls", "List files in a dataset.")
 	cmd.Action(func(c *kingpin.ParseContext) error {
 		beaker, err := beaker.NewClient(parentOpts.addr, config.UserToken)
 		if err != nil {
