@@ -16,8 +16,12 @@ import (
 type listOptions struct {
 	dataset string
 	prefix  string
-	json    bool
+	format  string
 }
+
+const (
+	formatJSON = "json"
+)
 
 func newListCmd(
 	parent *kingpin.CmdClause,
@@ -36,7 +40,7 @@ func newListCmd(
 
 	cmd.Arg("dataset", "Dataset name or ID").Required().StringVar(&o.dataset)
 	cmd.Arg("prefix", "Path prefix").StringVar(&o.prefix)
-	cmd.Flag("json", "Output a JSON object for each file.").BoolVar(&o.json)
+	cmd.Flag("format", "Output format").EnumVar(&o.format, formatJSON)
 }
 
 func (o *listOptions) run(beaker *client.Client) error {
@@ -62,7 +66,8 @@ func (o *listOptions) run(beaker *client.Client) error {
 		totalFiles++
 		totalBytes += info.Size
 
-		if o.json {
+		switch o.format {
+		case formatJSON:
 			buf, err := json.Marshal(fileInfo{
 				Path:    info.Path,
 				Size:    info.Size,
@@ -72,7 +77,7 @@ func (o *listOptions) run(beaker *client.Client) error {
 				return err
 			}
 			fmt.Println(string(buf))
-		} else {
+		default:
 			fmt.Printf(
 				"%10s  %s  %s\n",
 				bytefmt.FormatBytes(info.Size),
@@ -82,7 +87,9 @@ func (o *listOptions) run(beaker *client.Client) error {
 		}
 	}
 
-	if !o.json {
+	switch o.format {
+	case formatJSON:
+	default:
 		fmt.Printf("Total: %d files, %s\n", totalFiles, bytefmt.FormatBytes(totalBytes))
 	}
 
