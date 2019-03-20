@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"time"
 
+	bytefmt "github.com/beaker/fileheap/bytefmt"
+	fileheap "github.com/beaker/fileheap/client"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	beaker "github.com/allenai/beaker/client"
 	"github.com/allenai/beaker/config"
-	bytefmt "github.com/beaker/fileheap/bytefmt"
-	fileheap "github.com/beaker/fileheap/client"
 )
 
 type listOptions struct {
