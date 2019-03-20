@@ -37,4 +37,5 @@ func NewDatasetCmd(
 	newRenameCmd(cmd, o, config)
 	newStreamCmd(cmd, o, config)
 	newInspectCmd(cmd, o, config)
+	newListCmd(cmd, o, config)
 }
