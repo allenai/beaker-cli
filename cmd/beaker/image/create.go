@@ -131,7 +131,7 @@ func Create(
 		stream = ioutil.Discard
 	}
 	if err := jsonmessage.DisplayJSONMessagesStream(r, stream, 0, false, nil); err != nil {
-		r.Close()
+		_ = r.Close()
 		return "", errors.WithStack(err)
 	}
 	if err := r.Close(); err != nil {
