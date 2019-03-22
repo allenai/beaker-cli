@@ -125,14 +125,16 @@ func Create(
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
-	defer r.Close()
-
 	// Display push responses as the Docker CLI would. This also translates remote errors.
 	var stream io.Writer = os.Stdout
 	if opts.Quiet {
 		stream = ioutil.Discard
 	}
 	if err := jsonmessage.DisplayJSONMessagesStream(r, stream, 0, false, nil); err != nil {
+		_ = r.Close()
+		return "", errors.WithStack(err)
+	}
+	if err := r.Close(); err != nil {
 		return "", errors.WithStack(err)
 	}
 
