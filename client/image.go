@@ -151,3 +151,23 @@ func (h *ImageHandle) PatchPermissions(
 	defer safeClose(resp.Body)
 	return errorFromResponse(resp)
 }
+
+func (c *Client) SearchImages(
+	ctx context.Context,
+	searchOptions api.ImageSearchOptions,
+	page int,
+) ([]api.Image, error) {
+	query := url.Values{"page": {strconv.Itoa(page)}}
+	resp, err := c.sendRequest(ctx, http.MethodPost, "/api/v3/images/search", query, searchOptions)
+	if err != nil {
+		return nil, err
+	}
+	defer safeClose(resp.Body)
+
+	var body []api.Image
+	if err := parseResponse(resp, &body); err != nil {
+		return nil, err
+	}
+
+	return body, nil
+}
