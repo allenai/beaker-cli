@@ -23,6 +23,7 @@ type createOptions struct {
 	source      string
 	org         string
 	fileheap    bool
+	legacy      bool
 }
 
 func newCreateCmd(
@@ -47,13 +48,18 @@ func newCreateCmd(
 	cmd.Flag("name", "Assign a name to the dataset").Short('n').StringVar(&o.name)
 	cmd.Flag("quiet", "Only display created dataset's ID").Short('q').BoolVar(&o.quiet)
 	cmd.Flag("org", "Org that will own the created experiment").Short('o').StringVar(&o.org)
-	cmd.Flag("fileheap", "Store the dataset in FileHeap").BoolVar(&o.fileheap)
+	cmd.Flag("fileheap", "").BoolVar(&o.fileheap)
+	cmd.Flag("legacy", "Store the dataset in the legacy dataset store instead of FileHeap").BoolVar(&o.legacy)
 	cmd.Arg("source", "Path to a file or directory containing the data").
 		Required().ExistingFileOrDirVar(&o.source)
 }
 
 func (o *createOptions) run(beaker *beaker.Client) error {
-	ctx := context.TODO()
+	ctx := context.Background()
+
+	if o.fileheap {
+		color.Yellow("--fileheap is now the default and can be omitted")
+	}
 
 	info, err := os.Stat(o.source)
 	if err != nil {
@@ -66,7 +72,7 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 	spec := api.DatasetSpec{
 		Description:  o.description,
 		Organization: o.org,
-		FileHeap:     o.fileheap,
+		FileHeap:     !o.legacy,
 	}
 	if !info.IsDir() {
 		// If uploading a single file, treat it as a single-file dataset.
@@ -87,7 +93,9 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 	}
 
 	if info.IsDir() {
-		if o.fileheap {
+		if o.legacy {
+			err = uploadDirectory(ctx, dataset, o.source, !o.quiet)
+		} else {
 			var tracker cli.ProgressTracker = cli.NoTracker
 			if !o.quiet {
 				files, bytes, err := cli.UploadStats(o.source)
@@ -97,8 +105,6 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 				tracker = cli.BoundedTracker(ctx, files, bytes)
 			}
 			err = cli.Upload(ctx, o.source, dataset.Storage, "", tracker, 32)
-		} else {
-			err = uploadDirectory(ctx, dataset, o.source, !o.quiet)
 		}
 	} else {
 		err = uploadFile(ctx, dataset.FileRef(info.Name()), o.source, info.Size())
@@ -113,7 +119,7 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 
 	if o.quiet {
 		fmt.Println(dataset.ID())
-	} else if !(info.IsDir() && o.fileheap) {
+	} else if !info.IsDir() || o.legacy {
 		fmt.Println("Done.")
 	}
 	return nil
