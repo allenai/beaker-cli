@@ -47,7 +47,7 @@ func newCreateCmd(
 	cmd.Flag("name", "Assign a name to the dataset").Short('n').StringVar(&o.name)
 	cmd.Flag("quiet", "Only display created dataset's ID").Short('q').BoolVar(&o.quiet)
 	cmd.Flag("org", "Org that will own the created experiment").Short('o').StringVar(&o.org)
-	cmd.Flag("fileheap", "Store the dataset in FileHeap").BoolVar(&o.fileheap)
+	cmd.Flag("fileheap", "Store the dataset in FileHeap").Default("true").BoolVar(&o.fileheap)
 	cmd.Arg("source", "Path to a file or directory containing the data").
 		Required().ExistingFileOrDirVar(&o.source)
 }
