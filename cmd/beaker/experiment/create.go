@@ -127,7 +127,7 @@ func Create(
 				fmt.Fprintf(w, "%s\n", color.RedString(errorMsg))
 				return experiment.ID(), nil
 			}
-			fmt.Fprintf(w, "Comet.ML experiments were created for each task in this experiment.\n")
+			fmt.Fprintf(w, "Comet.ml experiments were created for each task in this experiment.\n")
 			// Arbitrary cutoff so Beaker doesn't spam the user's console on very large experiments.
 			if len(createdExp.Nodes) < 20 {
 				for _, node := range createdExp.Nodes {
@@ -138,7 +138,7 @@ func Create(
 					fmt.Fprintf(w, "%s: %s\n", color.BlueString(node.TaskID), url)
 				}
 			} else {
-				fmt.Fprintf(w, "View the Experiment page in your browser for Comet.ML links.\n")
+				fmt.Fprintf(w, "View the Experiment page in your browser for Comet.ml links.\n")
 			}
 		}
 	}

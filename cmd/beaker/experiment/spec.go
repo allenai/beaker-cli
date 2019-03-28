@@ -13,7 +13,7 @@ type ExperimentSpec struct {
 	// (optional) Text description of the experiment.
 	Description string `yaml:"description,omitempty"`
 
-	// (optional) If true, create Comet.ML experiments per task in this experiment.
+	// (optional) If true, create Comet.ml experiments per task in this experiment.
 	Comet *ExperimentCometSpec `yaml:"comet,omitempty"`
 
 	// (required) Tasks to create. Tasks may be defined in any order, though all
