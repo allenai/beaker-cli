@@ -49,7 +49,7 @@ type ExperimentSpec struct {
 	// If omitted attribution will be given to the user issuing the request.
 	AuthorToken string `json:"author_token,omitempty"`
 
-	// (optional) Settings for the Comet.ML integration, if it should be used for this experiment.
+	// (optional) Settings for the Comet.ml integration, if it should be used for this experiment.
 	Comet *ExperimentCometSpec `json:"comet,omitempty"`
 }
 
@@ -106,13 +106,13 @@ type ExperimentCometSpec struct {
 	// (required) Whether or not to enable the integration for this experiment.
 	Enable bool `json:"enable"`
 
-	// (optional) The name of the experiment (shown in the Comet.ML interface)
+	// (optional) The name of the experiment (shown in the Comet.ml interface)
 	ExperimentName string `json:"experiment,omitempty"`
 
-	// (optional) The name of the Comet.ML project for this experiment.
+	// (optional) The name of the Comet.ml project for this experiment.
 	ProjectName string `json:"project,omitempty"`
 
-	// (optional) The name of the Comet.ML workspace for this experiment.
+	// (optional) The name of the Comet.ml workspace for this experiment.
 	WorkspaceName string `json:"workspace,omitempty"`
 }
 
