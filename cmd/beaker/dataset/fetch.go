@@ -92,6 +92,12 @@ func (o *fetchOptions) run(beaker *client.Client) error {
 			return err
 		}
 	} else {
+		// Create target directory explicitly for empty datasets.
+		if err := os.MkdirAll(target, 0755); err != nil {
+			fmt.Printf(" %s.\n", color.RedString("Failed"))
+			return err
+		}
+
 		files, err := dataset.Files(ctx, "")
 		if err != nil {
 			fmt.Printf(" %s.\n", color.RedString("Failed"))
