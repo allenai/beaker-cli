@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 
 	"github.com/pkg/errors"
 
@@ -125,4 +126,24 @@ func (h *ExperimentHandle) PatchPermissions(
 	}
 	defer safeClose(resp.Body)
 	return errorFromResponse(resp)
+}
+
+func (c *Client) SearchExperiments(
+	ctx context.Context,
+	searchOptions api.ExperimentSearchOptions,
+	page int,
+) ([]api.Experiment, error) {
+	query := url.Values{"page": {strconv.Itoa(page)}}
+	resp, err := c.sendRequest(ctx, http.MethodPost, "/api/v3/experiments/search", query, searchOptions)
+	if err != nil {
+		return nil, err
+	}
+	defer safeClose(resp.Body)
+
+	var body []api.Experiment
+	if err := parseResponse(resp, &body); err != nil {
+		return nil, err
+	}
+
+	return body, nil
 }
