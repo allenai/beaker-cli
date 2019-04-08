@@ -43,3 +43,16 @@ type UserPatchSpec struct {
 	// (optional) Assign an authorization level to the user.
 	Role *string `json:"role,omitempty"`
 }
+
+type CometLinkSpec struct {
+	// The username in Comet.ml to associate with this Beaker account.
+	CometUserName string `json:"cometUserName"`
+}
+
+type UserCometDetail struct {
+	// The username in Comet.ml associated with this Beaker account.
+	CometUserName string `json:"cometUserName"`
+
+	// URL to the user's page on Comet.ml.
+	CometURL string `json:"cometUrl"`
+}
