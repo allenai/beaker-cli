@@ -113,7 +113,7 @@ type ExperimentCometSpec struct {
 	ProjectName string `json:"project,omitempty"`
 
 	// (optional) The name of the Comet.ml workspace for this experiment.
-	WorkspaceName string `json:"workspace,omitempty"`
+	Workspace string `json:"workspace,omitempty"`
 }
 
 // ExperimentPatchSpec describes a patch to apply to an experiment's editable
