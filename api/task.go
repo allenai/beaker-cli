@@ -30,7 +30,14 @@ type Task struct {
 	// Results
 	ResultID string `json:"result_id"`
 	ExitCode int    `json:"exit_code,omitempty"`
-	CometURL string `json:"cometUrl,omitempty"`
+	CometURL string `json:"cometUrl,omitempty"` // Deprecated
+	CometKey string `json:"cometKey,omitempty"`
+}
+
+type TaskCometDetail struct {
+	TaskID             string `json:"taskId"`
+	CometExperimentKey string `json:"cometKey"`
+	CometURL           string `json:"cometUrl"`
 }
 
 type TaskLogUploadLink struct {
@@ -73,9 +80,6 @@ type TaskSpec struct {
 
 	// (optional) Task resource requirements for scheduling.
 	Requirements TaskRequirements `json:"requirements"`
-
-	// (optional) Use FileHeap to store results.
-	FileHeapResults bool `json:"fileheapResults"`
 }
 
 // TaskRequirements describes the runtime hardware requirements for a task.
