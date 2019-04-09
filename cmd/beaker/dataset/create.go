@@ -100,7 +100,7 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		defer file.Close()
+		defer func() { _ = file.Close() }()
 
 		if err := dataset.Storage.WriteFile(ctx, info.Name(), file, info.Size()); err != nil {
 			return err
