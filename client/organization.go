@@ -18,14 +18,9 @@ func (c *Client) VerifyOrgExists(ctx context.Context, org string) error {
 		return errors.WithMessage(err, "could not resolve org reference "+org)
 	}
 
-	type idResult struct {
+	var body struct {
 		ID string `json:"id"`
 	}
 
-	var body idResult
-	if err := parseResponse(resp, &body); err != nil {
-		return errors.WithMessage(err, "could not parse org response "+org)
-	}
-
-	return nil
+	return parseResponse(resp, &body)
 }
