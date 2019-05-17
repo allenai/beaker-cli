@@ -136,7 +136,7 @@ func (s *TaskSpec) ToAPI() (*api.TaskSpec, error) {
 	var datasetMounts []api.DatasetMount
 	for _, mount := range s.Mounts {
 		datasetMounts = append(datasetMounts, api.DatasetMount{
-			DatasetID:     mount.DatasetID,
+			Dataset:     mount.DatasetID,
 			ContainerPath: mount.ContainerPath,
 		})
 	}
@@ -173,7 +173,7 @@ type DatasetMount struct {
 
 // ToAPI converts to an API-compatible struct.
 func (m DatasetMount) ToAPI() api.DatasetMount {
-	return api.DatasetMount{DatasetID: m.DatasetID, ContainerPath: m.ContainerPath}
+	return api.DatasetMount{Dataset: m.DatasetID, ContainerPath: m.ContainerPath}
 }
 
 // Requirements describes the runtime requirements for an experiment's container.
