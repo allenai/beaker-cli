@@ -94,7 +94,7 @@ type ImageRepository struct {
 
 // RegistryAuth supplies authorization for a Docker registry.
 type RegistryAuth struct {
-	ServerAddress string `json:"serverAddress"`
+	ServerAddress string `json:"server_address"`
 	User          string `json:"user"`
 	Password      string `json:"password"`
 }
