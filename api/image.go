@@ -27,7 +27,7 @@ type Image struct {
 	Committed time.Time `json:"committed,omitempty"`
 
 	// Original image tag, if supplied on creation. See ImageSpec.
-	OriginalTag string `json:"original_tag,omitempty"`
+	OriginalTag string `json:"originalTag,omitempty"`
 
 	// A plain-text description of this image.
 	Description string `json:"description,omitempty"`
@@ -61,7 +61,7 @@ type ImageSpec struct {
 
 	// (optional) A token representing the user to which the object should be attributed.
 	// If omitted attribution will be given to the user issuing the request.
-	AuthorToken string `json:"author_token,omitempty"`
+	AuthorToken string `json:"authorToken,omitempty"`
 }
 
 // ImagePatchSpec describes a patch to apply to an image's editable fields.
@@ -86,7 +86,7 @@ type ImagePatchSpec struct {
 type ImageRepository struct {
 	// Full tag, including registry, expected by Beaker. Clients must push this
 	// tag exactly for Beaker to recognize the image.
-	ImageTag string `json:"image_tag"`
+	ImageTag string `json:"imageTag"`
 
 	// Credentials for the image's registry.
 	Auth RegistryAuth `json:"auth"`
@@ -94,7 +94,7 @@ type ImageRepository struct {
 
 // RegistryAuth supplies authorization for a Docker registry.
 type RegistryAuth struct {
-	ServerAddress string `json:"server_address"`
+	ServerAddress string `json:"serverAddress"`
 	User          string `json:"user"`
 	Password      string `json:"password"`
 }

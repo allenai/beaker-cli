@@ -60,12 +60,12 @@ A blueprint's metadata can be retrieved with `beaker blueprint inspect`.
         "user": {
             "id": "us_gpx6zozipf5o",
             "name": "examples",
-            "display_name": "Beaker Examples"
+            "displayName": "Beaker Examples"
         },
         "name": "wordcount",
         "created": "2018-08-22T22:47:10.915236Z",
         "committed": "2018-08-22T22:47:23.422262Z",
-        "original_tag": "wordcount",
+        "originalTag": "wordcount",
         "description": "A simple example to count words in text."
     }
 ]

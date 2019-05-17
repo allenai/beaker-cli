@@ -8,6 +8,6 @@ const (
 	DatasetDescription       Dataset = "description"
 	DatasetID                Dataset = "id"
 	DatasetName              Dataset = "name"
-	DatasetNameOrDescription Dataset = "name_or_description"
+	DatasetNameOrDescription Dataset = "nameOrDescription"
 	DatasetOwner             Dataset = "owner"
 )

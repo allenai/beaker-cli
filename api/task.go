@@ -8,7 +8,7 @@ import (
 type Task struct {
 	// Identity
 	ID           string `json:"id"`
-	ExperimentID string `json:"experiment_id"`
+	ExperimentID string `json:"experimentId"`
 
 	// Ownership
 	Owner  Identity `json:"owner"`
@@ -28,8 +28,8 @@ type Task struct {
 	Bill *Bill `json:"bill,omitempty"`
 
 	// Results
-	ResultID string `json:"result_id"`
-	ExitCode int    `json:"exit_code,omitempty"`
+	ResultID string `json:"resultId"`
+	ExitCode int    `json:"exitCode,omitempty"`
 	CometURL string `json:"cometUrl,omitempty"` // Deprecated
 	CometKey string `json:"cometKey,omitempty"`
 }
@@ -41,9 +41,9 @@ type TaskCometDetail struct {
 }
 
 type TaskLogUploadLink struct {
-	TaskID      string `json:"task_id"`
-	TaskAttempt string `json:"task_attempt"`
-	LogChunk    string `json:"log_chunk"`
+	TaskID      string `json:"taskId"`
+	TaskAttempt string `json:"taskAttempt"`
+	LogChunk    string `json:"logChunk"`
 	URL         string `json:"url"`
 }
 
@@ -60,7 +60,7 @@ type TaskSpec struct {
 	// (required) Container path in which the task will save results. Files
 	// written to this location will be persisted as a dataset upon task
 	// completion.
-	ResultPath string `json:"result_path"`
+	ResultPath string `json:"resultPath"`
 
 	// (optional) Text description of the task.
 	Description string `json:"desc"` // TODO: Rename to "description"
@@ -91,19 +91,19 @@ type TaskRequirements struct {
 	MilliCPU int `json:"cpu"`
 
 	// (optional) GPUs required in increments of one full core.
-	GPUCount int `json:"gpu_count"`
+	GPUCount int `json:"gpuCount"`
 
 	// (optional) GPU variant to prefer when scheduling task.
-	GPUType string `json:"gpu_type,omitempty"`
+	GPUType string `json:"gpuType,omitempty"`
 }
 
 // DatasetMount describes a read-only data source for a task.
 type DatasetMount struct {
 	// (required) Name or Unique ID of a dataset to mount.
-	DatasetID string `json:"dataset_id"` // TODO: Make this "dataset" which can be name or ID.
+	DatasetID string `json:"datasetId"` // TODO: Make this "dataset" which can be name or ID.
 
 	// (required) Path within a task container to which file(s) will be mounted.
-	ContainerPath string `json:"container_path"`
+	ContainerPath string `json:"containerPath"`
 }
 
 // TaskPatchSpec describes a patch to apply to a task's editable fields.
