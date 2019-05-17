@@ -100,7 +100,7 @@ type TaskRequirements struct {
 // DatasetMount describes a read-only data source for a task.
 type DatasetMount struct {
 	// (required) Name or Unique ID of a dataset to mount.
-	DatasetID string `json:"datasetId"` // TODO: Make this "dataset" which can be name or ID.
+	Dataset string `json:"dataset"`
 
 	// (required) Path within a task container to which file(s) will be mounted.
 	ContainerPath string `json:"containerPath"`
