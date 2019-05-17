@@ -136,7 +136,7 @@ func (s *TaskSpec) ToAPI() (*api.TaskSpec, error) {
 	var datasetMounts []api.DatasetMount
 	for _, mount := range s.Mounts {
 		datasetMounts = append(datasetMounts, api.DatasetMount{
-			Dataset:     mount.DatasetID,
+			Dataset:       mount.DatasetID,
 			ContainerPath: mount.ContainerPath,
 		})
 	}
