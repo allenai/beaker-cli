@@ -16,7 +16,7 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/allenai/beaker/api"
-	beaker "github.com/allenai/beaker/client"
+	"github.com/allenai/beaker/client"
 	"github.com/allenai/beaker/config"
 )
 
@@ -33,7 +33,7 @@ func newTensorboardCmd(
 	o := &tensorboardOptions{}
 	cmd := parent.Command("tensorboard-logs", "Sync tensorboard logs for one or more experiments")
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		beaker, err := beaker.NewClient(parentOpts.addr, config.UserToken)
+		beaker, err := client.NewClient(parentOpts.addr, config.UserToken)
 		if err != nil {
 			return err
 		}
@@ -47,7 +47,7 @@ func newTensorboardCmd(
 	cmd.Arg("group", "Experiment group ").Required().StringVar(&o.group)
 }
 
-func (o *tensorboardOptions) run(beaker *beaker.Client) error {
+func (o *tensorboardOptions) run(beaker *client.Client) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go func() {
@@ -107,39 +107,43 @@ func (o *tensorboardOptions) run(beaker *beaker.Client) error {
 				printError("Failed to resolve dataset for "+path.Path, err)
 			}
 
-			manifest, err := dataset.Manifest(ctx)
+			fileIterator, err := dataset.Files(ctx, "")
 			if err != nil {
 				if isCancelError(err) {
 					break
 				}
-				printError("Failed to get file manifest for "+path.Path, err)
 			}
 
 			lastUpdatedFiles := updatedFiles
-			for _, file := range manifest.Files {
-				// Filter down to only log files that may be relevant for TensorBoard.
-				if !strings.Contains(file.File, ".tfevents.") {
+			for {
+				handle, info, err := fileIterator.Next()
+				if err == client.ErrDone {
+					break
+				} else if err != nil {
+					printError("Failed to download "+info.Path, err)
 					continue
 				}
 
-				target := filepath.Join(path.Path, file.File)
+				if !strings.Contains(info.Path, ".tfevents.") {
+					continue
+				}
+
+				target := filepath.Join(path.Path, info.Path)
 				seen[target] = true
 
 				// Skip this file if it hasn't changed since the last time we synced.
-				if lastModified[target] == file.TimeLastModified {
+				if lastModified[target] == info.Updated {
 					continue
 				}
-				lastModified[target] = file.TimeLastModified
 
-				// TODO: This needs some sort of non-linear retry.
-				fileRef := dataset.FileRef(file.File)
-				if err := downloadFile(ctx, fileRef, target, int64(file.Size)); err != nil {
+				if err := downloadFile(ctx, handle, target, int64(info.Size)); err != nil {
 					if !isCancelError(err) {
+						printError("Failed to download "+info.Path, err)
 						break
 					}
-					printError("Failed to download "+target, err)
 				}
 
+				lastModified[target] = info.Updated
 				updatedFiles++
 			}
 
@@ -165,9 +169,9 @@ func (o *tensorboardOptions) run(beaker *beaker.Client) error {
 
 func updateTracker(
 	ctx context.Context,
-	beaker *beaker.Client,
+	beaker *client.Client,
 	tracker *resultTracker,
-	group *beaker.GroupHandle,
+	group *client.GroupHandle,
 ) ([]datasetPath, error) {
 	experimentIDs, err := group.Experiments(ctx)
 	if err != nil {
@@ -213,7 +217,7 @@ func printError(message string, err error) {
 // so we can just download the newest bytes. Overwritten bytes are ignored.
 func downloadFile(
 	ctx context.Context,
-	fileRef *beaker.FileHandle,
+	fileRef *client.FileHandle,
 	target string,
 	fileSize int64,
 ) error {
