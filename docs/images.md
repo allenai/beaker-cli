@@ -62,7 +62,7 @@ An image's metadata can be retrieved with `beaker image inspect`.
         "name": "wordcount",
         "created": "2018-08-22T22:47:10.915236Z",
         "committed": "2018-08-22T22:47:23.422262Z",
-        "original_tag": "wordcount",
+        "originalTag": "wordcount",
         "description": "A simple example to count words in text."
     }
 ]

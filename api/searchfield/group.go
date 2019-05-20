@@ -9,6 +9,6 @@ const (
 	GroupID                Group = "id"
 	GroupModified          Group = "modified"
 	GroupName              Group = "name"
-	GroupNameOrDescription Group = "name_or_description"
+	GroupNameOrDescription Group = "nameOrDescription"
 	GroupOwner             Group = "owner"
 )

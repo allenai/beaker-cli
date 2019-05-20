@@ -8,7 +8,7 @@ const (
 	ExperimentDescription       Experiment = "description"
 	ExperimentID                Experiment = "id"
 	ExperimentName              Experiment = "name"
-	ExperimentNameOrDescription Experiment = "name_or_description"
+	ExperimentNameOrDescription Experiment = "nameOrDescription"
 	ExperimentOwner             Experiment = "owner"
 	ExperimentStatus            Experiment = "status"
 )

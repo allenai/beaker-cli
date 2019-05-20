@@ -3,9 +3,9 @@ package searchfield
 type GroupTask string
 
 const (
-	GroupTaskID         GroupTask = "task_id"
-	GroupTaskName       GroupTask = "task_name"
-	GroupTaskStatus     GroupTask = "task_status"
-	GroupExperimentID   GroupTask = "experiment_id"
-	GroupExperimentName GroupTask = "experiment_name"
+	GroupTaskID         GroupTask = "taskId"
+	GroupTaskName       GroupTask = "taskName"
+	GroupTaskStatus     GroupTask = "taskStatus"
+	GroupExperimentID   GroupTask = "experimentId"
+	GroupExperimentName GroupTask = "experimentName"
 )
