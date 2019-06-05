@@ -11,6 +11,7 @@ type Identity struct {
 type UserDetail struct {
 	Identity
 	Institution string `json:"institution,omitempty"`
+	ReportGroup string `json:"reportGroup,omitempty"`
 	Role        string `json:"role,omitempty"`
 	Email       string `json:"email,omitempty"`
 }
@@ -42,6 +43,9 @@ type UserPatchSpec struct {
 
 	// (optional) Assign an authorization level to the user.
 	Role *string `json:"role,omitempty"`
+
+	// (optional) Assign the user to a report group for cost tracking.
+	ReportGroup *string `json:"reportGroup,omitempty"`
 }
 
 type CometLinkSpec struct {
