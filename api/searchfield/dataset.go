@@ -3,6 +3,7 @@ package searchfield
 type Dataset string
 
 const (
+	DatasetCreated           Dataset = "created"
 	DatasetCommitted         Dataset = "committed"
 	DatasetCreatingUser      Dataset = "user"
 	DatasetDescription       Dataset = "description"
