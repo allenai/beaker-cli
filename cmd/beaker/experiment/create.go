@@ -20,6 +20,7 @@ type CreateOptions struct {
 	Name  string
 	Quiet bool
 	Org   string
+	Force bool
 }
 
 func newCreateCmd(
@@ -39,6 +40,7 @@ func newCreateCmd(
 	cmd.Flag("name", "Assign a name to the experiment").Short('n').StringVar(&opts.Name)
 	cmd.Flag("quiet", "Only display created experiment's ID").Short('q').BoolVar(&opts.Quiet)
 	cmd.Flag("org", "Org that will own the created experiment").Short('o').StringVar(&opts.Org)
+	cmd.Flag("force", "Allow depending on uncommitted datasets").BoolVar(&opts.Force)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {
 		var specFile io.Reader
@@ -109,7 +111,7 @@ func Create(
 	}
 	apiSpec.Organization = opts.Org
 
-	experiment, err := beaker.CreateExperiment(ctx, apiSpec, opts.Name)
+	experiment, err := beaker.CreateExperiment(ctx, apiSpec, opts.Name, opts.Force)
 	if err != nil {
 		return "", err
 	}
