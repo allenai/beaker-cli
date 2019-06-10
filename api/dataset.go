@@ -42,7 +42,7 @@ type Dataset struct {
 	Description string `json:"description,omitempty"`
 
 	// Task for which this dataset is a result, i.e. provenance, if any.
-	SourceTask *string `json:"source_task,omitempty"`
+	SourceTask *string `json:"sourceTask,omitempty"`
 
 	// Included if the dataset is a single file.
 	IsFile bool `json:"isFile,omitempty"`
@@ -74,7 +74,7 @@ type DatasetSpec struct {
 
 	// (optional) A token representing the user to which the object should be attributed.
 	// If omitted attribution will be given to the user issuing the request.
-	AuthorToken string `json:"author_token,omitempty"`
+	AuthorToken string `json:"authorToken,omitempty"`
 
 	// (optional) If set, the dataset will be stored in FileHeap.
 	// This flag will eventually become the default and be removed.
@@ -89,14 +89,7 @@ type DatasetFile struct {
 	// The size of the file, in bytes.
 	Size uint64 `json:"size"`
 
-	TimeLastModified time.Time `json:"time_last_modified"`
-}
-
-// DatasetFileLink represents a pre-signed upload or download link to a single file.
-type DatasetFileLink struct {
-	ID       string `json:"dataset_id"`
-	FilePath string `json:"file_path"`
-	URL      string `json:"url"`
+	TimeLastModified time.Time `json:"timeLastModified"`
 }
 
 // DatasetManifest describes the file contents of a dataset.
@@ -105,23 +98,10 @@ type DatasetManifest struct {
 	ID string `json:"id"`
 
 	// Whether the dataset should be treated as a single file.
-	SingleFile bool `json:"single_file,omitempty"`
+	SingleFile bool `json:"singleFile,omitempty"`
 
 	// Descriptions of files contained in the dataset.
 	Files []DatasetFile `json:"files,omitempty"`
-}
-
-// DatasetUsage describes how many experiments were started using this dataset
-// as a source, including some metadata about when the usage occurred.
-// Intended to be used in an aggregate statistic reporting.
-type DatasetUsage struct {
-	DatasetID          string    `json:"id"`
-	EarliestUsage      time.Time `json:"earliest_usage"`
-	LatestUsage        time.Time `json:"latest_usage"`
-	DatasetNames       []string  `json:"dataset_names"`
-	DatasetCreator     string    `json:"dataset_creator"`
-	ExperimentCreators []string  `json:"experiment_creators"`
-	ExperimentCount    int64     `json:"experiment_count"`
 }
 
 // DatasetPatchSpec describes a patch to apply to a dataset's editable fields.

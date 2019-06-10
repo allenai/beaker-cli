@@ -19,9 +19,10 @@ type UsageReport struct {
 
 // TODO: Document
 type EntityUsage struct {
-	Entity    UserDetail                  `json:"entity"` // TODO: This should be Identity.
-	Totals    UsageInterval               `json:"totals"`
-	Intervals map[time.Time]UsageInterval `json:"intervals"`
+	Entity      Identity                    `json:"entity"`
+	ReportGroup string                      `json:"reportGroup"`
+	Totals      UsageInterval               `json:"totals"`
+	Intervals   map[time.Time]UsageInterval `json:"intervals"`
 }
 
 // TODO: Document

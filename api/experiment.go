@@ -36,36 +36,36 @@ type ExperimentSpec struct {
 	// (optional) Organization on behalf of whom this resource is created. The
 	// user issuing the request must be a member of the organization. If omitted,
 	// the resource will be owned by the requestor.
-	Organization string `json:"org,omitempty"`
+	Organization string `json:"org,omitempty" yaml:"org,omitempty"`
 
 	// (optional) Text description of the experiment.
-	Description string `json:"description,omitempty"`
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 
 	// (required) Tasks to create. Tasks may be defined in any order, though all
 	// dependencies must be internally resolvable within the experiment.
-	Tasks []ExperimentTaskSpec `json:"tasks"`
+	Tasks []ExperimentTaskSpec `json:"tasks" yaml:"tasks"`
 
 	// (optional) A token representing the user to which the object should be attributed.
 	// If omitted attribution will be given to the user issuing the request.
-	AuthorToken string `json:"author_token,omitempty"`
+	AuthorToken string `json:"authorToken,omitempty" yaml:"authorToken,omitempty"`
 
 	// (optional) Settings for the Comet.ml integration, if it should be used for this experiment.
-	Comet *ExperimentCometSpec `json:"comet,omitempty"`
+	Comet *ExperimentCometSpec `json:"comet,omitempty" yaml:"comet,omitempty"`
 }
 
 // ExperimentNode describes a task along with its links within an experiment.
 type ExperimentNode struct {
 	Name     string     `json:"name,omitempty"`
-	TaskID   string     `json:"task_id"`
-	ResultID string     `json:"result_id"`
+	TaskID   string     `json:"taskId"`
+	ResultID string     `json:"resultId"`
 	Status   TaskStatus `json:"status"`
 	CometURL string     `json:"cometUrl,omitempty"`
 
 	// Identifiers of tasks dependent on this node within the containing experiment.
-	ChildTasks []string `json:"child_task_ids"`
+	ChildTasks []string `json:"childTaskIds"`
 
 	// Identifiers of task on which this node depends within the containing experiment.
-	ParentTasks []string `json:"parent_task_ids"`
+	ParentTasks []string `json:"parentTaskIds"`
 }
 
 // DisplayID returns the most human-friendly name available for an experiment
@@ -82,24 +82,24 @@ func (n *ExperimentNode) DisplayID() string {
 type ExperimentTaskSpec struct {
 	// (optional) Name of the task node, which need only be defined if
 	// dependencies reference it.
-	Name string `json:"name,omitempty"`
+	Name string `json:"name,omitempty" yaml:"name,omitempty"`
 
 	// (required) Specification describing the task to run.
-	Spec TaskSpec `json:"spec"`
+	Spec TaskSpec `json:"spec" yaml:"spec,omitempty"`
 
 	// (optional) Tasks on which this task depends. Mounts will be applied, in
 	// the order defined here, after existing mounts in the task spec.
-	DependsOn []TaskDependency `json:"depends_on,omitempty"`
+	DependsOn []TaskDependency `json:"dependsOn,omitempty" yaml:"dependsOn,omitempty"`
 }
 
 // TaskDependency describes a single "edge" in a task dependency graph.
 type TaskDependency struct {
 	// (required) Name of the task on which the referencing task depends.
-	ParentName string `json:"parent_name"`
+	ParentName string `json:"parentName" yaml:"parentName"`
 
 	// (optional) Path in the child task to which parent results will be mounted.
 	// If absent, this is treated as an order-only dependency.
-	ContainerPath string `json:"container_path,omitempty"`
+	ContainerPath string `json:"containerPath,omitempty" yaml:"containerPath,omitempty"`
 }
 
 type ExperimentCometSpec struct {
@@ -113,7 +113,7 @@ type ExperimentCometSpec struct {
 	ProjectName string `json:"project,omitempty"`
 
 	// (optional) The name of the Comet.ml workspace for this experiment.
-	WorkspaceName string `json:"workspace,omitempty"`
+	Workspace string `json:"workspace,omitempty"`
 }
 
 // ExperimentPatchSpec describes a patch to apply to an experiment's editable

@@ -8,7 +8,7 @@ import (
 type Task struct {
 	// Identity
 	ID           string `json:"id"`
-	ExperimentID string `json:"experiment_id"`
+	ExperimentID string `json:"experimentId"`
 
 	// Ownership
 	Owner  Identity `json:"owner"`
@@ -28,15 +28,21 @@ type Task struct {
 	Bill *Bill `json:"bill,omitempty"`
 
 	// Results
-	ResultID string `json:"result_id"`
-	ExitCode int    `json:"exit_code,omitempty"`
-	CometURL string `json:"cometUrl,omitempty"`
+	ResultID string `json:"resultId"`
+	ExitCode int    `json:"exitCode,omitempty"`
+	CometKey string `json:"cometKey,omitempty"`
+}
+
+type TaskCometDetail struct {
+	TaskID             string `json:"taskId"`
+	CometExperimentKey string `json:"cometKey"`
+	CometURL           string `json:"cometUrl"`
 }
 
 type TaskLogUploadLink struct {
-	TaskID      string `json:"task_id"`
-	TaskAttempt string `json:"task_attempt"`
-	LogChunk    string `json:"log_chunk"`
+	TaskID      string `json:"taskId"`
+	TaskAttempt string `json:"taskAttempt"`
+	LogChunk    string `json:"logChunk"`
 	URL         string `json:"url"`
 }
 
@@ -47,59 +53,63 @@ type TaskResults struct {
 // TaskSpec contains all information necessary to create a new task.
 type TaskSpec struct {
 	// (required) Image containing the code to be run.
-	Image     string `json:"image"`
-	Blueprint string `json:"blueprint"` // DEPRECATED.
+	Image string `json:"image" yaml:"image"`
 
 	// (required) Container path in which the task will save results. Files
 	// written to this location will be persisted as a dataset upon task
 	// completion.
-	ResultPath string `json:"result_path"`
+	ResultPath string `json:"resultPath" yaml:"resultPath"`
 
 	// (optional) Text description of the task.
-	Description string `json:"desc"` // TODO: Rename to "description"
+	Description string `json:"desc" yaml:"description,omitempty"` // TODO: Rename to "description"
 
 	// (optional) Command-line arguments to pass to the task's container.
-	Arguments []string `json:"arguments"`
+	Arguments []string `json:"arguments" yaml:"args,omitempty"`
 
 	// (optional) Environment variables to pass into the task's container.
-	Env map[string]string `json:"env"`
+	Env map[string]string `json:"env" yaml:"env,omitempty"`
 
 	// TODO: Replace both mount lists with TaskMount.
 
 	// (optional) Data sources to mount as read-only in the task's container.
 	// In the event that mounts overlap partially or in full, they will be
 	// applied in order. Later mounts will overlay earlier ones (last wins).
-	Mounts []DatasetMount `json:"sources"` // TODO: Rename to "mounts"
+	Mounts []DatasetMount `json:"sources" yaml:"datasetMounts,omitempty"` // TODO: Rename to "mounts"
 
 	// (optional) Task resource requirements for scheduling.
-	Requirements TaskRequirements `json:"requirements"`
-
-	// (optional) Use FileHeap to store results.
-	FileHeapResults bool `json:"fileheapResults"`
+	Requirements TaskRequirements `json:"requirements" yaml:"requirements,omitempty"`
 }
 
 // TaskRequirements describes the runtime hardware requirements for a task.
 type TaskRequirements struct {
 	// (optional) Minimum required memory, in bytes.
-	Memory int64 `json:"memory"`
+	Memory int64 `json:"memory" yaml:"-"`
+
+	// (optional) Minimum required memory, as a string which includes unit suffix.
+	// Examples: "2g", "256m"
+	MemoryHuman string `json:"-" yaml:"memory,omitempty"`
 
 	// (optional) Minimum CPUs to allocate in millicpus (1 CPU = 1000 millicpus).
-	MilliCPU int `json:"cpu"`
+	MilliCPU int `json:"cpu" yaml:"-"`
+
+	// (optional) Minimum CPUs to allocate as floating point.
+	// CPU requirements are rounded to one thousandth of a CPU, i.e. 0.001
+	CPU float64 `json:"-" yaml:"cpu,omitempty"`
 
 	// (optional) GPUs required in increments of one full core.
-	GPUCount int `json:"gpu_count"`
+	GPUCount int `json:"gpuCount" yaml:"gpuCount,omitempty"`
 
 	// (optional) GPU variant to prefer when scheduling task.
-	GPUType string `json:"gpu_type,omitempty"`
+	GPUType string `json:"gpuType,omitempty" yaml:"gpuType,omitempty"`
 }
 
 // DatasetMount describes a read-only data source for a task.
 type DatasetMount struct {
 	// (required) Name or Unique ID of a dataset to mount.
-	DatasetID string `json:"dataset_id"` // TODO: Make this "dataset" which can be name or ID.
+	Dataset string `json:"dataset" yaml:"datasetId"`
 
 	// (required) Path within a task container to which file(s) will be mounted.
-	ContainerPath string `json:"container_path"`
+	ContainerPath string `json:"containerPath" yaml:"containerPath"`
 }
 
 // TaskPatchSpec describes a patch to apply to a task's editable fields.

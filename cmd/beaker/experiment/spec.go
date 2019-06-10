@@ -43,7 +43,7 @@ type ExperimentCometSpec struct {
 	Enable         bool   `yaml:"enable"`
 	ExperimentName string `yaml:"experiment,omitempty"`
 	ProjectName    string `yaml:"project,omitempty"`
-	WorkspaceName  string `yaml:"workspace,omitempty"`
+	Workspace      string `yaml:"workspace,omitempty"`
 }
 
 // ToAPI converts to an API-compatible struct.
@@ -52,7 +52,7 @@ func (s ExperimentCometSpec) ToAPI() *api.ExperimentCometSpec {
 		Enable:         s.Enable,
 		ExperimentName: s.ExperimentName,
 		ProjectName:    s.ProjectName,
-		WorkspaceName:  s.WorkspaceName,
+		Workspace:      s.Workspace,
 	}
 }
 
@@ -129,9 +129,6 @@ type TaskSpec struct {
 
 	// (optional) Experiment resource requirements for scheduling.
 	Requirements Requirements `yaml:"requirements,omitempty"`
-
-	// (optional) Use FileHeap to store results.
-	FileHeapResults bool `yaml:"fileheapResults"`
 }
 
 // ToAPI converts to an API-compatible struct.
@@ -139,7 +136,7 @@ func (s *TaskSpec) ToAPI() (*api.TaskSpec, error) {
 	var datasetMounts []api.DatasetMount
 	for _, mount := range s.Mounts {
 		datasetMounts = append(datasetMounts, api.DatasetMount{
-			DatasetID:     mount.DatasetID,
+			Dataset:       mount.DatasetID,
 			ContainerPath: mount.ContainerPath,
 		})
 	}
@@ -155,14 +152,13 @@ func (s *TaskSpec) ToAPI() (*api.TaskSpec, error) {
 	}
 
 	return &api.TaskSpec{
-		Image:           image,
-		ResultPath:      s.ResultPath,
-		Description:     s.Description,
-		Arguments:       s.Arguments,
-		Env:             s.Env,
-		Mounts:          datasetMounts,
-		Requirements:    requirements,
-		FileHeapResults: s.FileHeapResults,
+		Image:        image,
+		ResultPath:   s.ResultPath,
+		Description:  s.Description,
+		Arguments:    s.Arguments,
+		Env:          s.Env,
+		Mounts:       datasetMounts,
+		Requirements: requirements,
 	}, nil
 }
 
@@ -177,7 +173,7 @@ type DatasetMount struct {
 
 // ToAPI converts to an API-compatible struct.
 func (m DatasetMount) ToAPI() api.DatasetMount {
-	return api.DatasetMount{DatasetID: m.DatasetID, ContainerPath: m.ContainerPath}
+	return api.DatasetMount{Dataset: m.DatasetID, ContainerPath: m.ContainerPath}
 }
 
 // Requirements describes the runtime requirements for an experiment's container.

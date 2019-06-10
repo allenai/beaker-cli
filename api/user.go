@@ -11,6 +11,7 @@ type Identity struct {
 type UserDetail struct {
 	Identity
 	Institution string `json:"institution,omitempty"`
+	ReportGroup string `json:"reportGroup,omitempty"`
 	Role        string `json:"role,omitempty"`
 	Email       string `json:"email,omitempty"`
 }
@@ -32,7 +33,7 @@ type UserPatchSpec struct {
 
 	// (optional) Name to display when showing the user. Unlike a user account
 	// name, display names have no restrictions character set or uniqueness.
-	DisplayName *string `json:"display_name,omitempty"`
+	DisplayName *string `json:"displayName,omitempty"`
 
 	// (optional) Email address for sending notifications to the user.
 	Email *string `json:"email,omitempty"`
@@ -42,4 +43,20 @@ type UserPatchSpec struct {
 
 	// (optional) Assign an authorization level to the user.
 	Role *string `json:"role,omitempty"`
+
+	// (optional) Assign the user to a report group for cost tracking.
+	ReportGroup *string `json:"reportGroup,omitempty"`
+}
+
+type CometLinkSpec struct {
+	// The username in Comet.ml to associate with this Beaker account.
+	CometUserName string `json:"cometUserName"`
+}
+
+type UserCometDetail struct {
+	// The username in Comet.ml associated with this Beaker account.
+	CometUserName string `json:"cometUserName"`
+
+	// URL to the user's page on Comet.ml.
+	CometURL string `json:"cometUrl"`
 }

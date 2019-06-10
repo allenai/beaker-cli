@@ -2,7 +2,7 @@
 
 Images are Beaker's unit of executable code. A beaker image combines a Docker image with metadata,
 such as its author and description, and an optional richer narrative in markdown. Please refer to
-[the wordcount example](https://beaker-pub.allenai.org/im/im_qbjvcda1sed7) for an overview.
+[the wordcount example](https://beaker.org/im/im_qbjvcda1sed7) for an overview.
 
 Like datasets, images are immutable. The following example shows how to create and use images.
 
@@ -62,7 +62,7 @@ An image's metadata can be retrieved with `beaker image inspect`.
         "name": "wordcount",
         "created": "2018-08-22T22:47:10.915236Z",
         "committed": "2018-08-22T22:47:23.422262Z",
-        "original_tag": "wordcount",
+        "originalTag": "wordcount",
         "description": "A simple example to count words in text."
     }
 ]
