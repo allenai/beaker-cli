@@ -44,7 +44,8 @@ func NewClient(address string, userToken string) (*Client, error) {
 		return nil, err
 	}
 
-	if u.Path != "" || u.Opaque != "" || u.RawQuery != "" || u.Fragment != "" || u.User != nil {
+	// First condition permits single trailing slash in url
+	if (u.Path != "" && u.Path != "/") || u.Opaque != "" || u.RawQuery != "" || u.Fragment != "" || u.User != nil {
 		return nil, errors.New("address must be base server address in the form [scheme://]host[:port]")
 	}
 
