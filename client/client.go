@@ -24,9 +24,7 @@ import (
 	"github.com/allenai/beaker/api"
 )
 
-// We encode the version as a manually-assigned constant for now. This must be
-// updated with each material change to how a client makes requests, and is
-// assumed to be monotonically increasing.
+// The version is automatically encoded during link time.
 var version = "placeholder"
 
 var idPattern = regexp.MustCompile(`^\w\w_[a-z0-9]{12}$`)
