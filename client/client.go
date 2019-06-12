@@ -24,7 +24,7 @@ import (
 	"github.com/allenai/beaker/api"
 )
 
-// The version is automatically encoded during link time.
+// The version is automatically injected during link time.
 var version = "placeholder"
 
 var idPattern = regexp.MustCompile(`^\w\w_[a-z0-9]{12}$`)
