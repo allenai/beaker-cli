@@ -19,8 +19,7 @@ type createOptions struct {
 	description string
 	name        string
 	quiet       bool
-	source      string // General path
-	subpath     string // Specific path (optional)
+	source      string
 	org         string
 }
 
@@ -50,9 +49,6 @@ func newCreateCmd(
 	// 	Required().ExistingFileOrDirVar(&o.source)
 	cmd.Arg("source", "Path to a directory containing the data").
 		Required().ExistingDirVar(&o.source)
-	// Added
-	cmd.Flag("subpath", "Path to a specific subdirectory containing the data")
-
 }
 
 func (o *createOptions) run(beaker *beaker.Client) error {
@@ -140,6 +136,6 @@ func modeToString(mode os.FileMode) string {
 	case mode&os.ModeDevice != 0:
 		return "device"
 	default:
-		return "file" // TODO: Remove?
+		return "file"
 	}
 }

@@ -49,18 +49,18 @@ func (o *streamFileOptions) run(beaker *client.Client) error {
 
 	var fileRef *client.FileHandle
 	if o.file == "" {
-		if !dataset.IsFile() {
-			return errors.Errorf("filename required for multi-file dataset %s", dataset.ID())
-		}
-		files, err := dataset.Files(ctx, "")
-		if err != nil {
-			return err
-		}
-		if fileRef, _, err = files.Next(); err != nil {
-			return err
-		}
-	} else {
-		fileRef = dataset.FileRef(o.file)
+		// if !dataset.IsFile() {
+		return errors.Errorf("filename required for dataset %s", dataset.ID())
+		// 	}
+		// 	files, err := dataset.Files(ctx, "")
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// 	if fileRef, _, err = files.Next(); err != nil {
+		// 		return err
+		// 	}
+		// } else {
+		// 	fileRef = dataset.FileRef(o.file)
 	}
 
 	var r io.ReadCloser

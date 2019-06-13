@@ -16,7 +16,7 @@ import (
 type DatasetHandle struct {
 	client *Client
 	id     string
-	isFile bool
+	// isFile bool
 
 	Storage *fileheap.DatasetRef
 }
@@ -52,7 +52,7 @@ func (c *Client) CreateDataset(
 		ds = fileheap.Dataset(body.Storage.ID)
 	}
 
-	return &DatasetHandle{client: c, id: body.ID, isFile: spec.Filename != "", Storage: ds}, nil
+	return &DatasetHandle{client: c, id: body.ID, Storage: ds}, nil
 }
 
 // Dataset gets a handle for a dataset by name or ID. The returned handle is
@@ -84,7 +84,7 @@ func (c *Client) Dataset(ctx context.Context, reference string) (*DatasetHandle,
 		ds = fileheap.Dataset(body.Storage.ID)
 	}
 
-	return &DatasetHandle{client: c, id: body.ID, isFile: body.IsFile, Storage: ds}, nil
+	return &DatasetHandle{client: c, id: body.ID, Storage: ds}, nil
 }
 
 // ID returns a dataset's stable, unique ID.
@@ -92,10 +92,10 @@ func (h *DatasetHandle) ID() string {
 	return h.id
 }
 
-// IsFile returns true if the dataset is a single file.
-func (h *DatasetHandle) IsFile() bool {
-	return h.isFile
-}
+// // IsFile returns true if the dataset is a single file.
+// func (h *DatasetHandle) IsFile() bool {
+// 	return h.isFile
+// }
 
 // Get retrieves a dataset's details.
 func (h *DatasetHandle) Get(ctx context.Context) (*api.Dataset, error) {
