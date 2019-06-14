@@ -108,6 +108,9 @@ type DatasetMount struct {
 	// (required) Name or Unique ID of a dataset to mount.
 	Dataset string `json:"dataset" yaml:"datasetId"`
 
+	// (optional) Path within the dataset to mount for this experiment container.
+	SubPath string `json:"datasetSubPath" yaml:"datasetSubPath"`
+
 	// (required) Path within a task container to which file(s) will be mounted.
 	ContainerPath string `json:"containerPath" yaml:"containerPath"`
 }
