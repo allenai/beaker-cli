@@ -16,7 +16,6 @@ import (
 type DatasetHandle struct {
 	client *Client
 	id     string
-	// isFile bool
 
 	Storage *fileheap.DatasetRef
 }
@@ -91,11 +90,6 @@ func (c *Client) Dataset(ctx context.Context, reference string) (*DatasetHandle,
 func (h *DatasetHandle) ID() string {
 	return h.id
 }
-
-// // IsFile returns true if the dataset is a single file.
-// func (h *DatasetHandle) IsFile() bool {
-// 	return h.isFile
-// }
 
 // Get retrieves a dataset's details.
 func (h *DatasetHandle) Get(ctx context.Context) (*api.Dataset, error) {
