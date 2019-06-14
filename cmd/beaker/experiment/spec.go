@@ -169,7 +169,7 @@ type DatasetMount struct {
 	DatasetID string `yaml:"datasetId"`
 
 	// (optional) Path within the dataset to mount for this experiment container.
-	SubPath string `yaml:"datasetSubPath"`
+	SubPath string `yaml:"subPath"`
 
 	// (required) Path within an experiment container to which this dataset will be mounted.
 	ContainerPath string `yaml:"containerPath"`
