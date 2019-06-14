@@ -44,8 +44,8 @@ type Dataset struct {
 	// Task for which this dataset is a result, i.e. provenance, if any.
 	SourceTask *string `json:"sourceTask,omitempty"`
 
-	// // Included if the dataset is a single file.
-	// IsFile bool `json:"isFile,omitempty"`
+	// Included if the dataset is a single file.
+	IsFile bool `json:"isFile,omitempty"`
 }
 
 // DisplayID returns the most human-friendly name available for a dataset while

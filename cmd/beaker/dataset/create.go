@@ -45,10 +45,8 @@ func newCreateCmd(
 	cmd.Flag("name", "Assign a name to the dataset").Short('n').StringVar(&o.name)
 	cmd.Flag("quiet", "Only display created dataset's ID").Short('q').BoolVar(&o.quiet)
 	cmd.Flag("org", "Org that will own the created experiment").Short('o').StringVar(&o.org)
-	// cmd.Arg("source", "Path to a file or directory containing the data").
-	// 	Required().ExistingFileOrDirVar(&o.source)
-	cmd.Arg("source", "Path to a directory containing the data").
-		Required().ExistingDirVar(&o.source)
+	cmd.Arg("source", "Path to a file or directory containing the data").
+		Required().ExistingFileOrDirVar(&o.source)
 }
 
 func (o *createOptions) run(beaker *beaker.Client) error {
@@ -67,10 +65,10 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 		Organization: o.org,
 		FileHeap:     true,
 	}
-	// if !info.IsDir() {
-	// 	// If uploading a single file, treat it as a single-file dataset.
-	// 	spec.Filename = info.Name()
-	// }
+	if !info.IsDir() {
+		// If uploading a single file, treat it as a single-file dataset.
+		spec.Filename = info.Name()
+	}
 
 	dataset, err := beaker.CreateDataset(ctx, spec, o.name)
 	if err != nil {
@@ -85,30 +83,29 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 		}
 	}
 
-	// if info.IsDir() {
-	var tracker cli.ProgressTracker = cli.NoTracker
-	if !o.quiet {
-		files, bytes, err := cli.UploadStats(o.source)
-		if err != nil {
+	if info.IsDir() {
+		var tracker cli.ProgressTracker = cli.NoTracker
+		if !o.quiet {
+			files, bytes, err := cli.UploadStats(o.source)
+			if err != nil {
+				return err
+			}
+			tracker = cli.BoundedTracker(ctx, files, bytes)
+		}
+		if err := cli.Upload(ctx, o.source, dataset.Storage, "", tracker, 32); err != nil {
 			return err
 		}
-		tracker = cli.BoundedTracker(ctx, files, bytes)
-	}
-	if err := cli.Upload(ctx, o.source, dataset.Storage, "", tracker, 32); err != nil {
-		return err
-	}
-	//}
-	// else {
-	// 	file, err := os.Open(o.source)
-	// 	if err != nil {
-	// 		return errors.WithStack(err)
-	// 	}
-	// 	defer func() { _ = file.Close() }()
+	} else {
+		file, err := os.Open(o.source)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		defer func() { _ = file.Close() }()
 
-	// 	if err := dataset.Storage.WriteFile(ctx, info.Name(), file, info.Size()); err != nil {
-	// 		return err
-	// 	}
-	// }
+		if err := dataset.Storage.WriteFile(ctx, info.Name(), file, info.Size()); err != nil {
+			return err
+		}
+	}
 
 	if err := dataset.Commit(ctx); err != nil {
 		return errors.WithMessage(err, "failed to commit dataset")
@@ -116,10 +113,9 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 
 	if o.quiet {
 		fmt.Println(dataset.ID())
+	} else if !info.IsDir() {
+		fmt.Println("Done.")
 	}
-	// else if !info.IsDir() {
-	// 	fmt.Println("Done.")
-	// }
 	return nil
 }
 
