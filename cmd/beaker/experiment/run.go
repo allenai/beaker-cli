@@ -187,8 +187,6 @@ func specFromArgs(args specArgs) (*ExperimentSpec, error) {
 			return nil, errors.Errorf("malformed source '%s': should be of the form 'source:target'", source)
 		}
 
-		// Accept path on source if specified; only that subset of data will be mounted
-
 		spec.Mounts = append(spec.Mounts, DatasetMount{
 			DatasetID:     splitSource[0], // May be name or ID.
 			ContainerPath: splitSource[1],
