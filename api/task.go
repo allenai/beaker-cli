@@ -7,8 +7,9 @@ import (
 // Task is a full description of a task specification and its status.
 type Task struct {
 	// Identity
-	ID           string `json:"id"`
-	ExperimentID string `json:"experimentId"`
+	ID                     string `json:"id"`
+	ExperimentIDDeprecated string `json:"experiment_id"`
+	ExperimentID           string `json:"experimentId"`
 
 	// Ownership
 	Owner  Identity `json:"owner"`
@@ -28,9 +29,12 @@ type Task struct {
 	Bill *Bill `json:"bill,omitempty"`
 
 	// Results
-	ResultID string `json:"resultId"`
-	ExitCode int    `json:"exitCode,omitempty"`
-	CometKey string `json:"cometKey,omitempty"`
+	ResultIDDeprecated string `json:"result_id"`
+	ResultID           string `json:"resultId"`
+	ExitCodeDeprecated int    `json:"exit_code,omitempty"`
+	ExitCode           int    `json:"exitCode,omitempty"`
+	CometURL           string `json:"cometUrl,omitempty"` // Deprecated
+	CometKey           string `json:"cometKey,omitempty"`
 }
 
 type TaskCometDetail struct {
@@ -40,10 +44,13 @@ type TaskCometDetail struct {
 }
 
 type TaskLogUploadLink struct {
-	TaskID      string `json:"taskId"`
-	TaskAttempt string `json:"taskAttempt"`
-	LogChunk    string `json:"logChunk"`
-	URL         string `json:"url"`
+	TaskIDDeprecated      string `json:"task_id"`
+	TaskID                string `json:"taskId"`
+	TaskAttemptDeprecated string `json:"task_attempt"`
+	TaskAttempt           string `json:"taskAttempt"`
+	LogChunkDeprecated    string `json:"log_chunk"`
+	LogChunk              string `json:"logChunk"`
+	URL                   string `json:"url"`
 }
 
 type TaskResults struct {
@@ -53,12 +60,14 @@ type TaskResults struct {
 // TaskSpec contains all information necessary to create a new task.
 type TaskSpec struct {
 	// (required) Image containing the code to be run.
-	Image string `json:"image" yaml:"image"`
+	Image     string `json:"image" yaml:"image"`
+	Blueprint string `json:"blueprint" yaml:"-"` // DEPRECATED.
 
 	// (required) Container path in which the task will save results. Files
 	// written to this location will be persisted as a dataset upon task
 	// completion.
-	ResultPath string `json:"resultPath" yaml:"resultPath"`
+	ResultPath           string `json:"resultPath" yaml:"resultPath"`
+	ResultPathDeprecated string `json:"result_path" yaml:"-"`
 
 	// (optional) Text description of the task.
 	Description string `json:"desc" yaml:"description,omitempty"` // TODO: Rename to "description"
@@ -97,19 +106,26 @@ type TaskRequirements struct {
 	CPU float64 `json:"-" yaml:"cpu,omitempty"`
 
 	// (optional) GPUs required in increments of one full core.
-	GPUCount int `json:"gpuCount" yaml:"gpuCount,omitempty"`
+	GPUCountDeprecated int `json:"gpu_count" yaml:"-"`
+	GPUCount           int `json:"gpuCount" yaml:"gpuCount,omitempty"`
 
 	// (optional) GPU variant to prefer when scheduling task.
-	GPUType string `json:"gpuType,omitempty" yaml:"gpuType,omitempty"`
+	GPUTypeDeprecated string `json:"gpu_type,omitempty" yaml:"-"`
+	GPUType           string `json:"gpuType,omitempty" yaml:"gpuType,omitempty"`
 }
 
 // DatasetMount describes a read-only data source for a task.
 type DatasetMount struct {
 	// (required) Name or Unique ID of a dataset to mount.
-	Dataset string `json:"dataset" yaml:"datasetId"`
+	DatasetIDDeprecated string `json:"dataset_id" yaml:"-"`
+	Dataset             string `json:"dataset" yaml:"datasetId"`
+
+	// (optional) Path within the dataset to mount for this experiment container.
+	SubPath string `json:"subPath,omitempty" yaml:"subPath,omitempty"`
 
 	// (required) Path within a task container to which file(s) will be mounted.
-	ContainerPath string `json:"containerPath" yaml:"containerPath"`
+	ContainerPathDeprecated string `json:"container_path" yaml:"-"`
+	ContainerPath           string `json:"containerPath" yaml:"containerPath"`
 }
 
 // TaskPatchSpec describes a patch to apply to a task's editable fields.

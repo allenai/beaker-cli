@@ -33,7 +33,8 @@ type UserPatchSpec struct {
 
 	// (optional) Name to display when showing the user. Unlike a user account
 	// name, display names have no restrictions character set or uniqueness.
-	DisplayName *string `json:"displayName,omitempty"`
+	DisplayNameDeprecated *string `json:"display_name,omitempty"`
+	DisplayName           *string `json:"displayName,omitempty"`
 
 	// (optional) Email address for sending notifications to the user.
 	Email *string `json:"email,omitempty"`

@@ -17,7 +17,7 @@ type Error struct {
 	Stack string `json:"stack,omitempty"`
 
 	// (optional) An identifier for this error for tracing purposes
-	ErrorID string `json:"errorId"`
+	ErrorID string `json:"error_id,omitempty"`
 }
 
 // Error implements the standard error interface.
@@ -43,7 +43,7 @@ func (e Error) Format(s fmt.State, verb rune) {
 
 func (e Error) messageWithErrorID() string {
 	if len(e.ErrorID) > 0 {
-		return fmt.Sprintf("%s (errorId %s)", e.Message, e.ErrorID)
+		return fmt.Sprintf("%s (error_id %s)", e.Message, e.ErrorID)
 	}
 	return e.Message
 }
