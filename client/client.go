@@ -24,10 +24,8 @@ import (
 	"github.com/allenai/beaker/api"
 )
 
-// We encode the version as a manually-assigned constant for now. This must be
-// updated with each material change to how a client makes requests, and is
-// assumed to be monotonically increasing.
-const version = "v20190301"
+// The version is automatically injected during link time.
+var version = "placeholder"
 
 var idPattern = regexp.MustCompile(`^\w\w_[a-z0-9]{12}$`)
 
@@ -44,7 +42,8 @@ func NewClient(address string, userToken string) (*Client, error) {
 		return nil, err
 	}
 
-	if u.Path != "" || u.Opaque != "" || u.RawQuery != "" || u.Fragment != "" || u.User != nil {
+	// First condition permits single trailing slash in url
+	if (u.Path != "" && u.Path != "/") || u.Opaque != "" || u.RawQuery != "" || u.Fragment != "" || u.User != nil {
 		return nil, errors.New("address must be base server address in the form [scheme://]host[:port]")
 	}
 
