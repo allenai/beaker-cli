@@ -16,6 +16,7 @@ builds:
     ldflags:
       - |
         -X main.version={{.Tag}}
+        -X github.com/allenai/beaker/client.version={{.Tag}}
         -X main.commit={{.Commit}}
 
 # Set archive name conventions.
