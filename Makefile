@@ -51,8 +51,8 @@ beaker: $(GO_SRC_FILES)
 	@echo "Building for local development..."
 	@go build -v --tags dev -o $@ -ldflags "\
 		-X github.com/allenai/beaker/client.version=$(VERSION) \
-		-X main.version=$(VERSION) \
 		-X main.commit=$(COMMIT)" ./cmd/beaker
+		-X main.version=$(VERSION) \
 
 # Build release binaries for Beaker.
 # This requires a github token to be set.

@@ -15,8 +15,9 @@ builds:
       - amd64
     ldflags:
       - |
-        -X main.version={{.Tag}}
+        -X github.com/allenai/beaker/client.version={{.Tag}}
         -X main.commit={{.Commit}}
+        -X main.version={{.Tag}}
 
 # Set archive name conventions.
 archive:
