@@ -7,8 +7,8 @@ import (
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/allenai/beaker/api"
-	beaker "github.com/allenai/beaker/client"
+	"github.com/beaker/client/api"
+	beaker "github.com/beaker/client/client"
 	"github.com/allenai/beaker/config"
 )
 
