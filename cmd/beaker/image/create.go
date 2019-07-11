@@ -18,6 +18,7 @@ import (
 
 	"github.com/beaker/client/api"
 	beaker "github.com/beaker/client/client"
+
 	"github.com/allenai/beaker/config"
 )
 
