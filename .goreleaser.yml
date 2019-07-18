@@ -15,7 +15,7 @@ builds:
       - amd64
     ldflags:
       - |
-        -X github.com/allenai/beaker/client.version={{.Tag}}
+        -X github.com/beaker/client/client.version={{.Tag}}
         -X main.commit={{.Commit}}
         -X main.version={{.Tag}}
 

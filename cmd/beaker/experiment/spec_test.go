@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/allenai/beaker/api"
+	"github.com/beaker/client/api"
 )
 
 func TestRequirementsToAPI(t *testing.T) {

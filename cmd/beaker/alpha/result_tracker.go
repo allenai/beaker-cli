@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/allenai/beaker/api"
+	"github.com/beaker/client/api"
 )
 
 type datasetPath struct {
