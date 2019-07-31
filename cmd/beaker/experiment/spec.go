@@ -195,6 +195,9 @@ type Requirements struct {
 
 	// (optional) GPU variant to prefer when scheduling task.
 	GPUType string `yaml:"gpuType,omitempty"`
+
+	// (optional) Run on preemptible instances (defaults to false)
+	Preemptible bool `json:"preemptible,omitempty" yaml:"preemptible,omitempty"`
 }
 
 // ToAPI converts to an API-compatible struct.
@@ -204,9 +207,10 @@ func (r Requirements) ToAPI() (api.TaskRequirements, error) {
 	}
 
 	result := api.TaskRequirements{
-		MilliCPU: int(r.CPU * 1000),
-		GPUCount: r.GPUCount,
-		GPUType:  r.GPUType,
+		MilliCPU:    int(r.CPU * 1000),
+		GPUCount:    r.GPUCount,
+		GPUType:     r.GPUType,
+		Preemptible: r.Preemptible,
 	}
 
 	if r.Memory != "" {
