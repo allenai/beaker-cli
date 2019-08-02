@@ -33,7 +33,7 @@ func newRenameCmd(
 	})
 
 	cmd.Flag("quiet", "Only display the workspace's unique ID").Short('q').BoolVar(&o.quiet)
-	cmd.Arg("image", "ID of the workspace to rename (name not yet supported)").Required().StringVar(&o.workspace)
+	cmd.Arg("workspace", "ID of the workspace to rename (name not yet supported)").Required().StringVar(&o.workspace)
 	cmd.Arg("new-name", "Unqualified name to assign to the workspace").Required().StringVar(&o.name)
 }
 
