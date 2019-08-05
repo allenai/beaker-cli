@@ -15,6 +15,7 @@ import (
 	"github.com/allenai/beaker/cmd/beaker/image"
 	"github.com/allenai/beaker/cmd/beaker/options"
 	"github.com/allenai/beaker/cmd/beaker/task"
+	"github.com/allenai/beaker/cmd/beaker/workspace"
 	"github.com/allenai/beaker/config"
 )
 
@@ -62,6 +63,7 @@ func newApp(config *config.Config) (*options.AppOptions, error) {
 	group.NewGroupCmd(app, o, config)
 	image.NewImageCmd(app, o, config)
 	task.NewTaskCmd(app, o, config)
+	workspace.NewWorkspaceCmd(app, o, config)
 
 	// Attach sub-commands.
 	NewConfigCmd(app)
