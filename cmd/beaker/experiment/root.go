@@ -37,4 +37,5 @@ func NewExperimentCmd(
 	newRenameCmd(cmd, o, config)
 	newRunCmd(cmd, o, config)
 	newStopCmd(cmd, o, config)
+	newResumeCmd(cmd, o, config)
 }
