@@ -19,8 +19,8 @@ func TestRequirementsToAPI(t *testing.T) {
 
 		// All values provided
 		{
-			input:    Requirements{1.5, "2m", 1, "p100"},
-			expected: api.TaskRequirements{MilliCPU: 1500, Memory: 2 * 1024 * 1024, GPUCount: 1, GPUType: "p100"},
+			input:    Requirements{CPU: 1.5, Memory: "2m", GPUCount: 1, GPUType: "p100", Preemptible: true},
+			expected: api.TaskRequirements{MilliCPU: 1500, Memory: 2 * 1024 * 1024, GPUCount: 1, GPUType: "p100", Preemptible: true},
 		},
 
 		// Variations on memory string
