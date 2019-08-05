@@ -7,7 +7,7 @@ import (
 	"os"
 
 	beaker "github.com/beaker/client/client"
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
+	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/allenai/beaker/config"
 )
