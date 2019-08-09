@@ -2,6 +2,7 @@ package experiment
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -26,7 +27,7 @@ func newResumeCmd(
 
 	opts := &ResumeOptions{}
 	cmd := parent.Command("resume", "Resume a preempted experiment and return the experiment ID for the new experiment.")
-	cmd.Flag("experiment-name", "Experiment to resume.").Short('e').Required().StringVar(&experimentToResume)
+	cmd.Flag("experiment-name", "Experiment to resume (name or experiment ID).").Short('e').Required().StringVar(&experimentToResume)
 	cmd.Flag("name", "Assign a name to the experiment").Short('n').StringVar(&opts.Name)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {
@@ -60,6 +61,8 @@ func Resume(
 	if err != nil {
 		return "", err
 	}
+
+	fmt.Fprintln(w, experiment.ID())
 
 	return experiment.ID(), nil
 }
