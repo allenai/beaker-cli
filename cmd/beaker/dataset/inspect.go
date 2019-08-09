@@ -15,7 +15,6 @@ import (
 
 type inspectOptions struct {
 	datasets []string
-	manifest bool
 }
 
 func newInspectCmd(
@@ -33,14 +32,12 @@ func newInspectCmd(
 		return o.run(beaker)
 	})
 
-	cmd.Flag("manifest", "Include file manifest in output").BoolVar(&o.manifest)
 	cmd.Arg("dataset", "Dataset name or ID").Required().StringsVar(&o.datasets)
 }
 
 func (o *inspectOptions) run(beaker *beaker.Client) error {
 	type detail struct {
 		api.Dataset
-		Manifest *api.DatasetManifest `json:"manifest,omitempty"`
 	}
 
 	ctx := context.TODO()
@@ -57,15 +54,7 @@ func (o *inspectOptions) run(beaker *beaker.Client) error {
 			return err
 		}
 
-		var manifest *api.DatasetManifest
-		if o.manifest {
-			manifest, err = dataset.Manifest(ctx)
-			if err != nil {
-				return err
-			}
-		}
-
-		datasets = append(datasets, detail{*info, manifest})
+		datasets = append(datasets, detail{*info})
 	}
 
 	encoder := json.NewEncoder(os.Stdout)

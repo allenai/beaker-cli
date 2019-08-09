@@ -87,40 +87,5 @@ func (o *fetchOptions) run(beaker *client.Client) error {
 	}
 
 	fmt.Printf("Downloading %s to %s\n", color.CyanString(dataset.ID()), color.GreenString(target+"/"))
-	if dataset.Storage != nil {
-		err := cli.Download(ctx, dataset.Storage, "", o.outputPath, cli.UnboundedTracker(ctx), 32)
-		if err != nil {
-			return err
-		}
-	} else {
-		// Create target directory explicitly for empty datasets.
-		if err := os.MkdirAll(target, 0755); err != nil {
-			fmt.Printf(" %s.\n", color.RedString("Failed"))
-			return err
-		}
-
-		files, err := dataset.Files(ctx, "")
-		if err != nil {
-			fmt.Printf(" %s.\n", color.RedString("Failed"))
-			return err
-		}
-
-		for {
-			file, info, err := files.Next()
-			if err == client.ErrDone {
-				break
-			}
-			if err != nil {
-				fmt.Printf(" %s.\n", color.RedString("Failed"))
-				return err
-			}
-			if err := file.DownloadTo(ctx, filepath.Join(target, info.Path)); err != nil {
-				fmt.Printf(" %s.\n", color.RedString("Failed"))
-				return err
-			}
-		}
-		fmt.Println(" done.")
-	}
-
-	return nil
+	return cli.Download(ctx, dataset.Storage, "", o.outputPath, cli.UnboundedTracker(ctx), 32)
 }
