@@ -85,28 +85,40 @@ func decodeParameterSpace(r io.Reader) (*ParameterSpace, error) {
 			if err != nil {
 				return nil, xerrors.Errorf("parameter %q: %w", key, err)
 			}
-			ps.params[key] = chooseOne{choices}
+			ps.params[key], err = newChooseOne(choices)
+			if err != nil {
+				return nil, xerrors.Errorf("parameter %q: %w", key, err)
+			}
 
 		case Integer:
 			min, max, err := getBoundsInt(fields)
 			if err != nil {
 				return nil, xerrors.Errorf("parameter %q: %w", key, err)
 			}
-			ps.params[key] = uniformInt{min, max}
+			ps.params[key], err = newUniformInt(min, max)
+			if err != nil {
+				return nil, xerrors.Errorf("parameter %q: %w", key, err)
+			}
 
 		case LogUniform:
 			min, max, err := getBoundsFloat(fields)
 			if err != nil {
 				return nil, xerrors.Errorf("parameter %q: %w", key, err)
 			}
-			ps.params[key] = logFloat{min, max}
+			ps.params[key], err = newLogFloat(min, max)
+			if err != nil {
+				return nil, xerrors.Errorf("parameter %q: %w", key, err)
+			}
 
 		case Uniform:
 			min, max, err := getBoundsFloat(fields)
 			if err != nil {
 				return nil, xerrors.Errorf("parameter %q: %w", key, err)
 			}
-			ps.params[key] = uniformFloat{min, max}
+			ps.params[key], err = newUniformFloat(min, max)
+			if err != nil {
+				return nil, xerrors.Errorf("parameter %q: %w", key, err)
+			}
 
 		default:
 			return nil, xerrors.Errorf("parameter %q: sampling distribution %q is not supported", key, dist)
@@ -222,12 +234,26 @@ type uniformInt struct {
 	min, max int64
 }
 
+func newUniformInt(min, max int64) (uniformInt, error) {
+	if min > max {
+		return uniformInt{}, xerrors.New("min cannot be greater than max")
+	}
+	return uniformInt{min, max}, nil
+}
+
 func (d uniformInt) Sample(r *rand.Rand) interface{} {
 	return r.Int63n(d.max-d.min) + d.min
 }
 
 type uniformFloat struct {
 	min, max float64
+}
+
+func newUniformFloat(min, max float64) (uniformFloat, error) {
+	if min > max {
+		return uniformFloat{}, xerrors.New("min cannot be greater than max")
+	}
+	return uniformFloat{min, max}, nil
 }
 
 func (d uniformFloat) Sample(r *rand.Rand) interface{} {
@@ -238,13 +264,29 @@ type logFloat struct {
 	min, max float64
 }
 
+func newLogFloat(min, max float64) (logFloat, error) {
+	if min <= 0 || max <= 0 {
+		return logFloat{}, xerrors.New("min and max must be positive")
+	}
+	if min > max {
+		return logFloat{}, xerrors.New("min cannot be greater than max")
+	}
+	return logFloat{math.Log(min), math.Log(max)}, nil
+}
+
 func (d logFloat) Sample(r *rand.Rand) interface{} {
-	lmin, lmax := math.Log(d.min), math.Log(d.max)
-	return math.Exp(r.Float64()*(lmax-lmin) + lmin)
+	return math.Exp(r.Float64()*(d.max-d.min) + d.min)
 }
 
 type chooseOne struct {
 	choices []interface{}
+}
+
+func newChooseOne(choices []interface{}) (chooseOne, error) {
+	if len(choices) == 0 {
+		return chooseOne{}, xerrors.New("at least one choice must be provided")
+	}
+	return chooseOne{choices}, nil
 }
 
 func (d chooseOne) Sample(r *rand.Rand) interface{} {
