@@ -87,6 +87,8 @@ func Tune(
 	if err != nil {
 		return nil, err
 	}
+	defer r.Close()
+
 	b, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
@@ -100,6 +102,8 @@ func Tune(
 	if err != nil {
 		return nil, err
 	}
+	defer r.Close()
+
 	paramSpace, err := decodeParameterSpace(r)
 	if err != nil {
 		return nil, err
