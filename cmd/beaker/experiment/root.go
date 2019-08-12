@@ -38,5 +38,4 @@ func NewExperimentCmd(
 	newResumeCmd(cmd, o, config)
 	newRunCmd(cmd, o, config)
 	newStopCmd(cmd, o, config)
-	newTuneCmd(cmd, o, config)
 }

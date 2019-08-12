@@ -1,4 +1,4 @@
-package experiment
+package alpha
 
 import (
 	"bytes"
@@ -18,6 +18,7 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/allenai/beaker/cmd/beaker/experiment"
 	"github.com/allenai/beaker/config"
 )
 
@@ -32,7 +33,7 @@ type TuneOptions struct {
 
 func newTuneCmd(
 	parent *kingpin.CmdClause,
-	parentOpts *experimentOptions,
+	parentOpts *alphaOptions,
 	config *config.Config,
 ) {
 	opts := &TuneOptions{}
@@ -144,10 +145,11 @@ func Tune(
 			return experiments, xerrors.Errorf("Failed to add experiments to %q: %w", opts.Group, err)
 		}
 
-		fmt.Fprintf(w, "See progress at %s/gr/%s\n", color.BlueString(beaker.Address()), group.ID())
+		url := fmt.Sprintf("%s/gr/%s", beaker.Address(), group.ID())
+		fmt.Fprintf(w, "See progress at %s\n", color.BlueString(url))
 	} else {
 		for _, ex := range experiments {
-			fmt.Println(experimentURL(beaker.Address(), ex))
+			fmt.Printf("%s/ex/%s\n", beaker.Address(), ex)
 		}
 	}
 
@@ -178,7 +180,7 @@ func runParameterSearch(
 			return experiments, err
 		}
 
-		var spec ExperimentSpec
+		var spec experiment.ExperimentSpec
 		if err := yaml.UnmarshalStrict(buf.Bytes(), &spec); err != nil {
 			return experiments, err
 		}
