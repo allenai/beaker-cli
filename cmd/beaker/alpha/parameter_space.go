@@ -235,8 +235,8 @@ type uniformInt struct {
 }
 
 func newUniformInt(min, max int64) (uniformInt, error) {
-	if min > max {
-		return uniformInt{}, xerrors.New("min cannot be greater than max")
+	if min >= max {
+		return uniformInt{}, xerrors.New("min must be less than max")
 	}
 	return uniformInt{min, max}, nil
 }
@@ -250,8 +250,8 @@ type uniformFloat struct {
 }
 
 func newUniformFloat(min, max float64) (uniformFloat, error) {
-	if min > max {
-		return uniformFloat{}, xerrors.New("min cannot be greater than max")
+	if min >= max {
+		return uniformFloat{}, xerrors.New("min must be less than max")
 	}
 	return uniformFloat{min, max}, nil
 }
@@ -268,8 +268,8 @@ func newLogFloat(min, max float64) (logFloat, error) {
 	if min <= 0 || max <= 0 {
 		return logFloat{}, xerrors.New("min and max must be positive")
 	}
-	if min > max {
-		return logFloat{}, xerrors.New("min cannot be greater than max")
+	if min >= max {
+		return logFloat{}, xerrors.New("min must be less than max")
 	}
 	return logFloat{math.Log(min), math.Log(max)}, nil
 }
