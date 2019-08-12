@@ -1,7 +1,6 @@
 package alpha
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -9,7 +8,7 @@ import (
 	"reflect"
 	"time"
 
-	"golang.org/x/xerrors"
+	errors "golang.org/x/xerrors"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -67,71 +66,66 @@ func decodeParameterSpace(r io.Reader) (*ParameterSpace, error) {
 	ps.rand = rand.New(rand.NewSource(ps.seed))
 	ps.params = make(map[string]distribution, len(ss.Parameters))
 	for key, param := range ss.Parameters {
-		if reflect.TypeOf(param).Kind() != reflect.Map {
-			// All distributions are expressed as a map, so this must be a fixed value.
-			ps.params[key] = fixedValue{param}
-			continue
+		d, err := parseDistribution(param)
+		if err != nil {
+			return nil, errors.Errorf("parameter %q: %w", key, err)
 		}
-
-		fields := param.(map[interface{}]interface{})
-		d, ok := fields[fieldDistribution]
-		if !ok {
-			return nil, xerrors.Errorf("parameter %q: no sampling distribution provided", key)
-		}
-
-		switch dist := Distribution(d.(string)); dist {
-		case Choice:
-			choices, err := getChoices(fields)
-			if err != nil {
-				return nil, xerrors.Errorf("parameter %q: %w", key, err)
-			}
-			ps.params[key], err = newChooseOne(choices)
-			if err != nil {
-				return nil, xerrors.Errorf("parameter %q: %w", key, err)
-			}
-
-		case Integer:
-			min, max, err := getBoundsInt(fields)
-			if err != nil {
-				return nil, xerrors.Errorf("parameter %q: %w", key, err)
-			}
-			ps.params[key], err = newUniformInt(min, max)
-			if err != nil {
-				return nil, xerrors.Errorf("parameter %q: %w", key, err)
-			}
-
-		case LogUniform:
-			min, max, err := getBoundsFloat(fields)
-			if err != nil {
-				return nil, xerrors.Errorf("parameter %q: %w", key, err)
-			}
-			ps.params[key], err = newLogFloat(min, max)
-			if err != nil {
-				return nil, xerrors.Errorf("parameter %q: %w", key, err)
-			}
-
-		case Uniform:
-			min, max, err := getBoundsFloat(fields)
-			if err != nil {
-				return nil, xerrors.Errorf("parameter %q: %w", key, err)
-			}
-			ps.params[key], err = newUniformFloat(min, max)
-			if err != nil {
-				return nil, xerrors.Errorf("parameter %q: %w", key, err)
-			}
-
-		default:
-			return nil, xerrors.Errorf("parameter %q: sampling distribution %q is not supported", key, dist)
-		}
+		ps.params[key] = d
 	}
 
 	return &ps, nil
 }
 
+func parseDistribution(param interface{}) (distribution, error) {
+	if reflect.TypeOf(param).Kind() != reflect.Map {
+		// All distributions are expressed as a map, so this must be a fixed value.
+		return fixedValue{param}, nil
+	}
+
+	fields := param.(map[interface{}]interface{})
+	d, ok := fields[fieldDistribution]
+	if !ok {
+		return nil, errors.Errorf("no sampling distribution provided")
+	}
+
+	switch dist := Distribution(d.(string)); dist {
+	case Choice:
+		choices, err := getChoices(fields)
+		if err != nil {
+			return nil, err
+		}
+		return newChooseOne(choices)
+
+	case Integer:
+		min, max, err := getBoundsInt(fields)
+		if err != nil {
+			return nil, err
+		}
+		return newUniformInt(min, max)
+
+	case LogUniform:
+		min, max, err := getBoundsFloat(fields)
+		if err != nil {
+			return nil, err
+		}
+		return newLogFloat(min, max)
+
+	case Uniform:
+		min, max, err := getBoundsFloat(fields)
+		if err != nil {
+			return nil, err
+		}
+		return newUniformFloat(min, max)
+
+	default:
+		return nil, errors.Errorf("sampling distribution %q is not supported", dist)
+	}
+}
+
 func getChoices(fields map[interface{}]interface{}) ([]interface{}, error) {
 	choices, ok := fields[fieldChoices]
 	if !ok || reflect.TypeOf(choices).Kind() != reflect.Slice {
-		return nil, xerrors.Errorf("must specify %q as a list", fieldChoices)
+		return nil, errors.Errorf("must specify %q as a list", fieldChoices)
 	}
 
 	return choices.([]interface{}), nil
@@ -141,16 +135,16 @@ func getBoundsInt(fields map[interface{}]interface{}) (min, max int64, err error
 	field, ok := fields[fieldBounds]
 	value := reflect.ValueOf(field)
 	if !ok || value.Type().Kind() != reflect.Slice || value.Len() != 2 {
-		return 0, 0, xerrors.Errorf("must specify %q as a list of 2 elements", fieldBounds)
+		return 0, 0, errors.Errorf("must specify %q as a list of 2 elements", fieldBounds)
 	}
 
 	min, err = getInt(value.Index(0))
 	if err != nil {
-		return 0, 0, xerrors.Errorf("%s[0]: %w", fieldBounds, err)
+		return 0, 0, errors.Errorf("%s[0]: %w", fieldBounds, err)
 	}
 	max, err = getInt(value.Index(1))
 	if err != nil {
-		return 0, 0, xerrors.Errorf("%s[1]: %w", fieldBounds, err)
+		return 0, 0, errors.Errorf("%s[1]: %w", fieldBounds, err)
 	}
 
 	return min, max, nil
@@ -160,16 +154,16 @@ func getBoundsFloat(fields map[interface{}]interface{}) (min, max float64, err e
 	field, ok := fields[fieldBounds]
 	value := reflect.ValueOf(field)
 	if !ok || value.Type().Kind() != reflect.Slice || value.Len() != 2 {
-		return 0, 0, xerrors.Errorf("must specify %q as a list of 2 elements", fieldBounds)
+		return 0, 0, errors.Errorf("must specify %q as a list of 2 elements", fieldBounds)
 	}
 
 	min, err = getFloat(value.Index(0))
 	if err != nil {
-		return 0, 0, xerrors.Errorf("%s[0]: %w", fieldBounds, err)
+		return 0, 0, errors.Errorf("%s[0]: %w", fieldBounds, err)
 	}
 	max, err = getFloat(value.Index(1))
 	if err != nil {
-		return 0, 0, xerrors.Errorf("%s[1]: %w", fieldBounds, err)
+		return 0, 0, errors.Errorf("%s[1]: %w", fieldBounds, err)
 	}
 
 	return min, max, nil
@@ -189,7 +183,7 @@ func getInt(value reflect.Value) (int64, error) {
 		return getInt(reflect.ValueOf(value.Interface()))
 	default:
 		fmt.Println(value.Type().Kind())
-		return 0, xerrors.Errorf("value is not an integer: %s", value.String())
+		return 0, errors.Errorf("value is not an integer: %s", value.String())
 	}
 }
 
@@ -204,7 +198,7 @@ func getFloat(value reflect.Value) (float64, error) {
 	case reflect.Interface:
 		return getFloat(reflect.ValueOf(value.Interface()))
 	default:
-		return 0, xerrors.Errorf("value is not a number: %s", value.String())
+		return 0, errors.Errorf("value is not a number: %s", value.String())
 	}
 }
 
@@ -236,7 +230,7 @@ type uniformInt struct {
 
 func newUniformInt(min, max int64) (uniformInt, error) {
 	if min >= max {
-		return uniformInt{}, xerrors.New("min must be less than max")
+		return uniformInt{}, errors.New("min must be less than max")
 	}
 	return uniformInt{min, max}, nil
 }
@@ -251,7 +245,7 @@ type uniformFloat struct {
 
 func newUniformFloat(min, max float64) (uniformFloat, error) {
 	if min >= max {
-		return uniformFloat{}, xerrors.New("min must be less than max")
+		return uniformFloat{}, errors.New("min must be less than max")
 	}
 	return uniformFloat{min, max}, nil
 }
@@ -266,10 +260,10 @@ type logFloat struct {
 
 func newLogFloat(min, max float64) (logFloat, error) {
 	if min <= 0 || max <= 0 {
-		return logFloat{}, xerrors.New("min and max must be positive")
+		return logFloat{}, errors.New("min and max must be positive")
 	}
 	if min >= max {
-		return logFloat{}, xerrors.New("min must be less than max")
+		return logFloat{}, errors.New("min must be less than max")
 	}
 	return logFloat{math.Log(min), math.Log(max)}, nil
 }
@@ -284,7 +278,7 @@ type chooseOne struct {
 
 func newChooseOne(choices []interface{}) (chooseOne, error) {
 	if len(choices) == 0 {
-		return chooseOne{}, xerrors.New("at least one choice must be provided")
+		return chooseOne{}, errors.New("at least one choice must be provided")
 	}
 	return chooseOne{choices}, nil
 }
