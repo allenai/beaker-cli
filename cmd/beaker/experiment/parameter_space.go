@@ -1,0 +1,252 @@
+package experiment
+
+import (
+	"errors"
+	"fmt"
+	"io"
+	"math"
+	"math/rand"
+	"reflect"
+	"time"
+
+	"golang.org/x/xerrors"
+	yaml "gopkg.in/yaml.v2"
+)
+
+// Constant field keys. Each field has a specific expected type.
+const (
+	fieldDistribution = "distribution" // Type: Distribution (TODO: Rename this to Distribution?)
+	fieldChoices      = "choices"      // Type: Slice
+	fieldBounds       = "bounds"       // Type: Slice with len=2
+)
+
+type searchSpace struct {
+	Seed       *int64                 `yaml:"seed,omitempty"`
+	Parameters map[string]interface{} `yaml:"parameters"`
+}
+
+// Distribution describes a distribution of values and how they should be sampled.
+type Distribution string
+
+const (
+	// Choice selects a single choice with uniform probability from a list.
+	Choice Distribution = "choice"
+
+	// Integer produces uniformly distributed integers in the range of [bounds[0], bounds[1]).
+	Integer Distribution = "uniform-int"
+
+	// LogUniform produces logarithmically distributed floats in the range of [bounds[0], bounds[1]).
+	LogUniform Distribution = "log-uniform"
+
+	// Uniform produces uniformly distributed floats in the range of [bounds[0], bounds[1]).
+	Uniform Distribution = "uniform"
+)
+
+// A ParameterSpace samples a set of named distributions.
+type ParameterSpace struct {
+	seed   int64
+	rand   *rand.Rand
+	params map[string]distribution
+}
+
+func decodeParameterSpace(r io.Reader) (*ParameterSpace, error) {
+	var ss searchSpace
+	dec := yaml.NewDecoder(r)
+	dec.SetStrict(true)
+	if err := dec.Decode(&ss); err != nil {
+		return nil, err
+	}
+
+	var ps ParameterSpace
+	if ss.Seed == nil {
+		ps.seed = time.Now().Unix()
+	} else {
+		ps.seed = *ss.Seed
+	}
+
+	ps.rand = rand.New(rand.NewSource(ps.seed))
+	ps.params = make(map[string]distribution, len(ss.Parameters))
+	for key, param := range ss.Parameters {
+		if reflect.TypeOf(param).Kind() != reflect.Map {
+			// All distributions are expressed as a map, so this must be a fixed value.
+			ps.params[key] = fixedValue{param}
+			continue
+		}
+
+		fields := param.(map[interface{}]interface{})
+		d, ok := fields[fieldDistribution]
+		if !ok {
+			return nil, xerrors.Errorf("parameter %q: no sampling distribution provided", key)
+		}
+
+		switch dist := Distribution(d.(string)); dist {
+		case Choice:
+			choices, err := getChoices(fields)
+			if err != nil {
+				return nil, xerrors.Errorf("parameter %q: %w", key, err)
+			}
+			ps.params[key] = chooseOne{choices}
+
+		case Integer:
+			min, max, err := getBoundsInt(fields)
+			if err != nil {
+				return nil, xerrors.Errorf("parameter %q: %w", key, err)
+			}
+			ps.params[key] = uniformInt{min, max}
+
+		case LogUniform:
+			min, max, err := getBoundsFloat(fields)
+			if err != nil {
+				return nil, xerrors.Errorf("parameter %q: %w", key, err)
+			}
+			ps.params[key] = logFloat{min, max}
+
+		case Uniform:
+			min, max, err := getBoundsFloat(fields)
+			if err != nil {
+				return nil, xerrors.Errorf("parameter %q: %w", key, err)
+			}
+			ps.params[key] = uniformFloat{min, max}
+
+		default:
+			return nil, xerrors.Errorf("parameter %q: sampling distribution %q is not supported", key, dist)
+		}
+	}
+
+	return &ps, nil
+}
+
+func getChoices(fields map[interface{}]interface{}) ([]interface{}, error) {
+	choices, ok := fields[fieldChoices]
+	if !ok || reflect.TypeOf(choices).Kind() != reflect.Slice {
+		return nil, xerrors.Errorf("must specify %q as a list", fieldChoices)
+	}
+
+	return choices.([]interface{}), nil
+}
+
+func getBoundsInt(fields map[interface{}]interface{}) (min, max int64, err error) {
+	field, ok := fields[fieldBounds]
+	value := reflect.ValueOf(field)
+	if !ok || value.Type().Kind() != reflect.Slice || value.Len() != 2 {
+		return 0, 0, xerrors.Errorf("must specify %q as a list of 2 elements", fieldBounds)
+	}
+
+	min, err = getInt(value.Index(0))
+	if err != nil {
+		return 0, 0, xerrors.Errorf("%s[0]: %w", fieldBounds, err)
+	}
+	max, err = getInt(value.Index(1))
+	if err != nil {
+		return 0, 0, xerrors.Errorf("%s[1]: %w", fieldBounds, err)
+	}
+
+	return min, max, nil
+}
+
+func getBoundsFloat(fields map[interface{}]interface{}) (min, max float64, err error) {
+	field, ok := fields[fieldBounds]
+	value := reflect.ValueOf(field)
+	if !ok || value.Type().Kind() != reflect.Slice || value.Len() != 2 {
+		return 0, 0, xerrors.Errorf("must specify %q as a list of 2 elements", fieldBounds)
+	}
+
+	min, err = getFloat(value.Index(0))
+	if err != nil {
+		return 0, 0, xerrors.Errorf("%s[0]: %w", fieldBounds, err)
+	}
+	max, err = getFloat(value.Index(1))
+	if err != nil {
+		return 0, 0, xerrors.Errorf("%s[1]: %w", fieldBounds, err)
+	}
+
+	return min, max, nil
+}
+
+func getInt(value reflect.Value) (int64, error) {
+	switch value.Type().Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return value.Int(), nil
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		i := int64(value.Uint())
+		if i < 0 {
+			return 0, errors.New("value is too large")
+		}
+		return i, nil
+	case reflect.Interface:
+		return getInt(reflect.ValueOf(value.Interface()))
+	default:
+		fmt.Println(value.Type().Kind())
+		return 0, xerrors.Errorf("value is not an integer: %s", value.String())
+	}
+}
+
+func getFloat(value reflect.Value) (float64, error) {
+	switch value.Type().Kind() {
+	case reflect.Float32, reflect.Float64:
+		return value.Float(), nil
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return float64(value.Int()), nil
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return float64(value.Uint()), nil
+	case reflect.Interface:
+		return getFloat(reflect.ValueOf(value.Interface()))
+	default:
+		return 0, xerrors.Errorf("value is not a number: %s", value.String())
+	}
+}
+
+// Sample returns a collection of sampled values from a search space.
+func (ps *ParameterSpace) Sample() map[string]interface{} {
+	// TODO: Iterate by sorted keys to ensure a fixed seed always produces identical results.
+	result := make(map[string]interface{}, len(ps.params))
+	for key, param := range ps.params {
+		result[key] = param.Sample(ps.rand)
+	}
+	return result
+}
+
+type distribution interface {
+	Sample(r *rand.Rand) interface{}
+}
+
+type fixedValue struct {
+	value interface{}
+}
+
+func (d fixedValue) Sample(r *rand.Rand) interface{} {
+	return d.value
+}
+
+type uniformInt struct {
+	min, max int64
+}
+
+func (d uniformInt) Sample(r *rand.Rand) interface{} {
+	return r.Int63n(d.max-d.min) + d.min
+}
+
+type uniformFloat struct {
+	min, max float64
+}
+
+func (d uniformFloat) Sample(r *rand.Rand) interface{} {
+	return r.Float64()*(d.max-d.min) + d.min
+}
+
+type logFloat struct {
+	min, max float64
+}
+
+func (d logFloat) Sample(r *rand.Rand) interface{} {
+	lmin, lmax := math.Log(d.min), math.Log(d.max)
+	return math.Exp(r.Float64()*(lmax-lmin) + lmin)
+}
+
+type chooseOne struct {
+	choices []interface{}
+}
+
+func (d chooseOne) Sample(r *rand.Rand) interface{} {
+	return d.choices[r.Intn(len(d.choices))]
+}

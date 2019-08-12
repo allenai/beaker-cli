@@ -44,15 +44,9 @@ func newCreateCmd(
 	cmd.Flag("force", "Allow depending on uncommitted datasets").BoolVar(&opts.Force)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		var specFile io.Reader
-		if *specPath == "-" {
-			specFile = os.Stdin
-		} else {
-			var err error
-			specFile, err = os.Open(*specPath)
-			if err != nil {
-				return err
-			}
+		specFile, err := openPath(*specPath)
+		if err != nil {
+			return err
 		}
 
 		spec, err := ReadSpec(specFile, *expandVars)
@@ -166,4 +160,13 @@ func ReadSpec(r io.Reader, expandVars bool) (*ExperimentSpec, error) {
 	}
 
 	return &spec, nil
+}
+
+func openPath(p string) (io.Reader, error) {
+	// Special case: "-" means read from STDIN.
+	if p == "-" {
+		return os.Stdin, nil
+	}
+
+	return os.Open(p)
 }
