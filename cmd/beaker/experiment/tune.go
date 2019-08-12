@@ -11,12 +11,12 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/allenai/beaker/config"
 	"github.com/fatih/color"
 	"golang.org/x/xerrors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/allenai/beaker/config"
 	"github.com/beaker/client/api"
 	beaker "github.com/beaker/client/client"
 )
