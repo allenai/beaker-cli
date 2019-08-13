@@ -68,7 +68,7 @@ a parameter search of 5 experiments with values sampled from the provided space.
 beaker alpha tune \
     --template template.yaml \
     --search parameter-space.yaml \
-    --group my-group \
+    --group parameter-search-example \
     --count 5
 ```
 
