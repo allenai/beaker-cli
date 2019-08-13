@@ -1,0 +1,13 @@
+tasks:
+  - spec:
+      image: busybox
+      resultPath: /none
+      env:
+        INT: '{{.Parameter.uniformInt}}'
+        FLOAT: '{{.Parameter.uniformFloat}}'
+        LOG: '{{.Parameter.log}}'
+        CHOICE: '{{.Parameter.chooseOne}}'
+      args:
+        - sh
+        - '-c'
+        - 'echo Parameters evaluate to the same value when repeated: $CHOICE, {{.Parameter.chooseOne}}'
