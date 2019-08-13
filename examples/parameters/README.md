@@ -61,8 +61,8 @@ it can be written as `{{index .Parameter "my parameter"}}`.
 
 ## Example
 
-The following example command automatically creates a group "my-group" containing
-a parameter search of 5 experiments with values sampled from the provided space.
+The following example command automatically creates a group containing 5
+experiments sampled from the provided space.
 
 ```bash
 beaker alpha tune \
