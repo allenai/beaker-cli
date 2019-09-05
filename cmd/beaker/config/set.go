@@ -26,7 +26,7 @@ func newSetCmd(
 	config *config.Config,
 ) {
 	o := &setOptions{}
-	cmd := parent.Command("set", "Set a specific config setting, identified by its YAML key")
+	cmd := parent.Command("set", "Set a specific config setting")
 	cmd.Action(func(c *kingpin.ParseContext) error {
 		return o.run(config)
 	})
