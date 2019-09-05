@@ -33,4 +33,5 @@ func NewConfigCmd(
 	newInteractiveCmd(cmd, o, config)
 	newSetCmd(cmd, o, config)
 	newTestCmd(cmd, o, config)
+	newUnsetCmd(cmd, o, config)
 }

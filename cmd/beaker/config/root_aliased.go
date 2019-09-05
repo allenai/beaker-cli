@@ -15,9 +15,10 @@ func NewConfigureCmd(
 ) {
 	o := &configOptions{AppOptions: parentOpts}
 	cmd := parent.Command("configure", "Manage Beaker configuration settings")
-	cmd.Command("interactive", "Interactive configuration").Default().Action(func(c *kingpin.ParseContext) error {
-		return beakerConfig.InteractiveConfiguration()
-	})
+	cmd.Command("interactive", "Interactive configuration").Default().Action(
+		func(c *kingpin.ParseContext) error {
+			return beakerConfig.InteractiveConfiguration()
+		})
 
 	// Attach subcommands.
 	newTestCmd(cmd, o, config)
