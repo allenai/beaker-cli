@@ -43,7 +43,7 @@ func (o *unsetOptions) run(beakerCfg *config.Config) error {
 		}
 	}
 	if !found {
-		return errors.New(fmt.Sprintf("Unknown config field: %q", o.property))
+		return errors.New(fmt.Sprintf("Unknown config property: %q", o.property))
 	}
 
 	fmt.Printf("Unset %s\n", o.property)

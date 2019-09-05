@@ -47,7 +47,7 @@ func (o *setOptions) run(beakerCfg *config.Config) error {
 		}
 	}
 	if !found {
-		return errors.New(fmt.Sprintf("Unknown config field: %q", o.property))
+		return errors.New(fmt.Sprintf("Unknown config property: %q", o.property))
 	}
 
 	fmt.Printf("Set %s = %s\n", o.property, o.value)
