@@ -11,7 +11,7 @@ func newInteractiveCmd(
 	parentOpts *configOptions,
 	cfg *config.Config,
 ) {
-	cmd := parent.Command("interactive", "Test the configuration")
+	cmd := parent.Command("interactive", "Interactive configuration")
 	cmd.Action(func(c *kingpin.ParseContext) error {
 		return config.InteractiveConfiguration()
 	})
