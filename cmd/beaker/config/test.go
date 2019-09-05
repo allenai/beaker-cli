@@ -1,14 +1,12 @@
 package config
 
 import (
-	"github.com/pkg/errors"
-	"fmt"
 	"context"
-
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
+	"fmt"
 
 	beaker "github.com/beaker/client/client"
-	beakerConfig "github.com/allenai/beaker/config"
+	"github.com/pkg/errors"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/allenai/beaker/config"
 )

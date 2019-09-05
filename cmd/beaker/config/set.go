@@ -1,14 +1,14 @@
 package config
 
 import (
-	"strings"
-	"github.com/pkg/errors"
-	"reflect"
-	"path/filepath"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"reflect"
+	"strings"
 
+	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	yaml "gopkg.in/yaml.v2"
 
@@ -16,7 +16,7 @@ import (
 )
 
 type setOptions struct {
-	key string
+	key   string
 	value string
 }
 
