@@ -27,6 +27,7 @@ func NewConfigureCmd(
 	}).Arg("command", "Show help on command.").StringsVar(&helpSubcommands)
 
 	// Attach subcommands.
+	newInteractiveCmd(cmd, o, config)
 	newSetCmd(cmd, o, config)
 	newTestCmd(cmd, o, config)
 }
