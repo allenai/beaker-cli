@@ -20,7 +20,7 @@ type Config struct {
 const (
 	addressKey     = "BEAKER_ADDR"
 	configPathKey  = "BEAKER_CONFIG_FILE"
-	defaultAddress = "https://beaker.allenai.org"
+	defaultAddress = "https://api.beaker.org"
 )
 
 var BeakerConfigDir = filepath.Join(os.Getenv("HOME"), ".beaker")
