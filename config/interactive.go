@@ -18,7 +18,7 @@ func InteractiveConfiguration() error {
 	fmt.Println("Beaker Configuration")
 	fmt.Println("")
 	fmt.Println("Press enter to keep the current value of any setting.")
-	fmt.Printf("Results will be saved to %v\n\n", color.BlueString(beakerConfigDir))
+	fmt.Printf("Results will be saved to %v\n\n", color.BlueString(BeakerConfigDir))
 
 	// Create a default config by reading in whatever config currently exists.
 	config, err := New()
@@ -46,11 +46,11 @@ func InteractiveConfiguration() error {
 		return err
 	}
 
-	if err := os.MkdirAll(beakerConfigDir, os.ModePerm); err != nil {
+	if err := os.MkdirAll(BeakerConfigDir, os.ModePerm); err != nil {
 		return errors.WithStack(err)
 	}
 
-	return ioutil.WriteFile(filepath.Join(beakerConfigDir, "config.yml"), bytes, 0644)
+	return ioutil.WriteFile(filepath.Join(BeakerConfigDir, "config.yml"), bytes, 0644)
 }
 
 func promptValue(name, defaultVal string) (string, error) {

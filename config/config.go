@@ -24,7 +24,7 @@ const (
 	defaultAddress = "https://beaker.allenai.org"
 )
 
-var beakerConfigDir = filepath.Join(os.Getenv("HOME"), ".beaker")
+var BeakerConfigDir = filepath.Join(os.Getenv("HOME"), ".beaker")
 
 // New reads environment and configuration files and returns the resulting Beaker configuration.
 func New() (*Config, error) {
@@ -59,7 +59,7 @@ func findConfig() (io.ReadCloser, error) {
 
 	const configFile = "config.yml"
 	configPaths := []string{
-		beakerConfigDir,
+		BeakerConfigDir,
 		"/etc/beaker",
 	}
 
