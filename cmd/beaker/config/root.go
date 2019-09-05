@@ -31,6 +31,7 @@ func NewConfigCmd(
 
 	// Attach subcommands.
 	newInteractiveCmd(cmd, o, config)
+	newListCmd(cmd, o, config)
 	newSetCmd(cmd, o, config)
 	newTestCmd(cmd, o, config)
 	newUnsetCmd(cmd, o, config)
