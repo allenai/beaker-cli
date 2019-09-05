@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/allenai/beaker/config"
+	beakerConfig "github.com/allenai/beaker/config"
 )
 
 const userTokenHelp = "Login on the Beaker website and follow the instructions to configure this Beaker CLI client."
@@ -16,7 +16,7 @@ const userTokenHelp = "Login on the Beaker website and follow the instructions t
 func newTestCmd(
 	parent *kingpin.CmdClause,
 	parentOpts *configOptions,
-	config *config.Config,
+	config *beakerConfig.Config,
 ) {
 	cmd := parent.Command("test", "Test the configuration")
 	cmd.Action(func(c *kingpin.ParseContext) error {
