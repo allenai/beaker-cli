@@ -16,7 +16,7 @@ import (
 )
 
 type setOptions struct {
-	key   string
+	property   string
 	value string
 }
 
@@ -31,8 +31,8 @@ func newSetCmd(
 		return o.run(config)
 	})
 
-	cmd.Arg("key", "Key").Required().StringVar(&o.key)
-	cmd.Arg("value", "Value").Required().StringVar(&o.value)
+	cmd.Arg("property", "Name of the property to set").Required().StringVar(&o.property)
+	cmd.Arg("value", "New value to set").Required().StringVar(&o.value)
 }
 
 func (o *setOptions) run(beakerCfg *config.Config) error {
@@ -40,16 +40,16 @@ func (o *setOptions) run(beakerCfg *config.Config) error {
 	found := false
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
-		if field.Tag.Get("yaml") == o.key {
+		if field.Tag.Get("yaml") == o.property {
 			found = true
 			reflect.ValueOf(beakerCfg).Elem().FieldByName(field.Name).SetString(strings.TrimSpace(o.value))
 		}
 	}
 	if !found {
-		return errors.New(fmt.Sprintf("Unknown config field: %q", o.key))
+		return errors.New(fmt.Sprintf("Unknown config field: %q", o.property))
 	}
 
-	fmt.Printf("Set %s = %s\n", o.key, o.value)
+	fmt.Printf("Set %s = %s\n", o.property, o.value)
 
 	bytes, err := yaml.Marshal(beakerCfg)
 	if err != nil {
