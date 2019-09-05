@@ -3,7 +3,7 @@ package config
 import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	config "github.com/allenai/beaker/config"
+	"github.com/allenai/beaker/config"
 )
 
 func newInteractiveCmd(
