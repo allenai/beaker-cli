@@ -21,8 +21,6 @@ func NewConfigCmd(
 	o := &configOptions{AppOptions: parentOpts}
 	cmd := parent.Command("config", "Manage Beaker configuration settings")
 
-	cmd.Flag("addr", "Address of the Beaker service.").Default(config.BeakerAddress).StringVar(&o.addr)
-
 	// Add automatic help generation for the command group.
 	var helpSubcommands []string
 	cmd.Command("help", "Show help.").Hidden().Default().PreAction(func(c *kingpin.ParseContext) error {
