@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	"github.com/fatih/color"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/allenai/beaker/config"
 )
