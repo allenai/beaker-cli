@@ -16,8 +16,8 @@ import (
 )
 
 type setOptions struct {
-	property   string
-	value string
+	property string
+	value    string
 }
 
 func newSetCmd(
@@ -42,6 +42,7 @@ func (o *setOptions) run(beakerCfg *config.Config) error {
 		field := t.Field(i)
 		if field.Tag.Get("yaml") == o.property {
 			found = true
+			// The following code assumes all values are strings and will not work with non-string values.
 			reflect.ValueOf(beakerCfg).Elem().FieldByName(field.Name).SetString(strings.TrimSpace(o.value))
 		}
 	}
