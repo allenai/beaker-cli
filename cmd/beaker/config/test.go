@@ -15,9 +15,6 @@ import (
 
 const userTokenHelp = "Login on the Beaker website and follow the instructions to configure this Beaker CLI client."
 
-type testOptions struct {
-}
-
 func newTestCmd(
 	parent *kingpin.CmdClause,
 	parentOpts *configOptions,
