@@ -2,14 +2,10 @@ package config
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"reflect"
 
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
-	yaml "gopkg.in/yaml.v2"
 
 	"github.com/allenai/beaker/config"
 )
@@ -32,7 +28,13 @@ func newUnsetCmd(
 	cmd.Arg("property", "Name of the property to set").Required().StringVar(&o.property)
 }
 
-func (o *unsetOptions) run(beakerCfg *config.Config) error {
+func (o *unsetOptions) run(_ *config.Config) error {
+	configFilePath := config.GetFilePath()
+	beakerCfg, err := config.ReadConfigFromFile(configFilePath)
+	if err != nil {
+		return err
+	}
+
 	t := reflect.TypeOf(*beakerCfg)
 	found := false
 	for i := 0; i < t.NumField(); i++ {
@@ -48,14 +50,5 @@ func (o *unsetOptions) run(beakerCfg *config.Config) error {
 
 	fmt.Printf("Unset %s\n", o.property)
 
-	bytes, err := yaml.Marshal(beakerCfg)
-	if err != nil {
-		return err
-	}
-
-	if err := os.MkdirAll(config.BeakerConfigDir, os.ModePerm); err != nil {
-		return errors.WithStack(err)
-	}
-
-	return ioutil.WriteFile(filepath.Join(config.BeakerConfigDir, "config.yml"), bytes, 0644)
+	return config.WriteConfig(beakerCfg, configFilePath)
 }

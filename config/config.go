@@ -2,6 +2,7 @@ package config
 
 import (
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -18,12 +19,13 @@ type Config struct {
 }
 
 const (
-	addressKey     = "BEAKER_ADDR"
-	configPathKey  = "BEAKER_CONFIG_FILE"
-	defaultAddress = "https://api.beaker.org"
+	addressKey       = "BEAKER_ADDR"
+	configPathKey    = "BEAKER_CONFIG_FILE"
+	defaultAddress   = "https://api.beaker.org"
+	beakerConfigFile = "config.yml"
 )
 
-var BeakerConfigDir = filepath.Join(os.Getenv("HOME"), ".beaker")
+var beakerConfigDir = filepath.Join(os.Getenv("HOME"), ".beaker")
 
 // New reads environment and configuration files and returns the resulting Beaker configuration.
 func New() (*Config, error) {
@@ -50,20 +52,56 @@ func New() (*Config, error) {
 	return &config, nil
 }
 
+func GetFilePath() string {
+	if override, ok := os.LookupEnv(configPathKey); ok {
+		return override
+	}
+	return filepath.Join(beakerConfigDir, beakerConfigFile)
+}
+
+func ReadConfigFromFile(path string) (*Config, error) {
+	r, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer r.Close()
+
+	config := Config{}
+	d := yaml.NewDecoder(r)
+	if err := d.Decode(&config); err != nil {
+		return nil, errors.Wrap(err, "failed to read config")
+	}
+
+	return &config, nil
+}
+
+func WriteConfig(config *Config, filePath string) error {
+	bytes, err := yaml.Marshal(config)
+	if err != nil {
+		return err
+	}
+
+	dirPath, _ := filepath.Split(filePath)
+	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
+		return errors.WithStack(err)
+	}
+
+	return ioutil.WriteFile(filePath, bytes, 0644)
+}
+
 func findConfig() (io.ReadCloser, error) {
 	// Check the override first.
 	if override, ok := os.LookupEnv(configPathKey); ok {
 		return os.Open(override)
 	}
 
-	const configFile = "config.yml"
 	configPaths := []string{
-		BeakerConfigDir,
+		beakerConfigDir,
 		"/etc/beaker",
 	}
 
 	for _, p := range configPaths {
-		r, err := os.Open(filepath.Join(p, configFile))
+		r, err := os.Open(filepath.Join(p, beakerConfigFile))
 		if os.IsNotExist(err) {
 			continue
 		}
