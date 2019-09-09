@@ -7,6 +7,7 @@ tasks:
         FLOAT: '{{.Parameter.uniformFloat}}'
         LOG: '{{.Parameter.log}}'
         CHOICE: '{{.Parameter.chooseOne}}'
+        ENV: '{{.Environment.USER}}'
       args:
         - sh
         - '-c'
