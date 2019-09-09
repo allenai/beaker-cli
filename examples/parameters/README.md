@@ -11,7 +11,7 @@ an optional seed and a map of named parameters.
 A small set of built-in distributions is provided:
 - `uniform-int`: an integer sampled uniformly from `[min, max)`
 - `uniform`: a real number sampled uniformly from `[min, max)`
-- `log-uniform`: a real number sampled from a logarithmic distrubition in `[min, max)`
+- `log-uniform`: a real number sampled from a logarithmic distribution in `[min, max)`
 - `choice`: a single choice sampled uniformly from a provided list (`choices`).
    Choices need not be of the same type.
 
