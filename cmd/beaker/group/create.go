@@ -19,6 +19,7 @@ type createOptions struct {
 	quiet       bool
 	org         string
 	experiments []string
+	workspace   string
 }
 
 func newCreateCmd(
@@ -42,7 +43,8 @@ func newCreateCmd(
 	cmd.Flag("desc", "Assign a description to the group").StringVar(&o.description)
 	cmd.Flag("name", "Assign a name to the group").Short('n').Required().StringVar(&o.name)
 	cmd.Flag("quiet", "Only display created group's ID").Short('q').BoolVar(&o.quiet)
-	cmd.Flag("org", "Org that will own the created experiment").Short('o').StringVar(&o.org)
+	cmd.Flag("org", "Org that will own the created group").Short('o').StringVar(&o.org)
+	cmd.Flag("workspace", "Workspace that will own the created group").Short('w').StringVar(&o.workspace)
 	cmd.Arg("experiment", "ID of experiment to add to the group").StringsVar(&o.experiments)
 }
 
@@ -52,6 +54,7 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 		Description:  o.description,
 		Organization: o.org,
 		Experiments:  trimAndUnique(o.experiments),
+		Workspace:    o.workspace,
 	}
 	group, err := beaker.CreateGroup(context.TODO(), spec)
 	if err != nil {
