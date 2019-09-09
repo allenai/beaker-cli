@@ -175,9 +175,15 @@ func runParameterSearch(
 ) ([]string, error) {
 	buf := &bytes.Buffer{}
 
+	envVars := map[string]string{}
+	for _, kv := range os.Environ() {
+		parts := strings.SplitN(kv, "=", 2)
+		envVars[parts[0]] = parts[1]
+	}
+
 	var experiments []string
 	for i := 0; i < opts.Count; i++ {
-		params := &model{Parameter: paramSpace.Sample()}
+		params := &model{Environment: envVars, Parameter: paramSpace.Sample()}
 
 		buf.Reset()
 		if err := specTemplate.Execute(buf, params); err != nil {
