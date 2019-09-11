@@ -64,7 +64,7 @@ func newCreateCmd(
 		if opts.Org == "" {
 			opts.Org = config.DefaultOrg
 		}
-		
+
 		if opts.Workspace == "" {
 			opts.Workspace = config.DefaultWorkspace
 		}
