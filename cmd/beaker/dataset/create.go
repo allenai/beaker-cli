@@ -22,6 +22,7 @@ type createOptions struct {
 	quiet       bool
 	source      string
 	org         string
+	workspace   string
 }
 
 func newCreateCmd(
@@ -39,6 +40,9 @@ func newCreateCmd(
 		if o.org == "" {
 			o.org = config.DefaultOrg
 		}
+		if o.workspace == "" {
+			o.workspace = config.DefaultWorkspace
+		}
 		return o.run(beaker)
 	})
 
@@ -46,6 +50,7 @@ func newCreateCmd(
 	cmd.Flag("name", "Assign a name to the dataset").Short('n').StringVar(&o.name)
 	cmd.Flag("quiet", "Only display created dataset's ID").Short('q').BoolVar(&o.quiet)
 	cmd.Flag("org", "Org that will own the created experiment").Short('o').StringVar(&o.org)
+	cmd.Flag("workspace", "Workspace where the dataset will be placed").Short('w').StringVar(&o.workspace)
 	cmd.Arg("source", "Path to a file or directory containing the data").
 		Required().ExistingFileOrDirVar(&o.source)
 }
@@ -64,6 +69,7 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 	spec := api.DatasetSpec{
 		Description:  o.description,
 		Organization: o.org,
+		Workspace:    o.workspace,
 		FileHeap:     true,
 	}
 	if !info.IsDir() {

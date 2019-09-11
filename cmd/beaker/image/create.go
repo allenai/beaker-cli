@@ -27,6 +27,8 @@ type CreateOptions struct {
 	Description string
 	Name        string
 	Quiet       bool
+	Org         string
+	Workspace   string
 }
 
 func newCreateCmd(
@@ -41,6 +43,8 @@ func newCreateCmd(
 	cmd.Flag("desc", "Assign a description to the image").StringVar(&opts.Description)
 	cmd.Flag("name", "Assign a name to the image").Short('n').StringVar(&opts.Name)
 	cmd.Flag("quiet", "Only display created image's ID").Short('q').BoolVar(&opts.Quiet)
+	cmd.Flag("org", "Org that will own the created experiment").Short('o').StringVar(&opts.Org)
+	cmd.Flag("workspace", "Workspace where the experiment will be placed").Short('w').StringVar(&opts.Workspace)
 	cmd.Arg("image", "Docker image ID").Required().StringVar(image)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {
@@ -48,6 +52,15 @@ func newCreateCmd(
 		if err != nil {
 			return err
 		}
+
+		if opts.Org == "" {
+			opts.Org = config.DefaultOrg
+		}
+
+		if opts.Workspace == "" {
+			opts.Workspace = config.DefaultWorkspace
+		}
+
 		_, err = Create(context.TODO(), os.Stdout, beaker, *image, opts)
 		return err
 	})
@@ -79,9 +92,11 @@ func Create(
 	}
 
 	spec := api.ImageSpec{
-		Description: opts.Description,
-		ImageID:     dockerImage.ID,
-		ImageTag:    imageTag,
+		Description:  opts.Description,
+		ImageID:      dockerImage.ID,
+		ImageTag:     imageTag,
+		Organization: opts.Org,
+		Workspace:    opts.Workspace,
 	}
 	image, err := beaker.CreateImage(ctx, spec, opts.Name)
 	if err != nil {

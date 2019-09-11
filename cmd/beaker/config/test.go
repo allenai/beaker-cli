@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	beaker "github.com/beaker/client/client"
+	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
@@ -60,6 +61,18 @@ func newTestCmd(
 			fmt.Printf("Default org verified: %q\n", cfg.DefaultOrg)
 		} else {
 			fmt.Println("No default org set.")
+		}
+
+		if cfg.DefaultWorkspace != "" {
+			fmt.Printf("Verifying default workspace: %q\n\n", cfg.DefaultWorkspace)
+			_, err := beaker.Workspace(context.TODO(), cfg.DefaultWorkspace)
+			if err != nil {
+				fmt.Println("There was a problem verifying your default workspace.")
+				fmt.Printf("Set the default workspace using the command %s\n", color.BlueString("beaker config set default_workspace <workspace_name>"))
+				return err
+			}
+		} else {
+			fmt.Println("No default workspace set.")
 		}
 
 		return nil
