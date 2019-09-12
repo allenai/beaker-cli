@@ -86,10 +86,10 @@ func Create(
 	}
 
 	spec := api.ImageSpec{
-		Description:  opts.Description,
-		ImageID:      dockerImage.ID,
-		ImageTag:     imageTag,
-		Workspace:    opts.Workspace,
+		Description: opts.Description,
+		ImageID:     dockerImage.ID,
+		ImageTag:    imageTag,
+		Workspace:   opts.Workspace,
 	}
 	image, err := beaker.CreateImage(ctx, spec, opts.Name)
 	if err != nil {
