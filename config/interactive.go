@@ -35,6 +35,9 @@ func InteractiveConfiguration() error {
 	if config.DefaultOrg, err = promptValue("Default organization", config.DefaultOrg); err != nil {
 		return err
 	}
+	if config.DefaultWorkspace, err = promptValue("Default workspace", config.DefaultWorkspace); err != nil {
+		return err
+	}
 
 	config.UserToken = strings.TrimSpace(config.UserToken)
 	if config.UserToken == "" {
