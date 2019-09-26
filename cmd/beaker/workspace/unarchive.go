@@ -30,11 +30,11 @@ func newUnarchiveCmd(
 		return o.run(beaker)
 	})
 
-	cmd.Arg("workspace", "Workspace ID (name not yet supported)").Required().StringVar(&o.workspace)
+	cmd.Arg("workspace", "Workspace to unarchive").Required().StringVar(&o.workspace)
 }
 
 func (o *unArchiveOptions) run(beaker *beaker.Client) error {
-	fmt.Println(color.RedString("Workspace commands are still under development and should be considered experimental."))
+	fmt.Println(color.YellowString("Workspace commands are still under development and should be considered experimental."))
 
 	ctx := context.TODO()
 
@@ -43,8 +43,7 @@ func (o *unArchiveOptions) run(beaker *beaker.Client) error {
 		return err
 	}
 
-	err = workspace.SetArchived(ctx, false)
-	if err != nil {
+	if err := workspace.SetArchived(ctx, false); err != nil {
 		return err
 	}
 

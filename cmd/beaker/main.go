@@ -8,6 +8,7 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/allenai/beaker/cmd/beaker/alpha"
+	"github.com/allenai/beaker/cmd/beaker/cluster"
 	configCmd "github.com/allenai/beaker/cmd/beaker/config"
 	"github.com/allenai/beaker/cmd/beaker/dataset"
 	"github.com/allenai/beaker/cmd/beaker/experiment"
@@ -57,6 +58,7 @@ func newApp(config *config.Config) (*options.AppOptions, error) {
 
 	// Build out sub-command groups.
 	alpha.NewAlphaCmd(app, o, config)
+	cluster.NewClusterCmd(app, o, config)
 	configCmd.NewConfigCmd(app, o, config)
 	// DEPRECATED: this allows config commands to keep working with "configure"
 	configCmd.NewConfigureCmd(app, o, config)

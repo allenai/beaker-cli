@@ -45,7 +45,7 @@ func newCreateCmd(
 
 func (o *createOptions) run(beaker *beaker.Client) error {
 	if !o.quiet {
-		fmt.Println(color.RedString("Workspace commands are still under development and should be considered experimental."))
+		fmt.Println(color.YellowString("Workspace commands are still under development and should be considered experimental."))
 	}
 
 	ctx := context.TODO()
