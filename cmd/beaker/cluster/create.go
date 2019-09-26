@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -52,10 +51,6 @@ func newCreateCmd(
 
 func (o *createOptions) run(beaker *beaker.Client) error {
 	fmt.Println(color.YellowString("Cluster commands are still under development and should be considered experimental."))
-
-	if o.size < 0 {
-		return errors.New("cluster size must be non-negative")
-	}
 
 	parts := strings.Split(o.name, "/")
 	if len(parts) != 2 {
