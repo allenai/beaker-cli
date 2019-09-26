@@ -35,7 +35,7 @@ func NewClusterCmd(
 	// Attach subcommands.
 	// TODO: Define a list command.
 	newCreateCmd(cmd, o, config)
-	newInspectCmd(cmd, o, config)
 	newExtendCmd(cmd, o, config) // TODO: Should this be automatic on experiment create?
-	newDeleteCmd(cmd, o, config)
+	newInspectCmd(cmd, o, config)
+	newTerminateCmd(cmd, o, config)
 }

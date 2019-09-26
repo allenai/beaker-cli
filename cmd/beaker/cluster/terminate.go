@@ -11,17 +11,17 @@ import (
 	"github.com/allenai/beaker/config"
 )
 
-type deleteOptions struct {
+type terminateOptions struct {
 	cluster string
 }
 
-func newDeleteCmd(
+func newTerminateCmd(
 	parent *kingpin.CmdClause,
 	parentOpts *clusterOptions,
 	config *config.Config,
 ) {
-	o := &deleteOptions{}
-	cmd := parent.Command("delete", "Permanently expire a cluster")
+	o := &terminateOptions{}
+	cmd := parent.Command("terminate", "Permanently expire a cluster")
 	cmd.Action(func(c *kingpin.ParseContext) error {
 		beaker, err := beaker.NewClient(parentOpts.addr, config.UserToken)
 		if err != nil {
@@ -30,16 +30,16 @@ func newDeleteCmd(
 		return o.run(beaker)
 	})
 
-	cmd.Arg("cluster", "Cluster to delete").Required().StringVar(&o.cluster)
+	cmd.Arg("cluster", "Cluster to terminate").Required().StringVar(&o.cluster)
 }
 
-func (o *deleteOptions) run(beaker *beaker.Client) error {
+func (o *terminateOptions) run(beaker *beaker.Client) error {
 	fmt.Println(color.YellowString("Cluster commands are still under development and should be considered experimental."))
 
 	if err := beaker.Cluster(o.cluster).Delete(context.TODO()); err != nil {
 		return err
 	}
 
-	fmt.Printf("Deleted %s\n", color.BlueString(o.cluster))
+	fmt.Printf("Terminated %s\n", color.BlueString(o.cluster))
 	return nil
 }
