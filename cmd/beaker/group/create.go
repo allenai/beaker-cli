@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/fatih/color"
+	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
-	
+
 	"github.com/beaker/client/api"
 	beaker "github.com/beaker/client/client"
 
