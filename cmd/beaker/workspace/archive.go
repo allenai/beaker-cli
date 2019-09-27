@@ -30,14 +30,13 @@ func newArchiveCmd(
 		return o.run(beaker)
 	})
 
-	cmd.Arg("workspace", "Workspace ID (name not yet supported)").Required().StringVar(&o.workspace)
+	cmd.Arg("workspace", "Workspace to archive").Required().StringVar(&o.workspace)
 }
 
 func (o *archiveOptions) run(beaker *beaker.Client) error {
-	fmt.Println(color.RedString("Workspace commands are still under development and should be considered experimental."))
+	fmt.Println(color.YellowString("Workspace commands are still under development and should be considered experimental."))
 
 	ctx := context.TODO()
-
 	workspace, err := beaker.Workspace(ctx, o.workspace)
 	if err != nil {
 		return err

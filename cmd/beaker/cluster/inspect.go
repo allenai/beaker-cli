@@ -1,4 +1,4 @@
-package workspace
+package cluster
 
 import (
 	"context"
@@ -15,16 +15,16 @@ import (
 )
 
 type inspectOptions struct {
-	workspaces []string
+	clusters []string
 }
 
 func newInspectCmd(
 	parent *kingpin.CmdClause,
-	parentOpts *workspaceOptions,
+	parentOpts *clusterOptions,
 	config *config.Config,
 ) {
 	o := &inspectOptions{}
-	cmd := parent.Command("inspect", "Display detailed information about one or more workspaces")
+	cmd := parent.Command("inspect", "Display detailed information about one or more clusters")
 	cmd.Action(func(c *kingpin.ParseContext) error {
 		beaker, err := beaker.NewClient(parentOpts.addr, config.UserToken)
 		if err != nil {
@@ -33,29 +33,25 @@ func newInspectCmd(
 		return o.run(beaker)
 	})
 
-	cmd.Arg("workspace", "Workspace(s) to inspect").Required().StringsVar(&o.workspaces)
+	cmd.Arg("cluster", "Cluster(s) to inspect").Required().StringsVar(&o.clusters)
 }
 
 func (o *inspectOptions) run(beaker *beaker.Client) error {
-	fmt.Println(color.YellowString("Workspace commands are still under development and should be considered experimental."))
+	fmt.Println(color.YellowString("Cluster commands are still under development and should be considered experimental."))
 
 	ctx := context.TODO()
 
-	var workspaces []*api.Workspace
-	for _, id := range o.workspaces {
-		workspace, err := beaker.Workspace(ctx, id)
+	var clusters []*api.Cluster
+	for _, id := range o.clusters {
+		info, err := beaker.Cluster(id).Get(ctx)
 		if err != nil {
 			return err
 		}
-
-		info, err := workspace.Get(ctx)
-		if err != nil {
-			return err
-		}
-		workspaces = append(workspaces, info)
+		clusters = append(clusters, info)
 	}
 
+	// TODO: Print this in a more human-friendly way, and include node summary.
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "    ")
-	return encoder.Encode(workspaces)
+	return encoder.Encode(clusters)
 }
