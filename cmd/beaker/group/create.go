@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/pkg/errors"
+
 	"github.com/fatih/color"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
@@ -39,6 +41,9 @@ func newCreateCmd(
 		}
 		if o.workspace == "" {
 			o.workspace = config.DefaultWorkspace
+		}
+		if o.workspace == "" {
+			return errors.New("groups must be created within a workspace")
 		}
 		return o.run(beaker)
 	})

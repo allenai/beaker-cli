@@ -54,6 +54,9 @@ func newCreateCmd(
 		if opts.Workspace == "" {
 			opts.Workspace = config.DefaultWorkspace
 		}
+		if opts.Workspace == "" {
+			return errors.New("images must be created within a workspace")
+		}
 
 		_, err = Create(context.TODO(), os.Stdout, beaker, *image, opts)
 		return err

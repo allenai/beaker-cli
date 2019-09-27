@@ -43,6 +43,9 @@ func newCreateCmd(
 		if o.workspace == "" {
 			o.workspace = config.DefaultWorkspace
 		}
+		if o.workspace == "" {
+			return errors.New("datasets must be created within a workspace")
+		}
 		return o.run(beaker)
 	})
 

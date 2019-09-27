@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/pkg/errors"
+
 	"github.com/fatih/color"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	yaml "gopkg.in/yaml.v2"
@@ -67,6 +69,9 @@ func newCreateCmd(
 
 		if opts.Workspace == "" {
 			opts.Workspace = config.DefaultWorkspace
+		}
+		if opts.Workspace == "" {
+			return errors.New("experiments must be created within a workspace")
 		}
 
 		_, err = Create(context.TODO(), os.Stdout, beaker, spec, opts)
