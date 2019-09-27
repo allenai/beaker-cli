@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-
 	"github.com/fatih/color"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	yaml "gopkg.in/yaml.v2"
