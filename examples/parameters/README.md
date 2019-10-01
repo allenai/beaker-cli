@@ -43,9 +43,11 @@ Values are injected into an experiment specification via Go templates. When
 parsing a templated spec file, anything between double curly braces ( `'{{'` and
 `'}}'` ) will be evaluated as expressions and replaced.
 
-Parameters can be specified with the special built-in `{{.Parameter.varName}}`.
-If the parameter name contains special characters such as punctuation or spaces,
-it can be written as `{{index .Parameter "my parameter"}}`.
+Parameters can be specified with the built-in `{{.Parameter.varName}}`. If the
+parameter name contains special characters such as punctuation or spaces, it can
+be written as `{{index .Parameter "my parameter"}}`.
+
+Exported environment variables can be expanded with built-in `{{.Environment.varName}}`.
 
 ## Setup
 
