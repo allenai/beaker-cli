@@ -36,7 +36,7 @@ func NewWorkspaceCmd(
 	newArchiveCmd(cmd, o, config)
 	newCreateCmd(cmd, o, config)
 	newInspectCmd(cmd, o, config)
+	newMoveCmd(cmd, o, config)
 	newRenameCmd(cmd, o, config)
-	newTransferCmd(cmd, o, config)
 	newUnarchiveCmd(cmd, o, config)
 }

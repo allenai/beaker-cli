@@ -11,19 +11,19 @@ import (
 	"github.com/allenai/beaker/config"
 )
 
-type transferOptions struct {
+type moveOptions struct {
 	quiet     bool
 	workspace string
-	entities  []string
+	items  []string
 }
 
-func newTransferCmd(
+func newMoveCmd(
 	parent *kingpin.CmdClause,
 	parentOpts *workspaceOptions,
 	config *config.Config,
 ) {
-	o := &transferOptions{}
-	cmd := parent.Command("transfer", "Transfer entities identified by IDs into a workspace")
+	o := &moveOptions{}
+	cmd := parent.Command("move", "Move items into a workspace")
 	cmd.Action(func(c *kingpin.ParseContext) error {
 		beaker, err := beaker.NewClient(parentOpts.addr, config.UserToken)
 		if err != nil {
@@ -34,10 +34,10 @@ func newTransferCmd(
 
 	cmd.Flag("quiet", "No console output unless an error occurs").Short('q').BoolVar(&o.quiet)
 	cmd.Arg("workspace", "Destination workspace").Required().StringVar(&o.workspace)
-	cmd.Arg("entities", "Entity IDs to transfer into the workspace").Required().StringsVar(&o.entities)
+	cmd.Arg("items", "IDs to transfer into the workspace").Required().StringsVar(&o.items)
 }
 
-func (o *transferOptions) run(beaker *beaker.Client) error {
+func (o *moveOptions) run(beaker *beaker.Client) error {
 	if !o.quiet {
 		fmt.Println(color.YellowString("Workspace commands are still under development and should be considered experimental."))
 	}
@@ -48,12 +48,12 @@ func (o *transferOptions) run(beaker *beaker.Client) error {
 		return err
 	}
 
-	if err := workspace.Transfer(ctx, o.entities...); err != nil {
+	if err := workspace.Transfer(ctx, o.items...); err != nil {
 		return err
 	}
 
 	if !o.quiet {
-		fmt.Printf("Transferred %d entities into workspace %s\n", len(o.entities), color.BlueString(workspace.ID()))
+		fmt.Printf("Transferred %d items into workspace %s\n", len(o.items), color.BlueString(workspace.ID()))
 	}
 	return nil
 }
