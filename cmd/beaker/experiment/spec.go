@@ -69,6 +69,10 @@ type ExperimentTaskSpec struct {
 	// (optional) Tasks on which this task depends. Mounts will be applied, in
 	// the order defined here, after existing mounts in the task spec.
 	DependsOn []TaskDependency `yaml:"dependsOn,omitempty"`
+
+	// (optional) Name of a cluster on which the task should run.
+	// Cluster affinity supercedes task requirements.
+	Cluster string `yaml:"cluster,omitempty"`
 }
 
 // ToAPI converts to an API-compatible struct.
@@ -83,7 +87,12 @@ func (e ExperimentTaskSpec) ToAPI() (api.ExperimentTaskSpec, error) {
 		deps = append(deps, dep.ToAPI())
 	}
 
-	return api.ExperimentTaskSpec{Name: e.Name, Spec: *spec, DependsOn: deps}, nil
+	return api.ExperimentTaskSpec{
+		Name:      e.Name,
+		Spec:      *spec,
+		DependsOn: deps,
+		Cluster:   e.Cluster,
+	}, nil
 }
 
 // TaskDependency describes a single "edge" in a task dependency graph.

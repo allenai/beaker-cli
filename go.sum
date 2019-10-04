@@ -16,8 +16,8 @@ github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc h1:cAKDfWh5Vpd
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf h1:qet1QNfXsQxTZqLG4oE62mJzwPIB8+Tee4RNCL9ulrY=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
-github.com/beaker/client v0.0.0-20191003203456-7c6718a31738 h1:yUwKkitQUhm5F/KZVednka5wfHLIvz8kXhvwAmLp/00=
-github.com/beaker/client v0.0.0-20191003203456-7c6718a31738/go.mod h1:i/WETkBXW1/lALGxPY13aI9cQFoJantgUm+g8kx3DOQ=
+github.com/beaker/client v0.0.0-20191003204454-0666c834fe9a h1:cIW0X5CTGf1cv10tOOKycFUOIVHKsC5FyRnZoLPcPCQ=
+github.com/beaker/client v0.0.0-20191003204454-0666c834fe9a/go.mod h1:i/WETkBXW1/lALGxPY13aI9cQFoJantgUm+g8kx3DOQ=
 github.com/beaker/fileheap v0.0.0-20190607174848-4d7ca2fc4416 h1:NhnWoWZ3rQ3nfmhZHqHObyxAeqBxdd8LrqlXWSzyziY=
 github.com/beaker/fileheap v0.0.0-20190607174848-4d7ca2fc4416/go.mod h1:M14OgSGeIYOCxmkcdcDi6HP+Dd6fW0QZUaSWK6fNx9A=
 github.com/beaker/fileheap v0.0.0-20190918175729-9b84818a4677 h1:TSfvuAlTxQKa94xKxfCK6BnPQ9yfOUzMEUDUkoPEj9w=
@@ -120,8 +120,8 @@ golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5h
 golang.org/x/sys v0.0.0-20190307162637-572b51eaf722/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20190412213103-97732733099d/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20190927073244-c990c680b611/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-golang.org/x/sys v0.0.0-20191002091554-b397fe3ad8ed h1:5TJcLJn2a55mJjzYk0yOoqN8X1OdvBDUnaZaKKyQtkY=
-golang.org/x/sys v0.0.0-20191002091554-b397fe3ad8ed/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20191003212358-c178f38b412c h1:6Zx7DRlKXf79yfxuQ/7GqV3w2y7aDsk6bGg0MzF5RVU=
+golang.org/x/sys v0.0.0-20191003212358-c178f38b412c/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/text v0.3.0 h1:g61tztE5qeGQ89tm6NTjjM9VPIm088od1l6aSorWRWg=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.2 h1:tW2bmiBqwgJj/UpqtC8EpXEZVYOwU0yG4iWbprSVAcs=
