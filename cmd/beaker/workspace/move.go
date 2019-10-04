@@ -14,7 +14,7 @@ import (
 type moveOptions struct {
 	quiet     bool
 	workspace string
-	items  []string
+	items     []string
 }
 
 func newMoveCmd(
