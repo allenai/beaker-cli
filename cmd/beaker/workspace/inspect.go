@@ -37,8 +37,6 @@ func newInspectCmd(
 }
 
 func (o *inspectOptions) run(beaker *beaker.Client) error {
-	fmt.Println(color.YellowString("Workspace commands are still under development and should be considered experimental."))
-
 	ctx := context.TODO()
 
 	var workspaces []*api.Workspace

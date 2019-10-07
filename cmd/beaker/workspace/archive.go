@@ -34,8 +34,6 @@ func newArchiveCmd(
 }
 
 func (o *archiveOptions) run(beaker *beaker.Client) error {
-	fmt.Println(color.YellowString("Workspace commands are still under development and should be considered experimental."))
-
 	ctx := context.TODO()
 	workspace, err := beaker.Workspace(ctx, o.workspace)
 	if err != nil {

@@ -38,10 +38,6 @@ func newMoveCmd(
 }
 
 func (o *moveOptions) run(beaker *beaker.Client) error {
-	if !o.quiet {
-		fmt.Println(color.YellowString("Workspace commands are still under development and should be considered experimental."))
-	}
-
 	ctx := context.TODO()
 	workspace, err := beaker.Workspace(ctx, o.workspace)
 	if err != nil {

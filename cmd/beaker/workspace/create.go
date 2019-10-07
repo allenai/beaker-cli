@@ -44,10 +44,6 @@ func newCreateCmd(
 }
 
 func (o *createOptions) run(beaker *beaker.Client) error {
-	if !o.quiet {
-		fmt.Println(color.YellowString("Workspace commands are still under development and should be considered experimental."))
-	}
-
 	ctx := context.TODO()
 
 	spec := api.WorkspaceSpec{
