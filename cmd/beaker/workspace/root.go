@@ -33,9 +33,10 @@ func NewWorkspaceCmd(
 	}).Arg("command", "Show help on command.").StringsVar(&helpSubcommands)
 
 	// Attach subcommands.
+	newArchiveCmd(cmd, o, config)
 	newCreateCmd(cmd, o, config)
 	newInspectCmd(cmd, o, config)
+	newMoveCmd(cmd, o, config)
 	newRenameCmd(cmd, o, config)
-	newArchiveCmd(cmd, o, config)
 	newUnarchiveCmd(cmd, o, config)
 }
