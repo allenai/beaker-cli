@@ -8,7 +8,7 @@ You can create and explore workspaces by clicking on the new “Workspaces” li
 1. Click on Workspaces in the top bar.
 1. Click the Create New Workspace button. This modal will appear:<br>
    ![Create Workspace modal](./images/create-workspace-modal.png)
-   1. Select the organization under which you want to create the workspace. The "Personal" organization is by default private to you. Creating a workspace under an organization with by default be readable by others members of that organization.
+   1. Select the organization under which you want to create the workspace. The "Personal" organization is by default private to you. Creating a workspace under an organization will by default be readable by others members of that organization.
    1. Carefully choose a new name for the new workspace. Names are unique within the context of an organization, and while the name can be changed later, that action will break any existing references. (e.g. mentions in papers or tweets, recording links in documents, etc.)
    1. Optionally write a description for the workspace.
    1. If you wish to make this workspace and its contents publicly accessible to anyone with the link, check the Public checkbox.
