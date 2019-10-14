@@ -28,20 +28,23 @@ type createOptions struct {
 func newCreateCmd(
 	parent *kingpin.CmdClause,
 	parentOpts *datasetOptions,
-	config *config.Config,
+	cfg *config.Config,
 ) {
 	o := &createOptions{}
 	cmd := parent.Command("create", "Create a new dataset")
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		beaker, err := beaker.NewClient(parentOpts.addr, config.UserToken)
+		beaker, err := beaker.NewClient(parentOpts.addr, cfg.UserToken)
 		if err != nil {
 			return err
 		}
 		if o.org == "" {
-			o.org = config.DefaultOrg
+			o.org = cfg.DefaultOrg
 		}
 		if o.workspace == "" {
-			o.workspace = config.DefaultWorkspace
+			o.workspace, err = config.EnsureDefaultWorkspace(beaker, cfg, o.org)
+			if err != nil {
+				return err
+			}
 		}
 		return o.run(beaker)
 	})

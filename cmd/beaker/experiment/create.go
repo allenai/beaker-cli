@@ -28,7 +28,7 @@ type CreateOptions struct {
 func newCreateCmd(
 	parent *kingpin.CmdClause,
 	parentOpts *experimentOptions,
-	config *config.Config,
+	cfg *config.Config,
 ) {
 	opts := &CreateOptions{}
 	expandVars := new(bool)
@@ -56,17 +56,20 @@ func newCreateCmd(
 			return err
 		}
 
-		beaker, err := beaker.NewClient(parentOpts.addr, config.UserToken)
+		beaker, err := beaker.NewClient(parentOpts.addr, cfg.UserToken)
 		if err != nil {
 			return err
 		}
 
 		if opts.Org == "" {
-			opts.Org = config.DefaultOrg
+			opts.Org = cfg.DefaultOrg
 		}
 
 		if opts.Workspace == "" {
-			opts.Workspace = config.DefaultWorkspace
+			opts.Workspace, err = config.EnsureDefaultWorkspace(beaker, cfg, opts.Org)
+			if err != nil {
+				return err
+			}
 		}
 
 		_, err = Create(context.TODO(), os.Stdout, beaker, spec, opts)
