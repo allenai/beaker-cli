@@ -1,5 +1,7 @@
 package config
 
+// TODO: Re-assess where this file should go when refactoring the client's package structure.
+
 import (
 	"context"
 	"fmt"
@@ -9,13 +11,15 @@ import (
 	api "github.com/beaker/client/api"
 	beaker "github.com/beaker/client/client"
 	"github.com/fatih/color"
+
+	"github.com/allenai/beaker/config"
 )
 
 // EnsureDefaultWorkspace uses the configured default workspace if it is available.
 // Otherwise it falls back to a set of default workspaces, creating them if needed.
 func EnsureDefaultWorkspace(
 	client *beaker.Client,
-	config *Config,
+	config *config.Config,
 	org string,
 ) (string, error) {
 	ctx := context.TODO()

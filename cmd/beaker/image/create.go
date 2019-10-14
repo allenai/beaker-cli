@@ -19,6 +19,7 @@ import (
 	"github.com/beaker/client/api"
 	beaker "github.com/beaker/client/client"
 
+	configCmd "github.com/allenai/beaker/cmd/beaker/config"
 	"github.com/allenai/beaker/config"
 )
 
@@ -52,7 +53,7 @@ func newCreateCmd(
 		}
 
 		if opts.Workspace == "" {
-			opts.Workspace, err = config.EnsureDefaultWorkspace(beaker, cfg, cfg.DefaultOrg)
+			opts.Workspace, err = configCmd.EnsureDefaultWorkspace(beaker, cfg, cfg.DefaultOrg)
 			if err != nil {
 				return err
 			}
