@@ -10,6 +10,7 @@ import (
 	"github.com/beaker/client/api"
 	beaker "github.com/beaker/client/client"
 
+	configCmd "github.com/allenai/beaker/cmd/beaker/config"
 	"github.com/allenai/beaker/config"
 )
 
@@ -25,20 +26,26 @@ type createOptions struct {
 func newCreateCmd(
 	parent *kingpin.CmdClause,
 	parentOpts *groupOptions,
-	config *config.Config,
+	cfg *config.Config,
 ) {
 	o := &createOptions{}
 	cmd := parent.Command("create", "Create a new experiment group")
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		beaker, err := beaker.NewClient(parentOpts.addr, config.UserToken)
+		beaker, err := beaker.NewClient(parentOpts.addr, cfg.UserToken)
 		if err != nil {
 			return err
 		}
 		if o.org == "" {
-			o.org = config.DefaultOrg
+			o.org = cfg.DefaultOrg
 		}
 		if o.workspace == "" {
-			o.workspace = config.DefaultWorkspace
+			o.workspace, err = configCmd.EnsureDefaultWorkspace(beaker, cfg, o.org)
+			if err != nil {
+				return err
+			}
+			if !o.quiet {
+				fmt.Printf("Using workspace %s\n", color.BlueString(o.workspace))
+			}
 		}
 		return o.run(beaker)
 	})

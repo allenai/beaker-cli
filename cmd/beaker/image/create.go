@@ -19,6 +19,7 @@ import (
 	"github.com/beaker/client/api"
 	beaker "github.com/beaker/client/client"
 
+	configCmd "github.com/allenai/beaker/cmd/beaker/config"
 	"github.com/allenai/beaker/config"
 )
 
@@ -33,7 +34,7 @@ type CreateOptions struct {
 func newCreateCmd(
 	parent *kingpin.CmdClause,
 	parentOpts *CmdOptions,
-	config *config.Config,
+	cfg *config.Config,
 ) {
 	opts := &CreateOptions{}
 	image := new(string)
@@ -46,13 +47,19 @@ func newCreateCmd(
 	cmd.Arg("image", "Docker image ID").Required().StringVar(image)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		beaker, err := beaker.NewClient(parentOpts.Addr, config.UserToken)
+		beaker, err := beaker.NewClient(parentOpts.Addr, cfg.UserToken)
 		if err != nil {
 			return err
 		}
 
 		if opts.Workspace == "" {
-			opts.Workspace = config.DefaultWorkspace
+			opts.Workspace, err = configCmd.EnsureDefaultWorkspace(beaker, cfg, cfg.DefaultOrg)
+			if err != nil {
+				return err
+			}
+			if !opts.Quiet {
+				fmt.Printf("Using workspace %s\n", color.BlueString(opts.Workspace))
+			}
 		}
 
 		_, err = Create(context.TODO(), os.Stdout, beaker, *image, opts)
