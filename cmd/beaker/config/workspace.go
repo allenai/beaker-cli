@@ -4,13 +4,11 @@ package config
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"path"
 
 	api "github.com/beaker/client/api"
 	beaker "github.com/beaker/client/client"
-	"github.com/fatih/color"
 
 	"github.com/allenai/beaker/config"
 )
@@ -34,15 +32,15 @@ func EnsureDefaultWorkspace(
 		return "", err
 	}
 
-	// If an org isn't specified, use the "<author>/default" workspace.
-	// Otherwise, use the "<org>/<author>" workspace.
+	// If an org is specified, use the "<org>/<author>-default" workspace.
+	// Otherwise, use the "<author>/default" workspace.
 	var workspaceName string
 	var workspaceRef string
 	if org == "" {
 		workspaceName = "default"
 		workspaceRef = path.Join(author.Name, workspaceName)
 	} else {
-		workspaceName = author.Name
+		workspaceName = author.Name + "-default"
 		workspaceRef = path.Join(org, workspaceName)
 	}
 
@@ -60,6 +58,5 @@ func EnsureDefaultWorkspace(
 		return "", err
 	}
 
-	fmt.Printf("No workspace specified; using default workspace %s.\n", color.BlueString(workspaceRef))
 	return workspaceRef, nil
 }

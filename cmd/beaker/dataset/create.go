@@ -46,6 +46,9 @@ func newCreateCmd(
 			if err != nil {
 				return err
 			}
+			if !o.quiet {
+				fmt.Printf("Using workspace %s\n", color.BlueString(o.workspace))
+			}
 		}
 		return o.run(beaker)
 	})

@@ -71,6 +71,9 @@ func newCreateCmd(
 			if err != nil {
 				return err
 			}
+			if !opts.Quiet {
+				fmt.Printf("Using workspace %s\n", color.BlueString(opts.Workspace))
+			}
 		}
 
 		_, err = Create(context.TODO(), os.Stdout, beaker, spec, opts)
