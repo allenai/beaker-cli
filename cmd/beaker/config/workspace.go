@@ -45,17 +45,16 @@ func EnsureDefaultWorkspace(
 	}
 
 	if _, err = client.Workspace(ctx, workspaceRef); err != nil {
-		if apiErr, ok := err.(api.Error); ok {
-			if apiErr.Code == http.StatusNotFound {
-				if _, err = client.CreateWorkspace(ctx, api.WorkspaceSpec{
-					Name:         workspaceName,
-					Organization: org,
-				}); err != nil {
-					return "", err
-				}
+		if apiErr, ok := err.(api.Error); ok && apiErr.Code == http.StatusNotFound {
+			if _, err = client.CreateWorkspace(ctx, api.WorkspaceSpec{
+				Name:         workspaceName,
+				Organization: org,
+			}); err != nil {
+				return "", err
 			}
+		} else {
+			return "", err
 		}
-		return "", err
 	}
 
 	return workspaceRef, nil
