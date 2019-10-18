@@ -36,7 +36,7 @@ func newTerminateCmd(
 func (o *terminateOptions) run(beaker *beaker.Client) error {
 	fmt.Println(color.YellowString("Cluster commands are still under development and should be considered experimental."))
 
-	if err := beaker.Cluster(o.cluster).Delete(context.TODO()); err != nil {
+	if err := beaker.Cluster(o.cluster).Terminate(context.TODO()); err != nil {
 		return err
 	}
 
