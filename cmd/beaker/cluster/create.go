@@ -49,7 +49,7 @@ func newCreateCmd(
 	cmd.Flag("preemptible", "Enable cheaper but more volatile nodes").BoolVar(&o.preemptible)
 	cmd.Flag("cpu-count", "Number of CPUs per node").IntVar(&o.cpuCount)
 	cmd.Flag("gpu-count", "Number of GPUs per node").IntVar(&o.gpuCount)
-	cmd.Flag("gpu-type", "Type of GPU, e.g. nvidia-p100").StringVar(&o.gpuType)
+	cmd.Flag("gpu-type", "Type of GPU, e.g. p100").StringVar(&o.gpuType)
 	cmd.Flag("memory", "Memory limit per node, e.g. 6.5GiB").StringVar(&o.memory)
 	cmd.Arg("name", "Fully qualified name to assign to the cluster").Required().StringVar(&o.name)
 }
