@@ -123,7 +123,7 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 				}
 
 				fmt.Print("\nEstimated cost per node: ")
-				color.Green("$%v/hour", cluster.NodeCost)
+				color.Green("$%v/hour", cluster.NodeCost.Round(2))
 				fmt.Println("Nodes may exceed requested parameters to optimize cost:")
 				fmt.Println("    CPUs:      ", cluster.NodeShape.CPUCount)
 				fmt.Println("    CPU Memory:", cluster.NodeShape.Memory)
