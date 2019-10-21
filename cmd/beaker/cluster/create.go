@@ -116,14 +116,14 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 
 				gpuStr := "none"
 				if gpuCount := cluster.NodeShape.GPUCount; gpuCount != 0 {
-					gpuStr := strconv.FormatInt(int64(gpuCount), 10)
-					if gpuType := cluster.NodeShape.GPUType; gpuType == "" {
+					gpuStr = strconv.FormatInt(int64(gpuCount), 10)
+					if gpuType := cluster.NodeShape.GPUType; gpuType != "" {
 						gpuStr += " " + gpuType
 					}
 				}
 
 				fmt.Print("\nEstimated cost per node: ")
-				color.Green("$%v/hour", cluster.NodeCost)
+				color.Green("$%v/hour", cluster.NodeCost.Round(2))
 				fmt.Println("Nodes may exceed requested parameters to optimize cost:")
 				fmt.Println("    CPUs:      ", cluster.NodeShape.CPUCount)
 				fmt.Println("    CPU Memory:", cluster.NodeShape.Memory)
