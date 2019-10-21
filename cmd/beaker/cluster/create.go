@@ -116,8 +116,8 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 
 				gpuStr := "none"
 				if gpuCount := cluster.NodeShape.GPUCount; gpuCount != 0 {
-					gpuStr := strconv.FormatInt(int64(gpuCount), 10)
-					if gpuType := cluster.NodeShape.GPUType; gpuType == "" {
+					gpuStr = strconv.FormatInt(int64(gpuCount), 10)
+					if gpuType := cluster.NodeShape.GPUType; gpuType != "" {
 						gpuStr += " " + gpuType
 					}
 				}
