@@ -137,7 +137,7 @@ func Tune(
 			// TODO: Set workspace, author token.
 			if gr, err = beaker.CreateGroup(ctx, api.GroupSpec{
 				Organization: opts.Org,
-				Workspace: 		opts.Workspace,
+				Workspace:    opts.Workspace,
 				Name:         opts.Group,
 			}); err != nil {
 				return nil, err
