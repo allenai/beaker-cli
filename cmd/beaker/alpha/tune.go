@@ -27,7 +27,6 @@ import (
 type TuneOptions struct {
 	Count       int
 	Group       string
-	Org         string
 	SearchSpace string
 	Template    string
 	Workspace   string
@@ -43,7 +42,6 @@ func newTuneCmd(
 	cmd := parent.Command("tune", "Run several experiments over a parameter search space")
 	cmd.Flag("count", "Total number of experiments to run (default 1)").Short('c').Default("1").IntVar(&opts.Count)
 	cmd.Flag("group", "Group in which to place experiments").Short('g').StringVar(&opts.Group)
-	cmd.Flag("org", "Org that will own the created experiments").Short('o').StringVar(&opts.Org)
 	cmd.Flag("workspace", "Workspace where the experiments will be placed").Short('w').StringVar(&opts.Workspace)
 	cmd.Flag("search", "Load a search space from a file.").Short('s').Required().StringVar(&opts.SearchSpace)
 	cmd.Flag("template", "Load experiment template from a file.").Short('t').Required().StringVar(&opts.Template)
@@ -54,12 +52,8 @@ func newTuneCmd(
 			return err
 		}
 
-		if opts.Org == "" {
-			opts.Org = config.DefaultOrg
-		}
-
 		if opts.Workspace == "" {
-			opts.Workspace, err = configCmd.EnsureDefaultWorkspace(beaker, config, opts.Org)
+			opts.Workspace, err = configCmd.EnsureDefaultWorkspace(beaker, config, config.DefaultOrg)
 			if err != nil {
 				return err
 			}
@@ -136,7 +130,6 @@ func Tune(
 
 			// TODO: Set workspace, author token.
 			if gr, err = beaker.CreateGroup(ctx, api.GroupSpec{
-				Organization: opts.Org,
 				Workspace:    opts.Workspace,
 				Name:         opts.Group,
 			}); err != nil {
@@ -211,7 +204,6 @@ func runParameterSearch(
 		if err != nil {
 			return experiments, err
 		}
-		apiSpec.Organization = opts.Org
 		apiSpec.Workspace = opts.Workspace
 
 		// TODO: Set a name?
