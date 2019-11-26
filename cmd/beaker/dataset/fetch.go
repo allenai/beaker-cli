@@ -87,5 +87,15 @@ func (o *fetchOptions) run(beaker *client.Client) error {
 	}
 
 	fmt.Printf("Downloading %s to %s\n", color.CyanString(dataset.ID()), color.GreenString(target+"/"))
-	return cli.Download(ctx, dataset.Storage, "", o.outputPath, cli.UnboundedTracker(ctx), 32)
+	var tracker cli.ProgressTracker
+	info, err := dataset.Storage.Info(ctx)
+	if err != nil {
+		return err
+	}
+	if info.Size != nil && info.Size.Final {
+		tracker = cli.BoundedTracker(ctx, info.Size.Files, info.Size.Bytes)
+	} else {
+		tracker = cli.UnboundedTracker(ctx)
+	}
+	return cli.Download(ctx, dataset.Storage, "", o.outputPath, tracker, 32)
 }
