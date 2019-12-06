@@ -20,8 +20,6 @@ github.com/beaker/client v0.0.0-20191017213319-e64acc465478 h1:Tv5JIoEFCf2qvISMK
 github.com/beaker/client v0.0.0-20191017213319-e64acc465478/go.mod h1:i/WETkBXW1/lALGxPY13aI9cQFoJantgUm+g8kx3DOQ=
 github.com/beaker/fileheap v0.0.0-20190607174848-4d7ca2fc4416 h1:NhnWoWZ3rQ3nfmhZHqHObyxAeqBxdd8LrqlXWSzyziY=
 github.com/beaker/fileheap v0.0.0-20190607174848-4d7ca2fc4416/go.mod h1:M14OgSGeIYOCxmkcdcDi6HP+Dd6fW0QZUaSWK6fNx9A=
-github.com/beaker/fileheap v0.0.0-20191007232439-d44c28c3bbf4 h1:ZEZD2bpA6gJMeWiyhm2J/r/BFCTU67vwUEifiUI92Zk=
-github.com/beaker/fileheap v0.0.0-20191007232439-d44c28c3bbf4/go.mod h1:s1DlGnLogkBXThHTcCaHVVSscWlAKnpN53FI+78ndtE=
 github.com/beaker/fileheap v0.0.0-20191126220902-3df645a3b85a h1:UR2hCD3Zg1R0KHUGxN8VEE5QYhjp9Mm7KgqNSajjKuo=
 github.com/beaker/fileheap v0.0.0-20191126220902-3df645a3b85a/go.mod h1:s1DlGnLogkBXThHTcCaHVVSscWlAKnpN53FI+78ndtE=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
