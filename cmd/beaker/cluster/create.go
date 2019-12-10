@@ -69,7 +69,7 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 		Name:        clusterName,
 		Capacity:    o.size,
 		Preemptible: o.preemptible,
-		Protected: o.protected,
+		Protected:   o.protected,
 		Spec: api.NodeSpec{
 			CPUCount: o.cpuCount,
 			GPUCount: o.gpuCount,
