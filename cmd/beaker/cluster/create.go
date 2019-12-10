@@ -23,6 +23,7 @@ type createOptions struct {
 	name        string
 	size        int
 	preemptible bool
+	protected   bool
 	cpuCount    int
 	gpuCount    int
 	gpuType     string
@@ -47,6 +48,7 @@ func newCreateCmd(
 
 	cmd.Flag("max-size", "Maximum number of nodes").IntVar(&o.size)
 	cmd.Flag("preemptible", "Enable cheaper but more volatile nodes").BoolVar(&o.preemptible)
+	cmd.Flag("protected", "Mark cluster as protected - ADMINS ONLY").BoolVar(&o.protected)
 	cmd.Flag("cpu-count", "Number of CPUs per node").IntVar(&o.cpuCount)
 	cmd.Flag("gpu-count", "Number of GPUs per node").IntVar(&o.gpuCount)
 	cmd.Flag("gpu-type", "Type of GPU, e.g. p100").StringVar(&o.gpuType)
@@ -67,6 +69,7 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 		Name:        clusterName,
 		Capacity:    o.size,
 		Preemptible: o.preemptible,
+		Protected: o.protected,
 		Spec: api.NodeSpec{
 			CPUCount: o.cpuCount,
 			GPUCount: o.gpuCount,
