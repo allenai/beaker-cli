@@ -3,12 +3,9 @@ package dataset
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/beaker/fileheap/cli"
 	"github.com/fatih/color"
-	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/beaker/client/client"
@@ -47,46 +44,10 @@ func (o *fetchOptions) run(beaker *client.Client) error {
 		return err
 	}
 
-	target := o.outputPath
-	if dataset.IsFile() {
-		files, err := dataset.Files(ctx, "")
-		if err != nil {
-			return err
-		}
-		file, info, err := files.Next()
-		if err != nil {
-			return err
-		}
+	fmt.Printf("Downloading %s to %s\n",
+		color.CyanString(dataset.ID()),
+		color.GreenString(o.outputPath+"/"))
 
-		// Mimic 'cp' rules: Copying a file to a directory places the file into the target.
-		if os.IsPathSeparator(target[len(target)-1]) {
-			// The target ends in an explicit path separator, so must be a directory.
-			// Stat will validate that paths ending in a sepator are directories.
-			if _, err := os.Stat(target); err != nil && !os.IsNotExist(err) {
-				return err
-			}
-			target = filepath.Join(target, info.Path)
-		} else if f, err := os.Stat(target); err == nil && f.IsDir() {
-			// The target exists and is a directory.
-			target = filepath.Join(target, info.Path)
-		}
-
-		// Check again, but error on collision. This is a no-op if target is unmodified.
-		if f, err := os.Stat(target); err == nil && f.IsDir() {
-			return errors.Errorf("cannot overwrite directory %s with file %s", target, info.Path)
-		}
-
-		fmt.Printf("Downloading dataset %s to file %s ...", color.CyanString(dataset.ID()), color.GreenString(target))
-		if err := file.DownloadTo(ctx, target); err != nil {
-			fmt.Printf(" %s.\n", color.RedString("Failed"))
-			return err
-		}
-
-		fmt.Println(" done.")
-		return nil
-	}
-
-	fmt.Printf("Downloading %s to %s\n", color.CyanString(dataset.ID()), color.GreenString(target+"/"))
 	var tracker cli.ProgressTracker
 	info, err := dataset.Storage.Info(ctx)
 	if err != nil {

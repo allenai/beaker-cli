@@ -16,12 +16,12 @@ github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc h1:cAKDfWh5Vpd
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf h1:qet1QNfXsQxTZqLG4oE62mJzwPIB8+Tee4RNCL9ulrY=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
-github.com/beaker/client v0.0.0-20191209234031-e006699478d9 h1:WnjQ8Kq9AomJjLV+fIMlk/eWRl00y6ZEtkYCNlcPZA4=
-github.com/beaker/client v0.0.0-20191209234031-e006699478d9/go.mod h1:i/WETkBXW1/lALGxPY13aI9cQFoJantgUm+g8kx3DOQ=
+github.com/beaker/client v0.0.0-20191211233428-e8b394fbe34c h1:mM2N1TQS1kgN/uqrpISuubGtLOqmvCcihgQ/BwqE6v0=
+github.com/beaker/client v0.0.0-20191211233428-e8b394fbe34c/go.mod h1:i/WETkBXW1/lALGxPY13aI9cQFoJantgUm+g8kx3DOQ=
 github.com/beaker/fileheap v0.0.0-20190607174848-4d7ca2fc4416 h1:NhnWoWZ3rQ3nfmhZHqHObyxAeqBxdd8LrqlXWSzyziY=
 github.com/beaker/fileheap v0.0.0-20190607174848-4d7ca2fc4416/go.mod h1:M14OgSGeIYOCxmkcdcDi6HP+Dd6fW0QZUaSWK6fNx9A=
-github.com/beaker/fileheap v0.0.0-20191126220902-3df645a3b85a h1:UR2hCD3Zg1R0KHUGxN8VEE5QYhjp9Mm7KgqNSajjKuo=
-github.com/beaker/fileheap v0.0.0-20191126220902-3df645a3b85a/go.mod h1:s1DlGnLogkBXThHTcCaHVVSscWlAKnpN53FI+78ndtE=
+github.com/beaker/fileheap v0.0.0-20191210230042-b1bb45205931 h1:ikTRjzjicjF2Lc9Asf6zTZlu1yhmTBh9ZSXusv/t0cg=
+github.com/beaker/fileheap v0.0.0-20191210230042-b1bb45205931/go.mod h1:s1DlGnLogkBXThHTcCaHVVSscWlAKnpN53FI+78ndtE=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -71,6 +71,8 @@ github.com/mattn/go-colorable v0.1.4/go.mod h1:U0ppj6V5qS13XJ6of8GYAs25YV2eR4EVc
 github.com/mattn/go-isatty v0.0.8/go.mod h1:Iq45c/XA43vh69/j3iqttzPXn0bhXyGjM0Hdxcsrc5s=
 github.com/mattn/go-isatty v0.0.10 h1:qxFzApOv4WsAL965uUPIsXzAKCZxN2p9UqdhFS4ZW10=
 github.com/mattn/go-isatty v0.0.10/go.mod h1:qgIWMr58cqv1PHHyhnkY9lrL7etaEgOFcMEpPG5Rm84=
+github.com/mattn/go-isatty v0.0.11 h1:FxPOTFNqGkuDUGi3H/qkUbQO4ZiBa2brKq5r0l8TGeM=
+github.com/mattn/go-isatty v0.0.11/go.mod h1:PhnuNfih5lzO57/f3n+odYbM4JtupLOxQOAqxQCu2WE=
 github.com/onsi/ginkgo v1.6.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
 github.com/onsi/ginkgo v1.8.0 h1:VkHVNpR4iVnU8XQR6DBm8BqYjN7CRzw+xKUbVVbbW9w=
 github.com/onsi/ginkgo v1.8.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
@@ -124,6 +126,7 @@ golang.org/x/sys v0.0.0-20190222072716-a9d3bda3a223/go.mod h1:STP8DvDyc/dI5b8T5h
 golang.org/x/sys v0.0.0-20190307162637-572b51eaf722/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20190412213103-97732733099d/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20191008105621-543471e840be/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20191026070338-33540a1f6037/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20191113165036-4c7a9d0fe056/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20191210023423-ac6580df4449 h1:gSbV7h1NRL2G1xTg/owz62CST1oJBmxy4QpMMregXVQ=
 golang.org/x/sys v0.0.0-20191210023423-ac6580df4449/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=

@@ -17,8 +17,8 @@ require (
 	github.com/Sirupsen/logrus v1.0.6 // indirect
 	github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc // indirect
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
-	github.com/beaker/client v0.0.0-20191209234031-e006699478d9
-	github.com/beaker/fileheap v0.0.0-20191126220902-3df645a3b85a
+	github.com/beaker/client v0.0.0-20191211233428-e8b394fbe34c
+	github.com/beaker/fileheap v0.0.0-20191210230042-b1bb45205931
 	github.com/docker/distribution v2.7.0+incompatible // indirect
 	github.com/docker/docker v1.13.1+incompatible
 	github.com/docker/go-connections v0.4.0 // indirect
@@ -28,6 +28,7 @@ require (
 	github.com/hashicorp/go-hclog v0.10.0 // indirect
 	github.com/hashicorp/go-retryablehttp v0.6.4 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
+	github.com/mattn/go-isatty v0.0.11 // indirect
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
