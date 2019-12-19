@@ -36,7 +36,7 @@ func newStreamCmd(
 	})
 
 	cmd.Arg("dataset", "Dataset name or ID").Required().StringVar(&o.dataset)
-	cmd.Arg("file", "File in dataset to fetch. Optional for single-file datasets.").StringVar(&o.file)
+	cmd.Arg("file", "File in dataset to fetch.").StringVar(&o.file)
 	cmd.Flag("offset", "Offset in bytes.").Int64Var(&o.offset)
 	cmd.Flag("length", "Number of bytes to read.").Int64Var(&o.length)
 }
@@ -50,9 +50,8 @@ func (o *streamFileOptions) run(beaker *client.Client) error {
 
 	var fileRef *client.FileHandle
 	if o.file == "" {
-		if !dataset.IsFile() {
-			return errors.Errorf("filename required for multi-file dataset %s", dataset.ID())
-		}
+		return errors.Errorf("filename required for dataset %s", dataset.ID())
+
 		files, err := dataset.Files(ctx, "")
 		if err != nil {
 			return err

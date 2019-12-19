@@ -79,10 +79,6 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 		Workspace:    o.workspace,
 		FileHeap:     true,
 	}
-	if !info.IsDir() {
-		// If uploading a single file, treat it as a single-file dataset.
-		spec.Filename = info.Name()
-	}
 
 	dataset, err := beaker.CreateDataset(ctx, spec, o.name)
 	if err != nil {
