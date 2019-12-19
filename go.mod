@@ -17,7 +17,7 @@ require (
 	github.com/Sirupsen/logrus v1.0.6 // indirect
 	github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc // indirect
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
-	github.com/beaker/client v0.0.0-20191211233428-e8b394fbe34c
+	github.com/beaker/client v0.0.0-20191219011547-c030e742a22c
 	github.com/beaker/fileheap v0.0.0-20191210230042-b1bb45205931
 	github.com/docker/distribution v2.7.0+incompatible // indirect
 	github.com/docker/docker v1.13.1+incompatible
@@ -25,7 +25,7 @@ require (
 	github.com/docker/go-units v0.3.3 // indirect
 	github.com/fatih/color v1.7.0
 	github.com/goware/urlx v0.3.1 // indirect
-	github.com/hashicorp/go-hclog v0.10.0 // indirect
+	github.com/hashicorp/go-hclog v0.10.1 // indirect
 	github.com/hashicorp/go-retryablehttp v0.6.4 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mattn/go-isatty v0.0.11 // indirect
@@ -36,11 +36,11 @@ require (
 	github.com/shopspring/decimal v0.0.0-20191130220710-360f2bc03045 // indirect
 	github.com/sirupsen/logrus v1.4.0 // indirect
 	github.com/stretchr/testify v1.4.0
-	github.com/vbauerster/mpb/v4 v4.11.1 // indirect
-	golang.org/x/crypto v0.0.0-20191206172530-e9b2fee46413 // indirect
+	github.com/vbauerster/mpb/v4 v4.11.2 // indirect
+	golang.org/x/crypto v0.0.0-20191219195013-becbf705a915 // indirect
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
-	golang.org/x/sys v0.0.0-20191210023423-ac6580df4449 // indirect
+	golang.org/x/sys v0.0.0-20191218084908-4a24b4065292 // indirect
 	golang.org/x/text v0.3.2 // indirect
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
