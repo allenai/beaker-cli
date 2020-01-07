@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/beaker/client/api"
+	beaker "github.com/beaker/client/client"
 	"github.com/beaker/fileheap/cli"
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
-	"github.com/beaker/client/api"
-	beaker "github.com/beaker/client/client"
 
 	configCmd "github.com/allenai/beaker/cmd/beaker/config"
 	"github.com/allenai/beaker/config"
@@ -22,7 +21,6 @@ type createOptions struct {
 	name        string
 	quiet       bool
 	source      string
-	org         string
 	workspace   string
 }
 
@@ -38,11 +36,8 @@ func newCreateCmd(
 		if err != nil {
 			return err
 		}
-		if o.org == "" {
-			o.org = cfg.DefaultOrg
-		}
 		if o.workspace == "" {
-			o.workspace, err = configCmd.EnsureDefaultWorkspace(beaker, cfg, o.org)
+			o.workspace, err = configCmd.EnsureDefaultWorkspace(beaker, cfg)
 			if err != nil {
 				return err
 			}
@@ -56,7 +51,6 @@ func newCreateCmd(
 	cmd.Flag("desc", "Assign a description to the dataset").StringVar(&o.description)
 	cmd.Flag("name", "Assign a name to the dataset").Short('n').StringVar(&o.name)
 	cmd.Flag("quiet", "Only display created dataset's ID").Short('q').BoolVar(&o.quiet)
-	cmd.Flag("org", "Org that will own the created dataset").Short('o').StringVar(&o.org)
 	cmd.Flag("workspace", "Workspace where the dataset will be placed").Short('w').StringVar(&o.workspace)
 	cmd.Arg("source", "Path to a file or directory containing the data").
 		Required().ExistingFileOrDirVar(&o.source)
@@ -74,10 +68,9 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 	}
 
 	spec := api.DatasetSpec{
-		Description:  o.description,
-		Organization: o.org,
-		Workspace:    o.workspace,
-		FileHeap:     true,
+		Description: o.description,
+		Workspace:   o.workspace,
+		FileHeap:    true,
 	}
 
 	dataset, err := beaker.CreateDataset(ctx, spec, o.name)

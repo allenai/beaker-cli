@@ -7,11 +7,10 @@ import (
 	"io/ioutil"
 	"os"
 
+	beaker "github.com/beaker/client/client"
 	"github.com/fatih/color"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	yaml "gopkg.in/yaml.v2"
-
-	beaker "github.com/beaker/client/client"
 
 	configCmd "github.com/allenai/beaker/cmd/beaker/config"
 	"github.com/allenai/beaker/config"
@@ -21,7 +20,6 @@ import (
 type CreateOptions struct {
 	Name      string
 	Quiet     bool
-	Org       string
 	Force     bool
 	Workspace string
 }
@@ -42,7 +40,6 @@ func newCreateCmd(
 	cmd.Flag("file", "Load experiment spec from a file.").Short('f').StringVar(specPath)
 	cmd.Flag("name", "Assign a name to the experiment").Short('n').StringVar(&opts.Name)
 	cmd.Flag("quiet", "Only display created experiment's ID").Short('q').BoolVar(&opts.Quiet)
-	cmd.Flag("org", "Org that will own the created experiment").Short('o').StringVar(&opts.Org)
 	cmd.Flag("workspace", "Workspace where the experiment will be placed").Short('w').StringVar(&opts.Workspace)
 	cmd.Flag("force", "Allow depending on uncommitted datasets").BoolVar(&opts.Force)
 
@@ -62,12 +59,8 @@ func newCreateCmd(
 			return err
 		}
 
-		if opts.Org == "" {
-			opts.Org = cfg.DefaultOrg
-		}
-
 		if opts.Workspace == "" {
-			opts.Workspace, err = configCmd.EnsureDefaultWorkspace(beaker, cfg, opts.Org)
+			opts.Workspace, err = configCmd.EnsureDefaultWorkspace(beaker, cfg)
 			if err != nil {
 				return err
 			}
@@ -117,7 +110,6 @@ func Create(
 	if err != nil {
 		return "", err
 	}
-	apiSpec.Organization = opts.Org
 	apiSpec.Workspace = opts.Workspace
 
 	experiment, err := beaker.CreateExperiment(ctx, apiSpec, opts.Name, opts.Force)

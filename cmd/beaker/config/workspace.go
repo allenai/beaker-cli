@@ -15,11 +15,7 @@ import (
 
 // EnsureDefaultWorkspace uses the configured default workspace if it is available.
 // Otherwise it falls back to a set of default workspaces, creating them if needed.
-func EnsureDefaultWorkspace(
-	client *beaker.Client,
-	config *config.Config,
-	org string,
-) (string, error) {
+func EnsureDefaultWorkspace(client *beaker.Client, config *config.Config) (string, error) {
 	ctx := context.TODO()
 
 	// If the user configured a default workspace, use it.
@@ -36,19 +32,19 @@ func EnsureDefaultWorkspace(
 	// Otherwise, use the "<author>/default" workspace.
 	var workspaceName string
 	var workspaceRef string
-	if org == "" {
+	if config.DefaultOrg == "" {
 		workspaceName = "default"
 		workspaceRef = path.Join(author.Name, workspaceName)
 	} else {
 		workspaceName = author.Name + "-default"
-		workspaceRef = path.Join(org, workspaceName)
+		workspaceRef = path.Join(config.DefaultOrg, workspaceName)
 	}
 
 	if _, err = client.Workspace(ctx, workspaceRef); err != nil {
 		if apiErr, ok := err.(api.Error); ok && apiErr.Code == http.StatusNotFound {
 			if _, err = client.CreateWorkspace(ctx, api.WorkspaceSpec{
 				Name:         workspaceName,
-				Organization: org,
+				Organization: config.DefaultOrg,
 			}); err != nil {
 				return "", err
 			}

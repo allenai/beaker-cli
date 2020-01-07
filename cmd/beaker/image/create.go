@@ -9,15 +9,14 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/beaker/client/api"
+	beaker "github.com/beaker/client/client"
 	"github.com/docker/docker/api/types"
 	docker "github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
-	"github.com/beaker/client/api"
-	beaker "github.com/beaker/client/client"
 
 	configCmd "github.com/allenai/beaker/cmd/beaker/config"
 	"github.com/allenai/beaker/config"
@@ -53,7 +52,7 @@ func newCreateCmd(
 		}
 
 		if opts.Workspace == "" {
-			opts.Workspace, err = configCmd.EnsureDefaultWorkspace(beaker, cfg, cfg.DefaultOrg)
+			opts.Workspace, err = configCmd.EnsureDefaultWorkspace(beaker, cfg)
 			if err != nil {
 				return err
 			}
