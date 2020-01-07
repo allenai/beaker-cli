@@ -53,7 +53,7 @@ func newTuneCmd(
 		}
 
 		if opts.Workspace == "" {
-			opts.Workspace, err = configCmd.EnsureDefaultWorkspace(beaker, config, config.DefaultOrg)
+			opts.Workspace, err = configCmd.EnsureDefaultWorkspace(beaker, config)
 			if err != nil {
 				return err
 			}
