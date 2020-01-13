@@ -34,7 +34,7 @@ must be installed to take full advantage of Beaker.
    ```
 
    **NOTE**: Add the `--dry-run` argument above to generate an experiment spec which is the building
-   blocks for specifying more complex options to beaker.
+   blocks for specifying more complex options to beaker. See `beaker experiment create -h` for details.
 
 ## Install Beaker CLI
 
