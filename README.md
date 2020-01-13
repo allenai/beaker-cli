@@ -20,13 +20,14 @@ must be installed to take full advantage of Beaker.
    to create experiments.  You can either ask on #beaker-users or email experiment-team@allenai.org.
    Please include the email address associated with your Beaker account.
 
+   **NOTE**: If you recently signed up, you should already have the necessary permissions.
+
 2. Run your first experiment. The following example
    [counts words](https://beaker.org/bp/bp_qbjvcda1sed7) in the text
    of [Moby Dick](https://beaker.org/ds/ds_1hz9k6sgxi0a).
 
    ```bash
    beaker experiment run \
-     --name wordcount-moby \
      --image examples/wordcount \
      --source examples/moby:/input \
      --result-path /output
