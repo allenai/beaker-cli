@@ -33,6 +33,9 @@ must be installed to take full advantage of Beaker.
      --result-path /output
    ```
 
+   **NOTE**: Add the `--dry-run` argument above to generate an experiment spec which is the building
+   blocks for specifying more complex options to beaker.
+
 ## Install Beaker CLI
 
 The most direct way to install Beaker is to download a
