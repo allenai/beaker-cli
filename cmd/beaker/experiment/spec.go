@@ -88,10 +88,7 @@ func (d TaskDependency) ToAPI() api.TaskDependency {
 
 // TaskSpec contains all information necessary to create a new experiment on the host.
 type TaskSpec struct {
-	// (required) Blueprint describing the code to be run.
-	Blueprint string `yaml:"blueprint"`
-
-	// Image describing code to be run or name of the Docker image to run (deprecated).
+	// (required) Image describing code to be run
 	Image string `yaml:"image,omitempty"`
 
 	// (required) Container path in which experiment will save results.
@@ -132,13 +129,8 @@ func (s *TaskSpec) ToAPI() (*api.TaskSpec, error) {
 		return nil, err
 	}
 
-	image := s.Image
-	if image == "" {
-		image = s.Blueprint
-	}
-
 	return &api.TaskSpec{
-		Image:        image,
+		Image:        s.Image,
 		ResultPath:   s.ResultPath,
 		Description:  s.Description,
 		Arguments:    s.Arguments,

@@ -13,21 +13,24 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	yaml "gopkg.in/yaml.v2"
 
+	configCmd "github.com/allenai/beaker/cmd/beaker/config"
+
 	"github.com/allenai/beaker/cmd/beaker/image"
 	"github.com/allenai/beaker/config"
 )
 
 type runOptions struct {
-	dryRun     bool
-	expandVars bool
-	specFile   *os.File
-	name       string
-	quiet      bool
-	specArgs   specArgs
+	dryRun      bool
+	expandVars  bool
+	specFile    *os.File
+	name        string
+	quiet       bool
+	specArgs    specArgs
+	dockerImage string
+	workspace   string
 }
 
 type specArgs struct {
-	blueprint  string
 	image      string
 	resultPath string
 	desc       string
@@ -43,28 +46,29 @@ type specArgs struct {
 func newRunCmd(
 	parent *kingpin.CmdClause,
 	parentOpts *experimentOptions,
-	config *config.Config,
+	cfg *config.Config,
 ) {
 	o := &runOptions{}
 	cmd := parent.Command("run", "Run an experiment")
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		beaker, err := beaker.NewClient(parentOpts.addr, config.UserToken)
+		beaker, err := beaker.NewClient(parentOpts.addr, cfg.UserToken)
 		if err != nil {
 			return err
 		}
-		return o.run(beaker)
+		return o.run(beaker, cfg)
 	})
 
-	cmd.Flag("dry-run", "Show what will be submitted and exit.").BoolVar(&o.dryRun)
+	cmd.Flag("dry-run", "Show the spec that would have been submitted and exit (no experiment is created)").BoolVar(&o.dryRun)
 	cmd.Flag("expand-vars", "Expand occurrences of '$VAR' and '${VAR}' in the experiment spec file from environment variables. Default true.").
 		Default("true").
 		BoolVar(&o.expandVars)
 	cmd.Flag("file", "Load experiment spec from a file.").Short('f').FileVar(&o.specFile)
 	cmd.Flag("name", "Assign a name to the experiment").Short('n').StringVar(&o.name)
 	cmd.Flag("quiet", "Only display the experiment's unique ID").Short('q').BoolVar(&o.quiet)
+	cmd.Flag("docker-image", "Docker image to use - a beaker image will be implicitly created").StringVar(&o.dockerImage)
+	cmd.Flag("workspace", "Workspace where the experiment will be placed").Short('w').StringVar(&o.workspace)
 
 	// File spec alternatives
-	cmd.Flag("blueprint", "Blueprint containing code to run").StringVar(&o.specArgs.blueprint)
 	cmd.Flag("image", "Beaker image containing code to run").StringVar(&o.specArgs.image)
 	cmd.Flag("desc", "Optional description for the experiment").StringVar(&o.specArgs.desc)
 	cmd.Flag("result-path", "Path within the container to which results will be written").
@@ -79,7 +83,7 @@ func newRunCmd(
 	cmd.Arg("arg", "Argument to the Docker image").StringsVar(&o.specArgs.args)
 }
 
-func (o *runOptions) run(beaker *beaker.Client) error {
+func (o *runOptions) run(beaker *beaker.Client, cfg *config.Config) error {
 	ctx := context.TODO()
 
 	if o.specFile != nil {
@@ -91,18 +95,18 @@ func (o *runOptions) run(beaker *beaker.Client) error {
 		return err
 	}
 
-	// Assume spec images refer to beaker images.
-	images := map[string]string{} // Map Docker image tags to beaker image IDs.
-	for _, task := range spec.Tasks {
-		specImage := task.Spec.Image
+	if o.workspace == "" {
+		o.workspace, err = configCmd.EnsureDefaultWorkspace(beaker, cfg)
+		if err != nil {
+			return err
+		}
+		if !o.quiet {
+			fmt.Printf("Using workspace %s\n", color.BlueString(o.workspace))
+		}
+	}
 
-		// Blueprints take priority over images. Enforce that we have exactly one.
-		if task.Spec.Blueprint != "" {
-			continue
-		}
-		if specImage == "" {
-			return errors.Errorf("task %q must declare either a beaker image or Docker image to run", task.Name)
-		}
+	if o.dockerImage != "" && o.specArgs.image != "" {
+		return errors.Errorf("please specify only one of --image or --docker-image")
 	}
 
 	if o.dryRun {
@@ -111,47 +115,32 @@ func (o *runOptions) run(beaker *beaker.Client) error {
 		return printSpec(spec)
 	}
 
-	_, err = Create(ctx, os.Stdout, beaker, spec, &CreateOptions{Name: o.name, Quiet: o.quiet})
-	if err == nil {
-		return err
+	if o.dockerImage != "" {
+		imageID, err := image.Create(ctx, os.Stdout, beaker, o.dockerImage, &image.CreateOptions{
+			Quiet:     o.quiet,
+			Workspace: o.workspace,
+		})
+		if err != nil {
+			return errors.WithMessage(err, "failed to create beaker image for Docker image "+strconv.Quote(o.dockerImage))
+		}
+		spec.Tasks[0].Spec.Image = imageID
 	}
 
-	// Create beaker images in place of Docker images, assuming spec images refer to Docker images.
-	images = map[string]string{} // Map Docker image tags to beaker image IDs.
-	color.Red("The --image flag should be used to specify the beaker image to use.\nPassing Docker images to the run command will be deprecated soon.\n")
-
-	for i, task := range spec.Tasks {
-		specImage := task.Spec.Image
-		spec.Tasks[i].Spec.Image = ""
-
-		// Blueprints take priority over images. Enforce that we have exactly one.
-		if task.Spec.Blueprint != "" {
-			continue
-		}
-		if specImage == "" {
-			return errors.Errorf("task %q must declare either a beaker image or Docker image to run", task.Name)
-		}
-
-		imageID, ok := images[specImage]
-		if !ok {
-			var err error
-			imageID, err = image.Create(ctx, os.Stdout, beaker, specImage, nil)
-			if err != nil {
-				return errors.WithMessage(err, "failed to create beaker image for Docker image "+strconv.Quote(specImage))
-			}
-			images[specImage] = imageID
-		}
-		spec.Tasks[i].Spec.Blueprint = imageID
-	}
-
-	_, err = Create(ctx, os.Stdout, beaker, spec, &CreateOptions{Name: o.name, Quiet: o.quiet})
+	_, err = Create(ctx,
+		os.Stdout,
+		beaker,
+		spec,
+		&CreateOptions{
+			Name:      o.name,
+			Quiet:     o.quiet,
+			Workspace: o.workspace,
+		})
 	return err
 }
 
 func specFromArgs(args specArgs) (*ExperimentSpec, error) {
 	image := args.image
 	spec := TaskSpec{
-		Blueprint:  args.blueprint,
 		Image:      image,
 		ResultPath: args.resultPath,
 		Arguments:  args.args,
