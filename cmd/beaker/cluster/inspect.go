@@ -3,12 +3,10 @@ package cluster
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 
 	"github.com/beaker/client/api"
 	beaker "github.com/beaker/client/client"
-	"github.com/fatih/color"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/allenai/beaker/config"
