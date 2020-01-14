@@ -28,7 +28,6 @@ type createOptions struct {
 	gpuCount    int
 	gpuType     string
 	memory      string
-	galaxy      string
 }
 
 func newCreateCmd(
@@ -57,11 +56,9 @@ func newCreateCmd(
 }
 
 func (o *createOptions) run(beaker *beaker.Client) error {
-	fmt.Println(color.YellowString("Cluster commands are still under development and should be considered experimental."))
-
 	parts := strings.Split(o.name, "/")
 	if len(parts) != 2 {
-		return fmt.Errorf("cluster names must be fully scoped in the form %s", color.GreenString("galaxy/cluster"))
+		return fmt.Errorf("cluster names must be fully scoped in the form %s", color.GreenString("account/cluster"))
 	}
 
 	account, clusterName := parts[0], parts[1]
