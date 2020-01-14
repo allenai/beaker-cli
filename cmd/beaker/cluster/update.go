@@ -7,7 +7,6 @@ import (
 	"github.com/beaker/client/api"
 
 	beaker "github.com/beaker/client/client"
-	"github.com/fatih/color"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/allenai/beaker/config"
@@ -40,8 +39,6 @@ func newUpdateCmd(
 }
 
 func (o *updateOptions) run(beaker *beaker.Client) error {
-	fmt.Println(color.YellowString("Cluster commands are still under development and should be considered experimental."))
-
 	patch := api.ClusterPatch{}
 	if o.scale >= 0 {
 		patch.Capacity = &o.scale
