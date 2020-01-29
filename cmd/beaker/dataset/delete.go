@@ -3,9 +3,8 @@ package dataset
 import (
 	"context"
 
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
 	beaker "github.com/beaker/client/client"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/allenai/beaker/config"
 )
