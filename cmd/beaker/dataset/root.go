@@ -38,4 +38,5 @@ func NewDatasetCmd(
 	newStreamCmd(cmd, o, config)
 	newInspectCmd(cmd, o, config)
 	newListCmd(cmd, o, config)
+	newDeleteCmd(cmd, o, config)
 }
