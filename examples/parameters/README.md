@@ -22,7 +22,7 @@ The following command demonstrates expansion of an environment variable.
 
 1. Create an experiment which prints a substituted value.
    ```yaml
-   description: Replace ENV value with {{.Environment.USER}}
+   description: Print {{.Environment.USER}}
    tasks:
    - spec:
        image: busybox
