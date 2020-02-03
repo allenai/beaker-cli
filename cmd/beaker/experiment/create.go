@@ -1,11 +1,14 @@
 package experiment
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
+	"text/template"
 
 	beaker "github.com/beaker/client/client"
 	"github.com/fatih/color"
@@ -30,13 +33,9 @@ func newCreateCmd(
 	cfg *config.Config,
 ) {
 	opts := &CreateOptions{}
-	expandVars := new(bool)
 	specPath := new(string)
 
 	cmd := parent.Command("create", "Create a new experiment")
-	cmd.Flag("expand-vars", "Expand occurrences of '$VAR' and '${VAR}' in the experiment spec file from environment variables. Default true.").
-		Default("true").
-		BoolVar(expandVars)
 	cmd.Flag("file", "Load experiment spec from a file.").Short('f').StringVar(specPath)
 	cmd.Flag("name", "Assign a name to the experiment").Short('n').StringVar(&opts.Name)
 	cmd.Flag("quiet", "Only display created experiment's ID").Short('q').BoolVar(&opts.Quiet)
@@ -49,7 +48,7 @@ func newCreateCmd(
 			return err
 		}
 
-		spec, err := ReadSpec(specFile, *expandVars)
+		spec, err := ReadSpec(specFile)
 		if err != nil {
 			return err
 		}
@@ -127,19 +126,35 @@ func Create(
 	return experiment.ID(), nil
 }
 
+type templateParams struct {
+	Environment map[string]string
+}
+
 // ReadSpec reads an experiment spec from YAML.
-func ReadSpec(r io.Reader, expandVars bool) (*ExperimentSpec, error) {
+func ReadSpec(r io.Reader) (*ExperimentSpec, error) {
 	b, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
 
-	if expandVars {
-		b = []byte(os.ExpandEnv(string(b)))
+	specTemplate, err := template.New("spec").Parse(string(b))
+	if err != nil {
+		return nil, err
+	}
+
+	envVars := map[string]string{}
+	for _, kv := range os.Environ() {
+		parts := strings.SplitN(kv, "=", 2)
+		envVars[parts[0]] = parts[1]
+	}
+
+	buf := &bytes.Buffer{}
+	if err := specTemplate.Execute(buf, templateParams{Environment: envVars}); err != nil {
+		return nil, err
 	}
 
 	var spec ExperimentSpec
-	if err := yaml.UnmarshalStrict(b, &spec); err != nil {
+	if err := yaml.UnmarshalStrict(buf.Bytes(), &spec); err != nil {
 		return nil, err
 	}
 
