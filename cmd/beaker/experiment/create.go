@@ -127,7 +127,7 @@ func Create(
 }
 
 type templateParams struct {
-	Environment map[string]string
+	Env map[string]string
 }
 
 // ReadSpec reads an experiment spec from YAML.
@@ -149,7 +149,7 @@ func ReadSpec(r io.Reader) (*ExperimentSpec, error) {
 	}
 
 	buf := &bytes.Buffer{}
-	if err := specTemplate.Execute(buf, templateParams{Environment: envVars}); err != nil {
+	if err := specTemplate.Execute(buf, templateParams{Env: envVars}); err != nil {
 		return nil, err
 	}
 

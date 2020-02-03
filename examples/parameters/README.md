@@ -8,7 +8,7 @@ Values are injected into an experiment specification via Go templates. When
 parsing a templated spec file, anything between double curly braces ( `'{{'` and
 `'}}'` ) will be evaluated as expressions and replaced.
 
-Exported environment variables can be expanded with built-in `{{.Environment.varName}}`.
+Exported environment variables can be expanded with built-in `{{.Env.varName}}`.
 
 ### Example
 
@@ -22,14 +22,14 @@ The following command demonstrates expansion of an environment variable.
 
 1. Create an experiment which prints a substituted value.
    ```yaml
-   description: Print {{.Environment.USER}}
+   description: Print {{.Env.USER}}
    tasks:
    - spec:
        image: busybox
        resultPath: /none
        args: ['sh', '-c', 'echo Parameter value: $ENV']
        env:
-         ENV: {{.Environment.USER}}
+         ENV: {{.Env.USER}}
    ```
 
 1. Run: `beaker experiment create -f spec.yaml`
