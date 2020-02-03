@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/beaker/client/client"
 	"github.com/beaker/fileheap/cli"
 	"github.com/fatih/color"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
-	"github.com/beaker/client/client"
 
 	"github.com/allenai/beaker/config"
 )

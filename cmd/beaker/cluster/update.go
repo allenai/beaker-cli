@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/beaker/client/api"
-
 	beaker "github.com/beaker/client/client"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 

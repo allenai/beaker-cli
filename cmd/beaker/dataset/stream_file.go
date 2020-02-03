@@ -5,10 +5,9 @@ import (
 	"io"
 	"os"
 
+	"github.com/beaker/client/client"
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
-	"github.com/beaker/client/client"
 
 	"github.com/allenai/beaker/config"
 )

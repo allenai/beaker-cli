@@ -11,12 +11,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/beaker/client/api"
+	"github.com/beaker/client/client"
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
-	"github.com/beaker/client/api"
-	"github.com/beaker/client/client"
 
 	"github.com/allenai/beaker/config"
 )
