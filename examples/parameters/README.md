@@ -1,12 +1,52 @@
 # Parameter Injection
 
-This example demonstrates how to inject values from a sampled parameter space
-into an experiment.
+This example demonstrates how to inject values into an experiment.
+
+## Templates
+
+Values are injected into an experiment specification via Go templates. When
+parsing a templated spec file, anything between double curly braces ( `'{{'` and
+`'}}'` ) will be evaluated as expressions and replaced.
+
+Exported environment variables can be expanded with built-in `{{.Env.varName}}`.
+
+### Example
+
+The following command demonstrates expansion of an environment variable.
+
+1. Upload the `busybox` Docker image:
+   ```bash
+   docker pull busybox
+   beaker image create --name busybox busybox
+   ```
+
+1. Create an experiment which prints a substituted value.
+   ```yaml
+   description: Print {{.Env.USER}}
+   tasks:
+   - spec:
+       image: busybox
+       resultPath: /none
+       args: ['sh', '-c', 'echo Parameter value: $ENV']
+       env:
+         ENV: {{.Env.USER}}
+   ```
+
+1. Run: `beaker experiment create -f spec.yaml`
+
+### Additional Reading
+
+See [Go templates](https://golang.org/pkg/text/template/) for an in-depth
+description of what is possible with templates.
 
 ## Parameter Spaces
 
-Beaker can expand a parameter space from a simple YAML specification containing
-an optional seed and a map of named parameters.
+With the `alpha tune` command, Beaker can expand a parameter space from a simple
+YAML specification containing an optional seed and a map of named parameters.
+
+Parameters can be specified with the built-in `{{.Parameter.varName}}`. If the
+parameter name contains special characters such as punctuation or spaces, it can
+be written as `{{index .Parameter "my parameter"}}`.
 
 A small set of built-in distributions is provided:
 - `uniform-int`: an integer sampled uniformly from `[min, max)`
@@ -37,19 +77,7 @@ parameters:
     choices: [<anything>, ...]
 ```
 
-## Templates
-
-Values are injected into an experiment specification via Go templates. When
-parsing a templated spec file, anything between double curly braces ( `'{{'` and
-`'}}'` ) will be evaluated as expressions and replaced.
-
-Parameters can be specified with the built-in `{{.Parameter.varName}}`. If the
-parameter name contains special characters such as punctuation or spaces, it can
-be written as `{{index .Parameter "my parameter"}}`.
-
-Exported environment variables can be expanded with built-in `{{.Environment.varName}}`.
-
-## Setup
+### Setup
 
 1. Download the sample space and template:
    - [parameter-space.yaml](./parameter-space.yaml)
@@ -61,7 +89,7 @@ Exported environment variables can be expanded with built-in `{{.Environment.var
    beaker image create --name busybox busybox
    ```
 
-## Example
+### Example
 
 The following example command automatically creates a group containing 5
 experiments sampled from the provided space.
@@ -73,8 +101,3 @@ beaker alpha tune \
     --group parameter-search-example \
     --count 5
 ```
-
-## Additional Reading
-
-See [Go templates](https://golang.org/pkg/text/template/) for an in-depth
-description of what is possible with templates.

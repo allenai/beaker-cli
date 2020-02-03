@@ -14,7 +14,6 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	configCmd "github.com/allenai/beaker/cmd/beaker/config"
-
 	"github.com/allenai/beaker/cmd/beaker/image"
 	"github.com/allenai/beaker/config"
 )

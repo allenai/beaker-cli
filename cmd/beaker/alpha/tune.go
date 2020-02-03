@@ -66,8 +66,8 @@ func newTuneCmd(
 }
 
 type model struct {
-	Environment map[string]string
-	Parameter   map[string]interface{}
+	Env       map[string]string
+	Parameter map[string]interface{}
 }
 
 // Tune creates multiple experiments and returns their IDs
@@ -188,7 +188,7 @@ func runParameterSearch(
 
 	var experiments []string
 	for i := 0; i < opts.Count; i++ {
-		params := &model{Environment: envVars, Parameter: paramSpace.Sample()}
+		params := &model{Env: envVars, Parameter: paramSpace.Sample()}
 
 		buf.Reset()
 		if err := specTemplate.Execute(buf, params); err != nil {
