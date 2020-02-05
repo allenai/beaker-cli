@@ -5,6 +5,7 @@ jobs:
       - image: circleci/golang:1.12.1
     steps:
       - checkout
+      - run: go mod tidy
       - run: make dev test --output-sync=target
   release:
     docker:
