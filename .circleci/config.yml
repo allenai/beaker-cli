@@ -5,6 +5,12 @@ jobs:
       - image: circleci/golang:1.12.1
     steps:
       - checkout
+      - run: 
+          command: |
+            go mod tidy
+            if [ -n "$(git status --porcelain)" ]; then
+              exit 1
+            fi
       - run: make dev test --output-sync=target
   release:
     docker:
