@@ -35,7 +35,7 @@ must be installed to take full advantage of Beaker.
    **NOTE**: Add the `--dry-run` argument above to generate an experiment spec which is the building
    blocks for specifying more complex options to beaker. See `beaker experiment create -h` for details.
 
-3. For more in-depth documentation, see https://github.com/allenai/beaker/tree/master/docs.
+3. For more in-depth documentation, see https://github.com/beaker/docs.
 
 ## Install Beaker CLI
 
