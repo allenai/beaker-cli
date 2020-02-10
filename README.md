@@ -17,8 +17,8 @@ must be installed to take full advantage of Beaker.
    These instructions will guide you through installing and configuring the
    Beaker CLI. See [below](#install-beaker-cli) for more options.
 
-   Request "Scientist" or higher credentials from a Beaker admin to get authorization
-   to create experiments.  You can either ask on #beaker-users or email bunsen@allenai.org.
+   Request credentials to run an experiment from a Beaker admin.
+   You can either ask on #beaker-users or email bunsen@allenai.org.
    Please include the email address associated with your Beaker account.
 
 2. Run your first experiment. The following example
