@@ -11,16 +11,15 @@ must be installed to take full advantage of Beaker.
 ## Getting Started
 
 1. Create an account at [beaker.org](https://beaker.org)
-   and follow the instructions in your [account settings](https://beaker.org/user).
+   and follow the instructions in your [account settings](https://beaker.org/user).  If you are
+   an AI2 employee please use Google OAuth and your AI2 account.
 
    These instructions will guide you through installing and configuring the
    Beaker CLI. See [below](#install-beaker-cli) for more options.
-   
-   Request "Scientist" or higher credentials from a Beaker admin to get authorization
-   to create experiments.  You can either ask on #beaker-users or email experiment-team@allenai.org.
-   Please include the email address associated with your Beaker account.
 
-   **NOTE**: If you recently signed up, you should already have the necessary permissions.
+   Request credentials to run an experiment from a Beaker admin.
+   You can either ask on #beaker-users or email bunsen@allenai.org.
+   Please include the email address associated with your Beaker account.
 
 2. Run your first experiment. The following example
    [counts words](https://beaker.org/bp/bp_qbjvcda1sed7) in the text
@@ -35,6 +34,8 @@ must be installed to take full advantage of Beaker.
 
    **NOTE**: Add the `--dry-run` argument above to generate an experiment spec which is the building
    blocks for specifying more complex options to beaker. See `beaker experiment create -h` for details.
+
+3. For more in-depth documentation, see https://github.com/beaker/docs.
 
 ## Install Beaker CLI
 
