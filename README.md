@@ -1,12 +1,6 @@
 # Beaker
 
-[Beaker](https://beaker.org) is a collaborative platform for
-rapid and reproducible research.
-
-## Prerequisites
-
-[Docker](https://www.docker.com/) is the foundation for Beaker experiments and
-must be installed to take full advantage of Beaker.
+[Beaker](https://beaker.org) is a collaborative platform for rapid and reproducible research.
 
 ## Getting Started
 
@@ -37,7 +31,14 @@ must be installed to take full advantage of Beaker.
 
 3. For more in-depth documentation, see https://github.com/beaker/docs.
 
-## Install Beaker CLI
+## Installation
+
+### Prerequisites
+
+[Docker](https://www.docker.com/) is the foundation for Beaker experiments and
+must be installed to take full advantage of Beaker.
+
+### Install Beaker CLI
 
 The most direct way to install Beaker is to download a
 [release](https://github.com/allenai/beaker/releases) and extract it to your path.
