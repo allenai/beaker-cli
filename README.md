@@ -16,18 +16,24 @@
    Please include the email address associated with your Beaker account.
 
 2. Run your first experiment. The following example
-   [counts words](https://beaker.org/bp/bp_qbjvcda1sed7) in the text
+   [counts words](https://beaker.org/im/im_qbjvcda1sed7) in the text
    of [Moby Dick](https://beaker.org/ds/ds_1hz9k6sgxi0a).
 
    ```bash
-   beaker experiment run \
-     --image examples/wordcount \
-     --source examples/moby:/input \
-     --result-path /output
+   cat > count.yaml << EOF
+   tasks:
+   - spec:
+       image: examples/wordcount
+       resultPath: /output
+       datasetMounts:
+       - datasetId: examples/moby
+         containerPath: /input
+   EOF
    ```
 
-   **NOTE**: Add the `--dry-run` argument above to generate an experiment spec which is the building
-   blocks for specifying more complex options to beaker. See `beaker experiment create -h` for details.
+   ```bash
+   beaker experiment create -f count.yaml
+   ```
 
 3. For more in-depth documentation, see https://github.com/beaker/docs.
 

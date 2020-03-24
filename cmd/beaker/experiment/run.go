@@ -85,6 +85,8 @@ func newRunCmd(
 func (o *runOptions) run(beaker *beaker.Client, cfg *config.Config) error {
 	ctx := context.TODO()
 
+	color.Yellow("This command is deprecated and will soon be removed. Please refer to 'beaker experiment create'.")
+
 	if o.specFile != nil {
 		return errors.Errorf("--file argument is no longer supported; experiment specs can be run with 'experiment create'")
 	}
