@@ -10,6 +10,7 @@ import (
 	"os"
 
 	beaker "github.com/beaker/client/client"
+	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	docker "github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/jsonmessage"
@@ -99,17 +100,23 @@ func (o *PullOptions) Run(beaker *beaker.Client) error {
 	tag := repo.ImageTag
 	if o.Tag != "" {
 		if !o.Quiet {
+			// We intentionally print the un-mangled tag.
 			fmt.Printf("Renaming %s to %s ...\n", repo.ImageTag, o.Tag)
 		}
 
-		if err := docker.ImageTag(ctx, repo.ImageTag, o.Tag); err != nil {
+		// We must normalize or ImageTag will return an error on otherwise valid references.
+		normalized, err := reference.ParseNormalizedNamed(o.Tag)
+		if err != nil {
+			return errors.Wrap(err, "invalid target name")
+		}
+		if err := docker.ImageTag(ctx, repo.ImageTag, normalized.String()); err != nil {
 			return errors.Wrap(err, "failed to tag image")
 		}
 
 		// We ignore the error here intentionally. Cleaning up is best-effort
 		// and we can't do anything to recover if this fails.
 		_, _ = docker.ImageRemove(ctx, repo.ImageTag, types.ImageRemoveOptions{})
-		tag = o.Tag
+		tag = normalized.String()
 	}
 
 	if o.Quiet {
