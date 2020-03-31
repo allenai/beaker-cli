@@ -60,8 +60,6 @@ func newApp(config *config.Config) (*options.AppOptions, error) {
 	alpha.NewAlphaCmd(app, o, config)
 	cluster.NewClusterCmd(app, o, config)
 	configCmd.NewConfigCmd(app, o, config)
-	// DEPRECATED: this allows config commands to keep working with "configure"
-	configCmd.NewConfigureCmd(app, o, config)
 	dataset.NewDatasetCmd(app, o, config)
 	experiment.NewExperimentCmd(app, o, config)
 	group.NewGroupCmd(app, o, config)
