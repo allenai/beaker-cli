@@ -24,7 +24,7 @@ type createOptions struct {
 	size        int
 	preemptible bool
 	protected   bool
-	cpuCount    int
+	cpuCount    float64
 	gpuCount    int
 	gpuType     string
 	memory      string
@@ -48,7 +48,7 @@ func newCreateCmd(
 	cmd.Flag("max-size", "Maximum number of nodes").IntVar(&o.size)
 	cmd.Flag("preemptible", "Enable cheaper but more volatile nodes").BoolVar(&o.preemptible)
 	cmd.Flag("protected", "Mark cluster as protected - ADMINS ONLY").Hidden().BoolVar(&o.protected)
-	cmd.Flag("cpu-count", "Number of CPUs per node").IntVar(&o.cpuCount)
+	cmd.Flag("cpu-count", "Number of CPUs per node").FloatVar(&o.cpuCount)
 	cmd.Flag("gpu-count", "Number of GPUs per node").IntVar(&o.gpuCount)
 	cmd.Flag("gpu-type", "Type of GPU, e.g. p100").StringVar(&o.gpuType)
 	cmd.Flag("memory", "Memory limit per node, e.g. 6.5GiB").StringVar(&o.memory)
@@ -67,7 +67,7 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 		Capacity:    o.size,
 		Preemptible: o.preemptible,
 		Protected:   o.protected,
-		Spec: api.NodeSpec{
+		Spec: api.NodeResources{
 			CPUCount: o.cpuCount,
 			GPUCount: o.gpuCount,
 			GPUType:  o.gpuType,
@@ -132,7 +132,7 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 
 			case api.ClusterFailed:
 				fmt.Println(" failed")
-				return errors.New("please contact Beaker for assistance")
+				return errors.New(cluster.StatusMessage)
 
 			default:
 				fmt.Println(" failed")
