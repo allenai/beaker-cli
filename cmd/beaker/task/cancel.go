@@ -36,11 +36,7 @@ func (o *cancelOptions) run(parentOpts *experimentOptions, userToken string) err
 	}
 
 	for _, id := range o.ids {
-		task, err := beaker.Task(ctx, id)
-		if err != nil {
-			return err
-		}
-
+		task := beaker.Task(id)
 		if err := task.Stop(ctx); err != nil {
 			// We want to cancel as many of the requested tasks as possible.
 			// Therefore we print to STDERR here instead of returning.

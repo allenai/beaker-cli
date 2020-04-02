@@ -53,7 +53,7 @@ func newTestCmd(
 			fmt.Println("No default org set.")
 		} else {
 			fmt.Printf("Verifying default org: %q\n\n", cfg.DefaultOrg)
-			err = beaker.VerifyOrgExists(context.TODO(), cfg.DefaultOrg)
+			_, err := beaker.Organization(cfg.DefaultOrg).Get(context.TODO())
 			if err != nil {
 				fmt.Println("There was a problem verifying your default org.")
 				fmt.Println("Set the default organization in your config in the format `default_org: <org_name>`. Note that the name may be different from the name displayed in beaker UI.")

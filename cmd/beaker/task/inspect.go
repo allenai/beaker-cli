@@ -39,12 +39,7 @@ func (o *inspectOptions) run(beaker *beaker.Client) error {
 
 	var tasks []*api.Task
 	for _, id := range o.ids {
-		task, err := beaker.Task(ctx, id)
-		if err != nil {
-			return err
-		}
-
-		info, err := task.Get(ctx)
+		info, err := beaker.Task(id).Get(ctx)
 		if err != nil {
 			return err
 		}
