@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"strings"
 
@@ -31,11 +32,15 @@ func newSetCmd(
 	cmd.Arg("value", "New value to set").Required().StringVar(&o.value)
 }
 
-func (o *setOptions) run(_ *config.Config) error {
+func (o *setOptions) run(cfg *config.Config) error {
 	configFilePath := config.GetFilePath()
 	beakerCfg, err := config.ReadConfigFromFile(configFilePath)
 	if err != nil {
-		return err
+		if os.IsNotExist(err) {
+			beakerCfg = cfg
+		} else {
+			return err
+		}
 	}
 
 	t := reflect.TypeOf(*beakerCfg)
