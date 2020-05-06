@@ -3,6 +3,7 @@ package alpha
 import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
+	"github.com/allenai/beaker/cmd/beaker/alpha/hooks"
 	"github.com/allenai/beaker/cmd/beaker/options"
 	"github.com/allenai/beaker/config"
 )
@@ -34,4 +35,5 @@ func NewAlphaCmd(
 	// Attach subcommands.
 	newTensorboardCmd(cmd, o, config)
 	newTuneCmd(cmd, o, config)
+	hooks.NewCommitHooks(parent, cmd)
 }
