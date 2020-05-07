@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/beaker/client/api"
 	beaker "github.com/beaker/client/client"
@@ -20,7 +21,7 @@ type createOptions struct {
 	description string
 	name        string
 	quiet       bool
-	source      string
+	sources     []string
 	workspace   string
 }
 
@@ -52,19 +53,29 @@ func newCreateCmd(
 	cmd.Flag("name", "Assign a name to the dataset").Short('n').StringVar(&o.name)
 	cmd.Flag("quiet", "Only display created dataset's ID").Short('q').BoolVar(&o.quiet)
 	cmd.Flag("workspace", "Workspace where the dataset will be placed").Short('w').StringVar(&o.workspace)
-	cmd.Arg("source", "Path to a file or directory containing the data").
-		Required().ExistingFileOrDirVar(&o.source)
+	cmd.Arg("sources", "List of globs resolving files or directories that should be uploaded").
+		Required().StringsVar(&o.sources)
 }
 
 func (o *createOptions) run(beaker *beaker.Client) error {
 	ctx := context.TODO()
 
-	info, err := os.Stat(o.source)
-	if err != nil {
-		return err
-	}
-	if info.Mode()&(os.ModeSymlink|os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {
-		return errors.Errorf("%s is a %s", o.source, modeToString(info.Mode()))
+	locations := make(map[string]os.FileInfo)
+	for _, pattern := range o.sources {
+		sources, err := filepath.Glob(pattern)
+		if err != nil {
+			return errors.Errorf("resolving glob pattern: %w", err)
+		}
+		for _, source := range sources {
+			info, err := os.Stat(source)
+			if err != nil {
+				return err
+			}
+			if info.Mode()&(os.ModeSymlink|os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {
+				return errors.Errorf("%s is a %s", source, modeToString(info.Mode()))
+			}
+			locations[source] = info
+		}
 	}
 
 	spec := api.DatasetSpec{
@@ -72,41 +83,44 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 		Workspace:   o.workspace,
 		FileHeap:    true,
 	}
-
 	dataset, err := beaker.CreateDataset(ctx, spec, o.name)
 	if err != nil {
 		return err
 	}
 
-	if !o.quiet {
-		if o.name == "" {
-			fmt.Printf("Uploading %s to %s\n", color.GreenString(o.source), color.CyanString(dataset.ID()))
-		} else {
-			fmt.Printf("Uploading %s to %s (%s)\n", color.GreenString(o.source), color.CyanString(o.name), dataset.ID())
-		}
-	}
-
-	if info.IsDir() {
-		var tracker cli.ProgressTracker = cli.NoTracker
+	hasDirs := false
+	for source, info := range locations {
 		if !o.quiet {
-			files, bytes, err := cli.UploadStats(o.source)
-			if err != nil {
+			if o.name == "" {
+				fmt.Printf("Uploading %s to %s\n", color.GreenString(source), color.CyanString(dataset.ID()))
+			} else {
+				fmt.Printf("Uploading %s to %s (%s)\n", color.GreenString(source), color.CyanString(o.name), dataset.ID())
+			}
+		}
+
+		if info.IsDir() {
+			hasDirs = true
+			var tracker cli.ProgressTracker = cli.NoTracker
+			if !o.quiet {
+				files, bytes, err := cli.UploadStats(source)
+				if err != nil {
+					return err
+				}
+				tracker = cli.BoundedTracker(ctx, files, bytes)
+			}
+			if err := cli.Upload(ctx, source, dataset.Storage, "", tracker, 32); err != nil {
 				return err
 			}
-			tracker = cli.BoundedTracker(ctx, files, bytes)
-		}
-		if err := cli.Upload(ctx, o.source, dataset.Storage, "", tracker, 32); err != nil {
-			return err
-		}
-	} else {
-		file, err := os.Open(o.source)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-		defer func() { _ = file.Close() }()
+		} else {
+			file, err := os.Open(source)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			defer func() { _ = file.Close() }()
 
-		if err := dataset.Storage.WriteFile(ctx, info.Name(), file, info.Size()); err != nil {
-			return err
+			if err := dataset.Storage.WriteFile(ctx, info.Name(), file, info.Size()); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -116,7 +130,7 @@ func (o *createOptions) run(beaker *beaker.Client) error {
 
 	if o.quiet {
 		fmt.Println(dataset.ID())
-	} else if !info.IsDir() {
+	} else if !hasDirs {
 		fmt.Println("Done.")
 	}
 	return nil
