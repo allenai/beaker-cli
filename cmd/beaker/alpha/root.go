@@ -36,4 +36,5 @@ func NewAlphaCmd(
 	newTensorboardCmd(cmd, o, config)
 	newTuneCmd(cmd, o, config)
 	hooks.NewCommitHooks(parent, cmd)
+	newAutobuild(cmd)
 }
