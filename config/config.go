@@ -22,7 +22,7 @@ type Config struct {
 const (
 	addressKey       = "BEAKER_ADDR"
 	configPathKey    = "BEAKER_CONFIG_FILE"
-	defaultAddress   = "https://api.beaker.org"
+	defaultAddress   = "https://beaker.org"
 	beakerConfigFile = "config.yml"
 )
 
