@@ -92,7 +92,7 @@ func Create(
 	// TODO: It would be far cleaner and more efficient to do this implicitly in the create request.
 	for i, exp := range spec.Tasks {
 		for j, mount := range exp.Spec.Mounts {
-			dataset, err := beaker.Dataset(ctx, mount.DatasetID)
+			dataset, err := beaker.Dataset(ctx, mount.Dataset)
 			if err != nil {
 				return "", err
 			}
@@ -101,7 +101,7 @@ func Create(
 			if err != nil {
 				return "", err
 			}
-			spec.Tasks[i].Spec.Mounts[j].DatasetID = ds.ID
+			spec.Tasks[i].Spec.Mounts[j].Dataset = ds.ID
 		}
 	}
 

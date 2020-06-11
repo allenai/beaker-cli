@@ -44,7 +44,7 @@ type ExperimentTaskSpec struct {
 
 	// (optional) Tasks on which this task depends. Mounts will be applied, in
 	// the order defined here, after existing mounts in the task spec.
-	DependsOn []TaskDependency `yaml:"dependsOn,omitempty"`
+	DependsOn []api.TaskDependency `yaml:"dependsOn,omitempty"`
 
 	// (optional) Name of a cluster on which the task should run.
 	// Cluster affinity supercedes task requirements.
@@ -58,38 +58,19 @@ func (e ExperimentTaskSpec) ToAPI() (api.ExperimentTaskSpec, error) {
 		return api.ExperimentTaskSpec{}, err
 	}
 
-	var deps []api.TaskDependency
-	for _, dep := range e.DependsOn {
-		deps = append(deps, dep.ToAPI())
-	}
-
 	return api.ExperimentTaskSpec{
 		Name:      e.Name,
 		Spec:      *spec,
-		DependsOn: deps,
+		DependsOn: e.DependsOn,
 		Cluster:   e.Cluster,
 	}, nil
-}
-
-// TaskDependency describes a single "edge" in a task dependency graph.
-type TaskDependency struct {
-	// (required) Name of the task on which the referencing task depends.
-	ParentName string `yaml:"parentName"`
-
-	// (optional) Path in the child task to which parent results will be mounted.
-	// If absent, this is treated as an order-only dependency.
-	ContainerPath string `yaml:"containerPath,omitempty"`
-}
-
-// ToAPI converts to an API-compatible struct.
-func (d TaskDependency) ToAPI() api.TaskDependency {
-	return api.TaskDependency{ParentName: d.ParentName, ContainerPath: d.ContainerPath}
 }
 
 // TaskSpec contains all information necessary to create a new experiment on the host.
 type TaskSpec struct {
 	// (required) Image describing code to be run
-	Image string `yaml:"image,omitempty"`
+	Image       string `yaml:"image,omitempty"`
+	DockerImage string `yaml:"dockerImage,omitempty"`
 
 	// (required) Container path in which experiment will save results.
 	// Files written to this location will be persisted as a dataset upon experiment completion.
@@ -107,7 +88,7 @@ type TaskSpec struct {
 	// (optional) Data sources to mount as read-only in the task's container.
 	// In the event that mounts overlap partially or in full, they will be
 	// applied in order. Later mounts will overlay earlier ones (last wins).
-	Mounts []DatasetMount `yaml:"datasetMounts,omitempty"`
+	Mounts []api.DatasetMount `yaml:"datasetMounts,omitempty"`
 
 	// (optional) Experiment resource requirements for scheduling.
 	Requirements Requirements `yaml:"requirements,omitempty"`
@@ -115,15 +96,6 @@ type TaskSpec struct {
 
 // ToAPI converts to an API-compatible struct.
 func (s *TaskSpec) ToAPI() (*api.TaskSpec, error) {
-	var datasetMounts []api.DatasetMount
-	for _, mount := range s.Mounts {
-		datasetMounts = append(datasetMounts, api.DatasetMount{
-			Dataset:       mount.DatasetID,
-			SubPath:       mount.SubPath,
-			ContainerPath: mount.ContainerPath,
-		})
-	}
-
 	requirements, err := s.Requirements.ToAPI()
 	if err != nil {
 		return nil, err
@@ -131,30 +103,14 @@ func (s *TaskSpec) ToAPI() (*api.TaskSpec, error) {
 
 	return &api.TaskSpec{
 		Image:        s.Image,
+		DockerImage:  s.DockerImage,
 		ResultPath:   s.ResultPath,
 		Description:  s.Description,
 		Arguments:    s.Arguments,
 		Env:          s.Env,
-		Mounts:       datasetMounts,
+		Mounts:       s.Mounts,
 		Requirements: requirements,
 	}, nil
-}
-
-// DatasetMount describes a read-only source in the experiment container.
-type DatasetMount struct {
-	// (required) Unique ID of the dataset to mount.
-	DatasetID string `yaml:"datasetId"`
-
-	// (optional) Path within the dataset to mount for this experiment container.
-	SubPath string `yaml:"subPath,omitempty"`
-
-	// (required) Path within an experiment container to which this dataset will be mounted.
-	ContainerPath string `yaml:"containerPath"`
-}
-
-// ToAPI converts to an API-compatible struct.
-func (m DatasetMount) ToAPI() api.DatasetMount {
-	return api.DatasetMount{Dataset: m.DatasetID, SubPath: m.SubPath, ContainerPath: m.ContainerPath}
 }
 
 // Requirements describes the runtime requirements for an experiment's container.
