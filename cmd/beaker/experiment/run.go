@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/beaker/client/api"
 	beaker "github.com/beaker/client/client"
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
@@ -172,8 +173,8 @@ func specFromArgs(args specArgs) (*ExperimentSpec, error) {
 			return nil, errors.Errorf("malformed source '%s': should be of the form 'source:target'", source)
 		}
 
-		spec.Mounts = append(spec.Mounts, DatasetMount{
-			DatasetID:     splitSource[0], // May be name or ID.
+		spec.Mounts = append(spec.Mounts, api.DatasetMount{
+			Dataset:       splitSource[0], // May be name or ID.
 			ContainerPath: splitSource[1],
 		})
 	}
