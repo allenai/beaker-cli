@@ -36,6 +36,6 @@ func NewImageCmd(
 	// Attach subcommands.
 	newCreateCmd(cmd, o, config)
 	newInspectCmd(cmd, o, config)
-	newRenameCmd(cmd, o, config)
 	newPullCmd(cmd, o, config)
+	newRenameCmd(cmd, o, config)
 }
