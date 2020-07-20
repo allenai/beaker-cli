@@ -207,7 +207,7 @@ func runParameterSearch(
 		apiSpec.Workspace = opts.Workspace
 
 		// TODO: Set a name?
-		experiment, err := beaker.CreateExperiment(ctx, apiSpec, "", false)
+		experiment, err := beaker.CreateExperiment(ctx, apiSpec, "", false, "normal")
 		if err != nil {
 			return experiments, err
 		}
