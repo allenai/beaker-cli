@@ -33,10 +33,10 @@ func NewDatasetCmd(
 
 	// Attach subcommands.
 	newCreateCmd(cmd, o, config)
+	newDeleteCmd(cmd, o, config)
 	newFetchCmd(cmd, o, config)
-	newRenameCmd(cmd, o, config)
-	newStreamCmd(cmd, o, config)
 	newInspectCmd(cmd, o, config)
 	newListCmd(cmd, o, config)
-	newDeleteCmd(cmd, o, config)
+	newRenameCmd(cmd, o, config)
+	newStreamCmd(cmd, o, config)
 }

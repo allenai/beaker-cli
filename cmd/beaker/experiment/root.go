@@ -33,6 +33,7 @@ func NewExperimentCmd(
 
 	// Attach subcommands.
 	newCreateCmd(cmd, o, config)
+	newDeleteCmd(cmd, o, config)
 	newInspectCmd(cmd, o, config)
 	newRenameCmd(cmd, o, config)
 	newResumeCmd(cmd, o, config)
