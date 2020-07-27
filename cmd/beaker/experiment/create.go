@@ -20,9 +20,9 @@ import (
 )
 
 const (
-	Low    = "low"
-	Normal = "normal"
-	High   = "high"
+	low    = "low"
+	normal = "normal"
+	high   = "high"
 )
 
 // CreateOptions wraps options used to create an experiment.
@@ -48,7 +48,7 @@ func newCreateCmd(
 	cmd.Flag("quiet", "Only display created experiment's ID").Short('q').BoolVar(&opts.Quiet)
 	cmd.Flag("workspace", "Workspace where the experiment will be placed").Short('w').StringVar(&opts.Workspace)
 	cmd.Flag("force", "Allow depending on uncommitted datasets").BoolVar(&opts.Force)
-	cmd.Flag("priority", "Assign an execution priority to the experiment").Short('p').EnumVar(&opts.Priority, Low, Normal, High)
+	cmd.Flag("priority", "Assign an execution priority to the experiment").Short('p').EnumVar(&opts.Priority, low, normal, high)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {
 		specFile, err := openPath(*specPath)
