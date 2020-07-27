@@ -19,12 +19,19 @@ import (
 	"github.com/allenai/beaker/config"
 )
 
+const (
+	low    = "low"
+	normal = "normal"
+	high   = "high"
+)
+
 // CreateOptions wraps options used to create an experiment.
 type CreateOptions struct {
 	Name      string
 	Quiet     bool
 	Force     bool
 	Workspace string
+	Priority  string
 }
 
 func newCreateCmd(
@@ -41,6 +48,7 @@ func newCreateCmd(
 	cmd.Flag("quiet", "Only display created experiment's ID").Short('q').BoolVar(&opts.Quiet)
 	cmd.Flag("workspace", "Workspace where the experiment will be placed").Short('w').StringVar(&opts.Workspace)
 	cmd.Flag("force", "Allow depending on uncommitted datasets").BoolVar(&opts.Force)
+	cmd.Flag("priority", "Assign an execution priority to the experiment").Short('p').EnumVar(&opts.Priority, low, normal, high)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {
 		specFile, err := openPath(*specPath)
@@ -111,7 +119,7 @@ func Create(
 	}
 	apiSpec.Workspace = opts.Workspace
 
-	experiment, err := beaker.CreateExperiment(ctx, apiSpec, opts.Name, opts.Force)
+	experiment, err := beaker.CreateExperiment(ctx, apiSpec, opts.Name, opts.Force, opts.Priority)
 	if err != nil {
 		return "", err
 	}
