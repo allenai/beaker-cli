@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/beaker/client/api"
@@ -15,32 +14,31 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	configCmd "github.com/allenai/beaker/cmd/beaker/config"
-	"github.com/allenai/beaker/cmd/beaker/image"
 	"github.com/allenai/beaker/config"
 )
 
 type runOptions struct {
-	dryRun      bool
-	expandVars  bool
-	specFile    *os.File
-	name        string
-	quiet       bool
-	specArgs    specArgs
-	dockerImage string
-	workspace   string
+	dryRun     bool
+	expandVars bool
+	specFile   *os.File
+	name       string
+	quiet      bool
+	specArgs   specArgs
+	workspace  string
 }
 
 type specArgs struct {
-	image      string
-	resultPath string
-	desc       string
-	args       []string
-	env        []string
-	sources    []string
-	cpu        float64
-	memory     string
-	gpuCount   int
-	gpuType    string
+	image       string
+	dockerImage string
+	resultPath  string
+	desc        string
+	args        []string
+	env         []string
+	sources     []string
+	cpu         float64
+	memory      string
+	gpuCount    int
+	gpuType     string
 }
 
 func newRunCmd(
@@ -65,11 +63,11 @@ func newRunCmd(
 	cmd.Flag("file", "Load experiment spec from a file.").Short('f').FileVar(&o.specFile)
 	cmd.Flag("name", "Assign a name to the experiment").Short('n').StringVar(&o.name)
 	cmd.Flag("quiet", "Only display the experiment's unique ID").Short('q').BoolVar(&o.quiet)
-	cmd.Flag("docker-image", "Docker image to use - a beaker image will be implicitly created").StringVar(&o.dockerImage)
 	cmd.Flag("workspace", "Workspace where the experiment will be placed").Short('w').StringVar(&o.workspace)
 
 	// File spec alternatives
 	cmd.Flag("image", "Beaker image containing code to run").StringVar(&o.specArgs.image)
+	cmd.Flag("docker-image", "Docker image to use - a beaker image will be implicitly created").StringVar(&o.specArgs.dockerImage)
 	cmd.Flag("desc", "Optional description for the experiment").StringVar(&o.specArgs.desc)
 	cmd.Flag("result-path", "Path within the container to which results will be written").
 		PlaceHolder("PATH").Required().StringVar(&o.specArgs.resultPath)
@@ -90,6 +88,9 @@ func (o *runOptions) run(beaker *beaker.Client, cfg *config.Config) error {
 
 	if o.specFile != nil {
 		return errors.Errorf("--file argument is no longer supported; experiment specs can be run with 'experiment create'")
+	}
+	if o.specArgs.image != "" && o.specArgs.dockerImage != "" {
+		return errors.Errorf("please specify only one of --image or --docker-image")
 	}
 
 	spec, err := specFromArgs(o.specArgs)
@@ -115,26 +116,10 @@ func (o *runOptions) run(beaker *beaker.Client, cfg *config.Config) error {
 		}
 	}
 
-	if o.dockerImage != "" && o.specArgs.image != "" {
-		return errors.Errorf("please specify only one of --image or --docker-image")
-	}
-
 	if o.dryRun {
 		fmt.Println("Experiment spec to be submitted:")
 		fmt.Println()
 		return printSpec(spec)
-	}
-
-	if o.dockerImage != "" {
-		imageID, err := image.Create(ctx,
-			os.Stdout,
-			beaker,
-			o.dockerImage,
-			&image.CreateOptions{Quiet: o.quiet})
-		if err != nil {
-			return errors.WithMessage(err, "failed to create beaker image for Docker image "+strconv.Quote(o.dockerImage))
-		}
-		spec.Tasks[0].Spec.Image = imageID
 	}
 
 	_, err = Create(ctx,
@@ -146,11 +131,11 @@ func (o *runOptions) run(beaker *beaker.Client, cfg *config.Config) error {
 }
 
 func specFromArgs(args specArgs) (*api.ExperimentSpec, error) {
-	image := args.image
 	spec := api.TaskSpec{
-		Image:      image,
-		ResultPath: args.resultPath,
-		Arguments:  args.args,
+		Image:       args.image,
+		DockerImage: args.dockerImage,
+		ResultPath:  args.resultPath,
+		Arguments:   args.args,
 		Requirements: api.TaskRequirements{
 			CPU:         args.cpu,
 			MemoryHuman: args.memory,
