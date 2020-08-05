@@ -64,7 +64,7 @@ func newCreateCmd(
 			return err
 		}
 
-		spec, err := ReadSpec(specFile)
+		spec, err := readSpec(specFile)
 		if err != nil {
 			return err
 		}
@@ -126,8 +126,8 @@ type templateParams struct {
 	Env map[string]string
 }
 
-// ReadSpec reads an experiment spec from YAML.
-func ReadSpec(r io.Reader) (*api.ExperimentSpec, error) {
+// readSpec reads an experiment spec from YAML.
+func readSpec(r io.Reader) (*api.ExperimentSpec, error) {
 	b, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
