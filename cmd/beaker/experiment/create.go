@@ -68,6 +68,9 @@ func newCreateCmd(
 		if err != nil {
 			return err
 		}
+		if err := CanonicalizeJSONSpec(spec); err != nil {
+			return err
+		}
 
 		if workspace != "" {
 			// Workspace flag overrides what's written in the spec.
