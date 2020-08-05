@@ -10,8 +10,11 @@ import (
 	"strings"
 	"text/template"
 
+	"code.cloudfoundry.org/bytefmt"
+	"github.com/beaker/client/api"
 	beaker "github.com/beaker/client/client"
 	"github.com/fatih/color"
+	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	yaml "gopkg.in/yaml.v2"
 
@@ -27,11 +30,10 @@ const (
 
 // CreateOptions wraps options used to create an experiment.
 type CreateOptions struct {
-	Name      string
-	Quiet     bool
-	Force     bool
-	Workspace string
-	Priority  string
+	Name     string
+	Quiet    bool
+	Force    bool
+	Priority string
 }
 
 func newCreateCmd(
@@ -40,23 +42,19 @@ func newCreateCmd(
 	cfg *config.Config,
 ) {
 	opts := &CreateOptions{}
-	specPath := new(string)
+	var workspace string
+	var specPath string
 
 	cmd := parent.Command("create", "Create a new experiment")
-	cmd.Flag("file", "Load experiment spec from a file.").Short('f').StringVar(specPath)
+	cmd.Flag("file", "Load experiment spec from a file.").Short('f').StringVar(&specPath)
 	cmd.Flag("name", "Assign a name to the experiment").Short('n').StringVar(&opts.Name)
 	cmd.Flag("quiet", "Only display created experiment's ID").Short('q').BoolVar(&opts.Quiet)
-	cmd.Flag("workspace", "Workspace where the experiment will be placed").Short('w').StringVar(&opts.Workspace)
+	cmd.Flag("workspace", "Workspace where the experiment will be placed").Short('w').StringVar(&workspace)
 	cmd.Flag("force", "Allow depending on uncommitted datasets").BoolVar(&opts.Force)
 	cmd.Flag("priority", "Assign an execution priority to the experiment").Short('p').EnumVar(&opts.Priority, low, normal, high)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		specFile, err := openPath(*specPath)
-		if err != nil {
-			return err
-		}
-
-		spec, err := ReadSpec(specFile)
+		specFile, err := openPath(specPath)
 		if err != nil {
 			return err
 		}
@@ -66,13 +64,23 @@ func newCreateCmd(
 			return err
 		}
 
-		if opts.Workspace == "" {
-			opts.Workspace, err = configCmd.EnsureDefaultWorkspace(beaker, cfg)
+		spec, err := ReadSpec(specFile)
+		if err != nil {
+			return err
+		}
+
+		if workspace != "" {
+			// Workspace flag overrides what's written in the spec.
+			spec.Workspace = workspace
+		}
+		if spec.Workspace == "" {
+			// Neither spec nor args specified a workspace, so find the default.
+			spec.Workspace, err = configCmd.EnsureDefaultWorkspace(beaker, cfg)
 			if err != nil {
 				return err
 			}
 			if !opts.Quiet {
-				fmt.Printf("Using workspace %s\n", color.BlueString(opts.Workspace))
+				fmt.Printf("Using workspace %s\n", color.BlueString(spec.Workspace))
 			}
 		}
 
@@ -86,7 +94,7 @@ func Create(
 	ctx context.Context,
 	w io.Writer,
 	beaker *beaker.Client,
-	spec *ExperimentSpec,
+	spec *api.ExperimentSpec,
 	opts *CreateOptions,
 ) (string, error) {
 	if w == nil {
@@ -96,30 +104,7 @@ func Create(
 		opts = &CreateOptions{}
 	}
 
-	// Dataset IDs may be names or IDs. Fix them up now by resolving them in the service.
-	// TODO: It would be far cleaner and more efficient to do this implicitly in the create request.
-	for i, exp := range spec.Tasks {
-		for j, mount := range exp.Spec.Mounts {
-			dataset, err := beaker.Dataset(ctx, mount.Dataset)
-			if err != nil {
-				return "", err
-			}
-
-			ds, err := dataset.Get(ctx)
-			if err != nil {
-				return "", err
-			}
-			spec.Tasks[i].Spec.Mounts[j].Dataset = ds.ID
-		}
-	}
-
-	apiSpec, err := spec.ToAPI()
-	if err != nil {
-		return "", err
-	}
-	apiSpec.Workspace = opts.Workspace
-
-	experiment, err := beaker.CreateExperiment(ctx, apiSpec, opts.Name, opts.Force, opts.Priority)
+	experiment, err := beaker.CreateExperiment(ctx, *spec, opts.Name, opts.Force, opts.Priority)
 	if err != nil {
 		return "", err
 	}
@@ -139,7 +124,7 @@ type templateParams struct {
 }
 
 // ReadSpec reads an experiment spec from YAML.
-func ReadSpec(r io.Reader) (*ExperimentSpec, error) {
+func ReadSpec(r io.Reader) (*api.ExperimentSpec, error) {
 	b, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
@@ -161,7 +146,7 @@ func ReadSpec(r io.Reader) (*ExperimentSpec, error) {
 		return nil, err
 	}
 
-	var spec ExperimentSpec
+	var spec api.ExperimentSpec
 	if err := yaml.UnmarshalStrict(buf.Bytes(), &spec); err != nil {
 		return nil, err
 	}
@@ -176,4 +161,24 @@ func openPath(p string) (io.Reader, error) {
 	}
 
 	return os.Open(p)
+}
+
+// CanonicalizeJSONSpec fills out fields used by the API from YAML fields parsed from disk.
+func CanonicalizeJSONSpec(spec *api.ExperimentSpec) error {
+	// FUTURE: This should be unnecessary when the service accepts YAML directly.
+	for i := range spec.Tasks {
+		reqs := &spec.Tasks[i].Spec.Requirements
+		if reqs.CPU < 0 {
+			return errors.Errorf("couldn't parse cpu argument '%.2f' because it was negative", reqs.CPU)
+		}
+		reqs.MilliCPU = int(reqs.CPU * 1000)
+		if reqs.MemoryHuman != "" {
+			bytes, err := bytefmt.ToBytes(reqs.MemoryHuman)
+			if err != nil {
+				return errors.Wrapf(err, "invalid memory value %q", reqs.MemoryHuman)
+			}
+			reqs.Memory = int64(bytes)
+		}
+	}
+	return nil
 }

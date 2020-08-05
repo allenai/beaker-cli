@@ -96,14 +96,22 @@ func (o *runOptions) run(beaker *beaker.Client, cfg *config.Config) error {
 	if err != nil {
 		return err
 	}
+	if err := CanonicalizeJSONSpec(spec); err != nil {
+		return err
+	}
 
-	if o.workspace == "" {
-		o.workspace, err = configCmd.EnsureDefaultWorkspace(beaker, cfg)
+	if o.workspace != "" {
+		// Workspace flag overrides what's written in the spec.
+		spec.Workspace = o.workspace
+	}
+	if spec.Workspace == "" {
+		// Neither spec nor args specified a workspace, so find the default.
+		spec.Workspace, err = configCmd.EnsureDefaultWorkspace(beaker, cfg)
 		if err != nil {
 			return err
 		}
 		if !o.quiet {
-			fmt.Printf("Using workspace %s\n", color.BlueString(o.workspace))
+			fmt.Printf("Using workspace %s\n", color.BlueString(spec.Workspace))
 		}
 	}
 
@@ -118,10 +126,11 @@ func (o *runOptions) run(beaker *beaker.Client, cfg *config.Config) error {
 	}
 
 	if o.dockerImage != "" {
-		imageID, err := image.Create(ctx, os.Stdout, beaker, o.dockerImage, &image.CreateOptions{
-			Quiet:     o.quiet,
-			Workspace: o.workspace,
-		})
+		imageID, err := image.Create(ctx,
+			os.Stdout,
+			beaker,
+			o.dockerImage,
+			&image.CreateOptions{Quiet: o.quiet})
 		if err != nil {
 			return errors.WithMessage(err, "failed to create beaker image for Docker image "+strconv.Quote(o.dockerImage))
 		}
@@ -132,25 +141,21 @@ func (o *runOptions) run(beaker *beaker.Client, cfg *config.Config) error {
 		os.Stdout,
 		beaker,
 		spec,
-		&CreateOptions{
-			Name:      o.name,
-			Quiet:     o.quiet,
-			Workspace: o.workspace,
-		})
+		&CreateOptions{Name: o.name, Quiet: o.quiet})
 	return err
 }
 
-func specFromArgs(args specArgs) (*ExperimentSpec, error) {
+func specFromArgs(args specArgs) (*api.ExperimentSpec, error) {
 	image := args.image
-	spec := TaskSpec{
+	spec := api.TaskSpec{
 		Image:      image,
 		ResultPath: args.resultPath,
 		Arguments:  args.args,
-		Requirements: Requirements{
-			CPU:      args.cpu,
-			Memory:   args.memory,
-			GPUCount: args.gpuCount,
-			GPUType:  args.gpuType,
+		Requirements: api.TaskRequirements{
+			CPU:         args.cpu,
+			MemoryHuman: args.memory,
+			GPUCount:    args.gpuCount,
+			GPUType:     args.gpuType,
 		},
 	}
 
@@ -179,9 +184,9 @@ func specFromArgs(args specArgs) (*ExperimentSpec, error) {
 		})
 	}
 
-	return &ExperimentSpec{
+	return &api.ExperimentSpec{
 		Description: args.desc,
-		Tasks:       []ExperimentTaskSpec{{Spec: spec}},
+		Tasks:       []api.ExperimentTaskSpec{{Spec: spec}},
 	}, nil
 }
 
@@ -189,7 +194,7 @@ func experimentURL(serviceAddress string, experimentID string) string {
 	return fmt.Sprintf("%s/ex/%s", serviceAddress, experimentID)
 }
 
-func printSpec(spec *ExperimentSpec) error {
+func printSpec(spec *api.ExperimentSpec) error {
 	y, err := yaml.Marshal(spec)
 	if err != nil {
 		return err
