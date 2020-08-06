@@ -48,6 +48,8 @@ func newTensorboardCmd(
 }
 
 func (o *tensorboardOptions) run(beaker *client.Client) error {
+	color.Yellow("This command is deprecated and will soon be removed. Please contact the Bunsen team if you still need it.")
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go func() {

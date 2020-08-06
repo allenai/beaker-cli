@@ -77,6 +77,8 @@ func Tune(
 	beaker *beaker.Client,
 	opts *TuneOptions,
 ) ([]string, error) {
+	color.Yellow("This command is deprecated and will soon be removed. Please contact the Bunsen team if you still need it.")
+
 	if w == nil {
 		w = ioutil.Discard
 	}
