@@ -115,8 +115,8 @@ func Create(
 	if opts.Quiet {
 		fmt.Fprintln(w, experiment.ID())
 	} else {
-		url := experimentURL(beaker.Address(), experiment.ID())
-		fmt.Fprintf(w, "Experiment %s submitted. See progress at %s\n", color.BlueString(experiment.ID()), url)
+		fmt.Fprintf(w, "Experiment %s submitted. See progress at %s/ex/%s\n",
+			color.BlueString(experiment.ID()), beaker.Address(), experiment.ID())
 	}
 
 	return experiment.ID(), nil
