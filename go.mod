@@ -24,7 +24,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/shopspring/decimal v0.0.0-20200428023536-480f653de814 // indirect
 	github.com/sirupsen/logrus v1.4.0 // indirect
-	github.com/stretchr/testify v1.4.0
 	golang.org/x/net v0.0.0-20200425230154-ff2c4b7c35a0 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
