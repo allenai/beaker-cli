@@ -195,19 +195,20 @@ func runParameterSearch(
 			return experiments, err
 		}
 
-		var spec experiment.ExperimentSpec
+		var spec api.ExperimentSpec
 		if err := yaml.UnmarshalStrict(buf.Bytes(), &spec); err != nil {
 			return experiments, err
 		}
 
-		apiSpec, err := spec.ToAPI()
-		if err != nil {
+		if err := experiment.CanonicalizeJSONSpec(&spec); err != nil {
 			return experiments, err
 		}
-		apiSpec.Workspace = opts.Workspace
+		if spec.Workspace == "" {
+			spec.Workspace = opts.Workspace
+		}
 
 		// TODO: Set a name?
-		experiment, err := beaker.CreateExperiment(ctx, apiSpec, "", false, "normal")
+		experiment, err := beaker.CreateExperiment(ctx, spec, "", false, "normal")
 		if err != nil {
 			return experiments, err
 		}
