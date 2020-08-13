@@ -32,7 +32,6 @@ const (
 type CreateOptions struct {
 	Name     string
 	Quiet    bool
-	Force    bool
 	Priority string
 }
 
@@ -50,7 +49,6 @@ func newCreateCmd(
 	cmd.Flag("name", "Assign a name to the experiment").Short('n').StringVar(&opts.Name)
 	cmd.Flag("quiet", "Only display created experiment's ID").Short('q').BoolVar(&opts.Quiet)
 	cmd.Flag("workspace", "Workspace where the experiment will be placed").Short('w').StringVar(&workspace)
-	cmd.Flag("force", "Allow depending on uncommitted datasets").BoolVar(&opts.Force)
 	cmd.Flag("priority", "Assign an execution priority to the experiment").Short('p').EnumVar(&opts.Priority, low, normal, high)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {
@@ -107,7 +105,7 @@ func Create(
 		opts = &CreateOptions{}
 	}
 
-	experiment, err := beaker.CreateExperiment(ctx, *spec, opts.Name, opts.Force, opts.Priority)
+	experiment, err := beaker.CreateExperiment(ctx, *spec, opts.Name, opts.Priority)
 	if err != nil {
 		return "", err
 	}
