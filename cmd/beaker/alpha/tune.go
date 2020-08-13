@@ -210,7 +210,7 @@ func runParameterSearch(
 		}
 
 		// TODO: Set a name?
-		experiment, err := beaker.CreateExperiment(ctx, spec, "", false, "normal")
+		experiment, err := beaker.CreateExperiment(ctx, spec, "", "normal")
 		if err != nil {
 			return experiments, err
 		}
