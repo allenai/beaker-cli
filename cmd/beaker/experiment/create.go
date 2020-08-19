@@ -66,7 +66,7 @@ func newCreateCmd(
 		if err != nil {
 			return err
 		}
-		if err := CanonicalizeJSONSpec(spec); err != nil {
+		if err := canonicalizeSpecV1(spec); err != nil {
 			return err
 		}
 
@@ -164,8 +164,8 @@ func openPath(p string) (io.Reader, error) {
 	return os.Open(p)
 }
 
-// CanonicalizeJSONSpec fills out fields used by the API from YAML fields parsed from disk.
-func CanonicalizeJSONSpec(spec *api.ExperimentSpec) error {
+// canonicalizeSpecV1 fills out JSON fields used by the API from YAML fields parsed from disk.
+func canonicalizeSpecV1(spec *api.ExperimentSpec) error {
 	// FUTURE: This should be unnecessary when the service accepts YAML directly.
 	for i := range spec.Tasks {
 		reqs := &spec.Tasks[i].Spec.Requirements
