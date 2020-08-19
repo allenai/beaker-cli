@@ -33,5 +33,4 @@ func NewAlphaCmd(
 
 	// Attach subcommands.
 	newTensorboardCmd(cmd, o, config)
-	newTuneCmd(cmd, o, config)
 }
