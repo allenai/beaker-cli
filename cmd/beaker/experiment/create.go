@@ -13,7 +13,6 @@ import (
 	"code.cloudfoundry.org/bytefmt"
 	"github.com/beaker/client/api"
 	"github.com/beaker/client/client"
-	beaker "github.com/beaker/client/client"
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
@@ -59,7 +58,7 @@ func newCreateCmd(
 			return err
 		}
 
-		beaker, err := beaker.NewClient(parentOpts.addr, cfg.UserToken)
+		beaker, err := client.NewClient(parentOpts.addr, cfg.UserToken)
 		if err != nil {
 			return err
 		}
