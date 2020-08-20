@@ -12,11 +12,12 @@ import (
 
 	"code.cloudfoundry.org/bytefmt"
 	"github.com/beaker/client/api"
+	"github.com/beaker/client/client"
 	beaker "github.com/beaker/client/client"
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	configCmd "github.com/allenai/beaker/cmd/beaker/config"
 	"github.com/allenai/beaker/config"
@@ -52,6 +53,7 @@ func newCreateCmd(
 	cmd.Flag("priority", "Assign an execution priority to the experiment").Short('p').EnumVar(&opts.Priority, low, normal, high)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {
+		ctx := context.TODO()
 		specFile, err := openPath(specPath)
 		if err != nil {
 			return err
@@ -62,62 +64,75 @@ func newCreateCmd(
 			return err
 		}
 
-		spec, err := readSpec(specFile)
-		if err != nil {
-			return err
-		}
-		if err := canonicalizeSpecV1(spec); err != nil {
-			return err
-		}
-
-		if workspace != "" {
-			// Workspace flag overrides what's written in the spec.
-			spec.Workspace = workspace
-		}
-		if spec.Workspace == "" {
-			// Neither spec nor args specified a workspace, so find the default.
-			spec.Workspace, err = configCmd.EnsureDefaultWorkspace(beaker, cfg)
-			if err != nil {
+		// Find a default workspace if there's no explicit argument.
+		if workspace == "" {
+			if workspace, err = configCmd.EnsureDefaultWorkspace(beaker, cfg); err != nil {
 				return err
 			}
 			if !opts.Quiet {
-				fmt.Printf("Using workspace %s\n", color.BlueString(spec.Workspace))
+				fmt.Printf("Using workspace %s\n", color.BlueString(workspace))
 			}
 		}
 
-		_, err = Create(context.TODO(), os.Stdout, beaker, spec, opts)
-		return err
+		rawSpec, err := readSpec(specFile)
+		if err != nil {
+			return err
+		}
+
+		var header struct {
+			Version string `yaml:"version,omitempty"`
+		}
+		if err := yaml.Unmarshal(rawSpec, &header); err != nil {
+			return err
+		}
+
+		// TODO: We should be able to blindly pass the raw spec to the service,
+		// but need to update the API to accept YAML first.
+		var experimentID string
+		switch header.Version {
+		case "v2", "v2-alpha":
+			var spec api.ExperimentSpecV2
+			if err := yaml.UnmarshalStrict(rawSpec, &spec); err != nil {
+				return err
+			}
+
+			ws, err := beaker.Workspace(ctx, workspace)
+			if err != nil {
+				return err
+			}
+			experiment, err := ws.CreateExperiment(ctx, &spec, &client.ExperimentOpts{
+				Name: opts.Name,
+			})
+			if err != nil {
+				return err
+			}
+			experimentID = experiment.ID
+
+		case "", "v1":
+			var spec api.ExperimentSpec
+			if err := yaml.UnmarshalStrict(rawSpec, &spec); err != nil {
+				return err
+			}
+			if err := canonicalizeSpecV1(&spec); err != nil {
+				return err
+			}
+
+			spec.Workspace = workspace
+			experiment, err := beaker.CreateExperiment(ctx, spec, opts.Name, opts.Priority)
+			if err != nil {
+				return err
+			}
+			experimentID = experiment.ID()
+		}
+
+		if opts.Quiet {
+			fmt.Println(experimentID)
+		} else {
+			fmt.Printf("Experiment %s submitted. See progress at %s/ex/%s\n",
+				color.BlueString(experimentID), beaker.Address(), experimentID)
+		}
+		return nil
 	})
-}
-
-// Create creates a new experiment and returns its ID.
-func Create(
-	ctx context.Context,
-	w io.Writer,
-	beaker *beaker.Client,
-	spec *api.ExperimentSpec,
-	opts *CreateOptions,
-) (string, error) {
-	if w == nil {
-		w = ioutil.Discard
-	}
-	if opts == nil {
-		opts = &CreateOptions{}
-	}
-
-	experiment, err := beaker.CreateExperiment(ctx, *spec, opts.Name, opts.Priority)
-	if err != nil {
-		return "", err
-	}
-
-	if opts.Quiet {
-		fmt.Fprintln(w, experiment.ID())
-	} else {
-		fmt.Fprintf(w, "Experiment %s submitted. See progress at %s/ex/%s\n",
-			color.BlueString(experiment.ID()), beaker.Address(), experiment.ID())
-	}
-
-	return experiment.ID(), nil
 }
 
 type templateParams struct {
@@ -125,7 +140,7 @@ type templateParams struct {
 }
 
 // readSpec reads an experiment spec from YAML.
-func readSpec(r io.Reader) (*api.ExperimentSpec, error) {
+func readSpec(r io.Reader) ([]byte, error) {
 	b, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
@@ -147,12 +162,7 @@ func readSpec(r io.Reader) (*api.ExperimentSpec, error) {
 		return nil, err
 	}
 
-	var spec api.ExperimentSpec
-	if err := yaml.UnmarshalStrict(buf.Bytes(), &spec); err != nil {
-		return nil, err
-	}
-
-	return &spec, nil
+	return buf.Bytes(), nil
 }
 
 func openPath(p string) (io.Reader, error) {
@@ -160,7 +170,6 @@ func openPath(p string) (io.Reader, error) {
 	if p == "-" {
 		return os.Stdin, nil
 	}
-
 	return os.Open(p)
 }
 
