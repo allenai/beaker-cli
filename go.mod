@@ -9,7 +9,7 @@ require (
 	github.com/Sirupsen/logrus v1.0.6 // indirect
 	github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc // indirect
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
-	github.com/beaker/client v0.0.0-20200923182510-3d59d829bda4
+	github.com/beaker/client v0.0.0-20200924203429-c50086a4b970
 	github.com/beaker/fileheap v0.0.0-20200106234808-5c201f881591
 	github.com/docker/distribution v2.7.0+incompatible
 	github.com/docker/docker v1.13.1
