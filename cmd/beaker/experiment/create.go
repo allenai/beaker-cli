@@ -63,14 +63,8 @@ func newCreateCmd(
 			return err
 		}
 
-		// Find a default workspace if there's no explicit argument.
-		if workspace == "" {
-			if workspace, err = configCmd.EnsureDefaultWorkspace(beaker, cfg); err != nil {
-				return err
-			}
-			if !opts.Quiet {
-				fmt.Printf("Using workspace %s\n", color.BlueString(workspace))
-			}
+		if workspace, err = configCmd.EnsureWorkspaceExists(beaker, cfg, workspace); err != nil {
+			return err
 		}
 
 		rawSpec, err := readSpec(specFile)

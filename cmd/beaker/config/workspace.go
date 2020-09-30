@@ -5,46 +5,47 @@ package config
 import (
 	"context"
 	"net/http"
-	"path"
+	"strings"
 
 	api "github.com/beaker/client/api"
 	beaker "github.com/beaker/client/client"
+	"github.com/pkg/errors"
 
 	"github.com/allenai/beaker/config"
 )
 
-// EnsureDefaultWorkspace uses the configured default workspace if it is available.
-// Otherwise it falls back to a set of default workspaces, creating them if needed.
-func EnsureDefaultWorkspace(client *beaker.Client, config *config.Config) (string, error) {
+var errWorkspaceNotProvided = errors.New(`workspace not provided, either:
+1. Pass the --workspace flag
+2. Configure a default workspace with 'beaker config set default_workspace <workspace>'`)
+
+// EnsureWorkspaceExists ensures that workspaceRef exists or that the default workspace
+// exists if workspaceRef is empty.
+// Returns errWorkspaceNotProvided if workspaceRef and the default workspace are empty.
+func EnsureWorkspaceExists(
+	client *beaker.Client,
+	config *config.Config,
+	workspaceRef string,
+) (string, error) {
 	ctx := context.TODO()
 
-	// If the user configured a default workspace, use it.
-	if config.DefaultWorkspace != "" {
-		return config.DefaultWorkspace, nil
+	if workspaceRef == "" {
+		if config.DefaultWorkspace == "" {
+			return "", errWorkspaceNotProvided
+		}
+		workspaceRef = config.DefaultWorkspace
 	}
 
-	author, err := client.WhoAmI(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	// If an org is specified, use the "<org>/<author>-default" workspace.
-	// Otherwise, use the "<author>/default" workspace.
-	var workspaceName string
-	var workspaceRef string
-	if config.DefaultOrg == "" {
-		workspaceName = "default"
-		workspaceRef = path.Join(author.Name, workspaceName)
-	} else {
-		workspaceName = author.Name + "-default"
-		workspaceRef = path.Join(config.DefaultOrg, workspaceName)
-	}
-
-	if _, err = client.Workspace(ctx, workspaceRef); err != nil {
+	// Create the workspace if it doesn't exist.
+	if _, err := client.Workspace(ctx, workspaceRef); err != nil {
 		if apiErr, ok := err.(api.Error); ok && apiErr.Code == http.StatusNotFound {
+			parts := strings.Split(workspaceRef, "/")
+			if len(parts) != 2 {
+				return "", errors.New("workspace must be formatted like '<organization>/<name>'")
+			}
+
 			if _, err = client.CreateWorkspace(ctx, api.WorkspaceSpec{
-				Name:         workspaceName,
-				Organization: config.DefaultOrg,
+				Organization: parts[0],
+				Name:         parts[1],
 			}); err != nil {
 				return "", err
 			}

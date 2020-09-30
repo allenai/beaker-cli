@@ -33,14 +33,8 @@ func newCreateCmd(
 		if err != nil {
 			return err
 		}
-		if o.workspace == "" {
-			o.workspace, err = configCmd.EnsureDefaultWorkspace(beaker, cfg)
-			if err != nil {
-				return err
-			}
-			if !o.quiet {
-				fmt.Printf("Using workspace %s\n", color.BlueString(o.workspace))
-			}
+		if o.workspace, err = configCmd.EnsureWorkspaceExists(beaker, cfg, o.workspace); err != nil {
+			return err
 		}
 		return o.run(beaker)
 	})

@@ -51,14 +51,8 @@ func newCreateCmd(
 			return err
 		}
 
-		if opts.Workspace == "" {
-			opts.Workspace, err = configCmd.EnsureDefaultWorkspace(beaker, cfg)
-			if err != nil {
-				return err
-			}
-			if !opts.Quiet {
-				fmt.Printf("Using workspace %s\n", color.BlueString(opts.Workspace))
-			}
+		if opts.Workspace, err = configCmd.EnsureWorkspaceExists(beaker, cfg, opts.Workspace); err != nil {
+			return err
 		}
 
 		_, err = Create(context.TODO(), os.Stdout, beaker, *image, opts)
