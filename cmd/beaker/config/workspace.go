@@ -38,7 +38,7 @@ func EnsureWorkspace(
 		if apiErr, ok := err.(api.Error); ok && apiErr.Code == http.StatusNotFound {
 			parts := strings.Split(workspaceRef, "/")
 			if len(parts) != 2 {
-				return "", errors.New("workspace must be formatted like '<organization>/<name>'")
+				return "", errors.New("workspace must be formatted like '<account>/<name>'")
 			}
 
 			if _, err = client.CreateWorkspace(ctx, api.WorkspaceSpec{
