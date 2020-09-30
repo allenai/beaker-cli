@@ -14,10 +14,6 @@ import (
 	"github.com/allenai/beaker/config"
 )
 
-var errWorkspaceNotProvided = errors.New(`workspace not provided, either:
-1. Pass the --workspace flag
-2. Configure a default workspace with 'beaker config set default_workspace <workspace>'`)
-
 // EnsureWorkspaceExists ensures that workspaceRef exists or that the default workspace
 // exists if workspaceRef is empty.
 // Returns errWorkspaceNotProvided if workspaceRef and the default workspace are empty.
@@ -30,7 +26,9 @@ func EnsureWorkspaceExists(
 
 	if workspaceRef == "" {
 		if config.DefaultWorkspace == "" {
-			return "", errWorkspaceNotProvided
+			return "", errors.New(`workspace not provided, either:
+1. Pass the --workspace flag
+2. Configure a default workspace with 'beaker config set default_workspace <workspace>'`)
 		}
 		workspaceRef = config.DefaultWorkspace
 	}
