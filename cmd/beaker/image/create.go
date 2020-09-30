@@ -51,7 +51,7 @@ func newCreateCmd(
 			return err
 		}
 
-		if opts.Workspace, err = configCmd.EnsureWorkspaceExists(beaker, cfg, opts.Workspace); err != nil {
+		if opts.Workspace, err = configCmd.EnsureWorkspace(beaker, cfg, opts.Workspace); err != nil {
 			return err
 		}
 

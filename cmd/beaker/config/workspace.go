@@ -14,10 +14,10 @@ import (
 	"github.com/allenai/beaker/config"
 )
 
-// EnsureWorkspaceExists ensures that workspaceRef exists or that the default workspace
+// EnsureWorkspace ensures that workspaceRef exists or that the default workspace
 // exists if workspaceRef is empty.
 // Returns errWorkspaceNotProvided if workspaceRef and the default workspace are empty.
-func EnsureWorkspaceExists(
+func EnsureWorkspace(
 	client *beaker.Client,
 	config *config.Config,
 	workspaceRef string,
