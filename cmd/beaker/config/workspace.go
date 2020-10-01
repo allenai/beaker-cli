@@ -16,7 +16,7 @@ import (
 
 // EnsureWorkspace ensures that workspaceRef exists or that the default workspace
 // exists if workspaceRef is empty.
-// Returns errWorkspaceNotProvided if workspaceRef and the default workspace are empty.
+// Returns an error if workspaceRef and the default workspace are empty.
 func EnsureWorkspace(
 	client *beaker.Client,
 	config *config.Config,
