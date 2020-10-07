@@ -102,7 +102,7 @@ func newCreateCmd(
 			experimentID = experiment.ID
 
 		case "", "v1":
-			var spec api.ExperimentSpec
+			var spec api.ExperimentSpecV1
 			if err := yaml.UnmarshalStrict(rawSpec, &spec); err != nil {
 				return err
 			}
@@ -167,7 +167,7 @@ func openPath(p string) (io.Reader, error) {
 }
 
 // canonicalizeSpecV1 fills out JSON fields used by the API from YAML fields parsed from disk.
-func canonicalizeSpecV1(spec *api.ExperimentSpec) error {
+func canonicalizeSpecV1(spec *api.ExperimentSpecV1) error {
 	// FUTURE: This should be unnecessary when the service accepts YAML directly.
 	for i := range spec.Tasks {
 		reqs := &spec.Tasks[i].Spec.Requirements
