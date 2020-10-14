@@ -32,6 +32,5 @@ func NewTaskCmd(
 	}).Arg("command", "Show help on command.").StringsVar(&helpSubcommands)
 
 	// Attach subcommands.
-	newCancelCmd(cmd, o, config)
 	newInspectCmd(cmd, o, config)
 }
