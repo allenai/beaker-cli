@@ -1,47 +1,60 @@
-version: 2
+
+version: 2.1
 jobs:
-  build:
+  validate:
     docker:
-      - image: circleci/golang:1.13.5
+      - image: cimg/go:1.15
     steps:
       - checkout
-      - run: 
+      - run:
+          name: go fmt ./...
+          command: |
+            go fmt ./...
+            git diff --quiet --exit-code
+      - run:
+          name: go mod tidy
           command: |
             go mod tidy
-            if [ -n "$(git status --porcelain)" ]; then
-              exit 1
-            fi
-      - run: make dev test --output-sync=target
+            git diff --quiet --exit-code
+      - run: go vet ./...
+      - run: go test ./...
+      - run: go build ./...
+
   release:
     docker:
-      - image: circleci/golang:1.13.5
+      - image: cimg/go:1.15
     steps:
       - checkout
       - run:
           command: |
             export GITHUB_TOKEN=$GITHUB_ACCESS_TOKEN
+
             # goreleaser runs builds for darwin/linux together and module cache isn't safe against concurrent updates.
             # This way we avoid running into issues during goreleaser builds.
             go mod download
-            # For some reason go.sum gets reordered all the time. This avoids "git is in a dirty state errors"
-            go mod tidy
-            make release
+
+            TEMP=$(shell mktemp -d)
+            curl -L "https://github.com/goreleaser/goreleaser/releases/download/v0.89.0/goreleaser_Linux_x86_64.tar.gz" \
+              | tar -xvz -C$(TEMP) goreleaser
+            $(TEMP)/goreleaser release --rm-dist
+            rm -rf $(TEMP)
 
 workflows:
-  version: 2
-  build-release:
+  version: 2.1
+
+  validate:
     jobs:
-      - build:
+      - validate:
+          # Only run validation on PRs.
           filters:
             branches:
-              only: /.*/
-            tags:
-              only: /.*/
+              ignore: master
+
+  release:
+    jobs:
       - release:
-          requires:
-            - build
           filters:
-            # Only run the release on tags
+            # Only run the release on tags.
             branches:
               ignore: /.*/
             tags:
