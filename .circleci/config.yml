@@ -2,19 +2,20 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.13.5
+      - image: cimg/go:1.15
     steps:
       - checkout
-      - run: 
+      - run:
           command: |
             go mod tidy
             if [ -n "$(git status --porcelain)" ]; then
               exit 1
             fi
       - run: make dev test --output-sync=target
+
   release:
     docker:
-      - image: circleci/golang:1.13.5
+      - image: cimg/go:1.15
     steps:
       - checkout
       - run:
