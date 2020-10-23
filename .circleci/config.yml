@@ -20,19 +20,6 @@ jobs:
       - run: go test ./...
       - run: go build ./...
 
-  download:
-    docker:
-      - image: cimg/go:1.15
-    steps:
-      - checkout
-      - run:
-          command: |
-            TEMP=$(mktemp -d)
-            echo $TEMP
-            curl -L "https://github.com/goreleaser/goreleaser/releases/download/v0.89.0/goreleaser_Linux_x86_64.tar.gz" \
-              | tar -xvz -C $TEMP goreleaser
-            $TEMP/goreleaser
-
   release:
     docker:
       - image: cimg/go:1.15
@@ -48,16 +35,15 @@ jobs:
 
             TEMP=$(mktemp -d)
             curl -L "https://github.com/goreleaser/goreleaser/releases/download/v0.89.0/goreleaser_Linux_x86_64.tar.gz" \
-              | tar -xvz -C$(TEMP) goreleaser
-            $(TEMP)/goreleaser release --rm-dist
-            rm -rf $(TEMP)
+              | tar -xvz -C $TEMP goreleaser
+            $TEMP/goreleaser release --rm-dist
+            rm -rf $TEMP
 
 workflows:
   version: 2.1
 
   validate:
     jobs:
-      - download
       - validate:
           # Only run validation on PRs.
           filters:
