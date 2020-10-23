@@ -20,6 +20,18 @@ jobs:
       - run: go test ./...
       - run: go build ./...
 
+  download:
+    docker:
+      - image: cimg/go:1.15
+    steps:
+      - checkout
+      - run:
+          command: |
+            TEMP=$(mktemp -d)
+            curl -L "https://github.com/goreleaser/goreleaser/releases/download/v0.89.0/goreleaser_Linux_x86_64.tar.gz" \
+              | tar -xvz -C$(TEMP) goreleaser
+            $(TEMP)/goreleaser
+
   release:
     docker:
       - image: cimg/go:1.15
@@ -33,7 +45,7 @@ jobs:
             # This way we avoid running into issues during goreleaser builds.
             go mod download
 
-            TEMP=$(shell mktemp -d)
+            TEMP=$(mktemp -d)
             curl -L "https://github.com/goreleaser/goreleaser/releases/download/v0.89.0/goreleaser_Linux_x86_64.tar.gz" \
               | tar -xvz -C$(TEMP) goreleaser
             $(TEMP)/goreleaser release --rm-dist
@@ -44,6 +56,7 @@ workflows:
 
   validate:
     jobs:
+      - download
       - validate:
           # Only run validation on PRs.
           filters:
