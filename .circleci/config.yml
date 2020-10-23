@@ -33,11 +33,11 @@ jobs:
             # This way we avoid running into issues during goreleaser builds.
             go mod download
 
-            TEMP=$(shell mktemp -d)
+            TEMP=$(mktemp -d)
             curl -L "https://github.com/goreleaser/goreleaser/releases/download/v0.89.0/goreleaser_Linux_x86_64.tar.gz" \
-              | tar -xvz -C$(TEMP) goreleaser
-            $(TEMP)/goreleaser release --rm-dist
-            rm -rf $(TEMP)
+              | tar -xvz -C $TEMP goreleaser
+            $TEMP/goreleaser release --rm-dist
+            rm -rf $TEMP
 
 workflows:
   version: 2.1
