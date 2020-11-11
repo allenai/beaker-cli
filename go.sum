@@ -18,8 +18,6 @@ github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc h1:cAKDfWh5Vpd
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf h1:qet1QNfXsQxTZqLG4oE62mJzwPIB8+Tee4RNCL9ulrY=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
-github.com/beaker/client v0.0.0-20201111190736-11006cef078d h1:Kym72OytQvZlHEIQjzaZ/TMrNalKlTQyb5w/jTLgNxE=
-github.com/beaker/client v0.0.0-20201111190736-11006cef078d/go.mod h1:D0s5YdnSsRWWTegUjTasZ/nusfTfaZZffpUvZPZ30BI=
 github.com/beaker/client v0.0.0-20201111192605-fbacaecae99d h1:f2jwhg+JZjgx3nOLF54mkcvbR9X3pEQg5A4GKh3nr3g=
 github.com/beaker/client v0.0.0-20201111192605-fbacaecae99d/go.mod h1:D0s5YdnSsRWWTegUjTasZ/nusfTfaZZffpUvZPZ30BI=
 github.com/beaker/fileheap v0.0.0-20200106234808-5c201f881591 h1:BKRHEopDd5dTFHRGB0dP1Xpon6z3LJciIyDuSf63+w4=
