@@ -18,7 +18,7 @@ func newListCmd(
 ) {
 	o := &listOptions{}
 	cmd := parent.Command("list", "List the metadata of all secrets in a workspace")
-	cmd.Flag("workspace", "Workspace").Required().StringVar(&o.workspace)
+	cmd.Flag("workspace", "Workspace to list secrets.").Required().StringVar(&o.workspace)
 	cmd.Action(func(c *kingpin.ParseContext) error {
 		beaker, err := beaker.NewClient(parentOpts.addr, config.UserToken)
 		if err != nil {
