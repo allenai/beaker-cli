@@ -1,6 +1,8 @@
 package secret
 
 import (
+	"context"
+
 	beaker "github.com/beaker/client/client"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
@@ -32,6 +34,11 @@ func newDeleteCmd(
 }
 
 func (o *deleteOptions) run(beaker *beaker.Client) error {
-	// TODO Delete the secret
-	return nil
+	ctx := context.Background()
+	workspace, err := beaker.Workspace(ctx, o.workspace)
+	if err != nil {
+		return err
+	}
+
+	return workspace.DeleteSecret(ctx, o.name)
 }

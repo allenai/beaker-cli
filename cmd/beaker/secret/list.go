@@ -1,6 +1,10 @@
 package secret
 
 import (
+	"context"
+	"encoding/json"
+	"os"
+
 	beaker "github.com/beaker/client/client"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
@@ -29,6 +33,18 @@ func newListCmd(
 }
 
 func (o *listOptions) run(beaker *beaker.Client) error {
-	// TODO List secret metadata
-	return nil
+	ctx := context.Background()
+	workspace, err := beaker.Workspace(ctx, o.workspace)
+	if err != nil {
+		return err
+	}
+
+	secrets, err := workspace.ListSecrets(ctx)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(os.Stdout)
+	encoder.SetIndent("", "    ")
+	return encoder.Encode(secrets)
 }

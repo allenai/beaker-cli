@@ -1,6 +1,9 @@
 package secret
 
 import (
+	"context"
+	"fmt"
+
 	beaker "github.com/beaker/client/client"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
@@ -32,6 +35,16 @@ func newReadCmd(
 }
 
 func (o *readOptions) run(beaker *beaker.Client) error {
-	// TODO Read the secret
+	ctx := context.Background()
+	workspace, err := beaker.Workspace(ctx, o.workspace)
+	if err != nil {
+		return err
+	}
+
+	secret, err := workspace.ReadSecret(ctx, o.name)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s", secret)
 	return nil
 }

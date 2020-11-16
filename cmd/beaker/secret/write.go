@@ -1,7 +1,7 @@
 package secret
 
 import (
-	"fmt"
+	"context"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -41,8 +41,13 @@ If the value is "-", it is read from stdin.`).Required().StringVar(&o.value)
 }
 
 func (o *writeOptions) run(beaker *beaker.Client) error {
+	ctx := context.Background()
+	workspace, err := beaker.Workspace(ctx, o.workspace)
+	if err != nil {
+		return err
+	}
+
 	var value []byte
-	var err error
 	switch {
 	case strings.HasPrefix(o.value, "@"):
 		value, err = ioutil.ReadFile(strings.TrimPrefix(o.value, "@"))
@@ -55,8 +60,6 @@ func (o *writeOptions) run(beaker *beaker.Client) error {
 		return err
 	}
 
-	fmt.Printf("%s=%s\n", o.name, value)
-
-	// TODO Write the secret
-	return nil
+	_, err = workspace.PutSecret(ctx, o.name, value)
+	return err
 }
