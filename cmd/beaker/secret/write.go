@@ -13,8 +13,9 @@ import (
 )
 
 type writeOptions struct {
-	name  string
-	value string
+	workspace string
+	name      string
+	value     string
 }
 
 func newWriteCmd(
@@ -24,6 +25,7 @@ func newWriteCmd(
 ) {
 	o := &writeOptions{}
 	cmd := parent.Command("write", "Write a new secret or update an existing secret")
+	cmd.Flag("workspace", "Workspace containing the secret").Required().StringVar(&o.workspace)
 	cmd.Arg("name", "The name of the secret").Required().StringVar(&o.name)
 	cmd.Arg("value", `The value of the secret.
 If the value begins with "@", it is loaded from a file.

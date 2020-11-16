@@ -8,7 +8,8 @@ import (
 )
 
 type readOptions struct {
-	name string
+	workspace string
+	name      string
 }
 
 func newReadCmd(
@@ -18,6 +19,7 @@ func newReadCmd(
 ) {
 	o := &readOptions{}
 	cmd := parent.Command("read", "Read the value of a secret")
+	cmd.Flag("workspace", "Workspace containing the secret").Required().StringVar(&o.workspace)
 	cmd.Arg("name", "The name of the secret").Required().StringVar(&o.name)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {

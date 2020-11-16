@@ -8,7 +8,8 @@ import (
 )
 
 type inspectOptions struct {
-	name string
+	workspace string
+	name      string
 }
 
 func newInspectCmd(
@@ -18,6 +19,7 @@ func newInspectCmd(
 ) {
 	o := &inspectOptions{}
 	cmd := parent.Command("inspect", "Inspect secret metadata")
+	cmd.Flag("workspace", "Workspace containing the secret").Required().StringVar(&o.workspace)
 	cmd.Arg("name", "The name of the secret").Required().StringVar(&o.name)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {

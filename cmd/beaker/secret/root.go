@@ -9,8 +9,7 @@ import (
 
 type secretOptions struct {
 	*options.AppOptions
-	addr      string
-	workspace string
+	addr string
 }
 
 // NewSecretCmd creates the root command for this subpackage.
@@ -23,7 +22,6 @@ func NewSecretCmd(
 	cmd := parent.Command("secret", "Manage secrets")
 
 	cmd.Flag("addr", "Address of the Beaker service.").Default(config.BeakerAddress).StringVar(&o.addr)
-	cmd.Flag("workspace", "Workspace containing the secret").Required().StringVar(&o.workspace)
 
 	// Add automatic help generation for the command group.
 	var helpSubcommands []string
