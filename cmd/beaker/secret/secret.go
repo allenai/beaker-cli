@@ -2,10 +2,10 @@ package secret
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -50,6 +50,7 @@ type writeOptions struct {
 	workspace string
 	name      string
 	value     string
+	stdin     bool
 }
 
 func newWriteCmd(
@@ -60,12 +61,17 @@ func newWriteCmd(
 	o := &writeOptions{}
 	cmd := parent.Command("write", "Write a new secret or update an existing secret")
 	cmd.Flag("workspace", "Workspace containing the secret.").Required().StringVar(&o.workspace)
+	cmd.Flag("stdin", "Read value from stdin").BoolVar(&o.stdin)
 	cmd.Arg("name", "The name of the secret.").Required().StringVar(&o.name)
-	cmd.Arg("value", `The value of the secret.
-If the value begins with "@", it is loaded from a file.
-If the value is "-", it is read from stdin.`).Required().StringVar(&o.value)
+	cmd.Arg("value", "The value of the secret.").StringVar(&o.value)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {
+		if o.value == "" && !o.stdin {
+			return errors.New("either 'value' argument or --stdin flag must be provided")
+		} else if o.value != "" && o.stdin {
+			return errors.New("only one of 'value' argument and --stdin flag may be provided")
+		}
+
 		beaker, err := beaker.NewClient(parentOpts.addr, config.UserToken)
 		if err != nil {
 			return err
@@ -78,12 +84,9 @@ If the value is "-", it is read from stdin.`).Required().StringVar(&o.value)
 		}
 
 		var value []byte
-		switch {
-		case strings.HasPrefix(o.value, "@"):
-			value, err = ioutil.ReadFile(strings.TrimPrefix(o.value, "@"))
-		case o.value == "-":
+		if o.stdin {
 			value, err = ioutil.ReadAll(os.Stdin)
-		default:
+		} else {
 			value = []byte(o.value)
 		}
 		if err != nil {
