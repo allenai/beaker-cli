@@ -61,7 +61,7 @@ func newWriteCmd(
 	cmd := parent.Command("write", "Write a new secret or update an existing secret")
 	cmd.Flag("workspace", "Workspace containing the secret.").Required().StringVar(&o.workspace)
 	cmd.Arg("name", "The name of the secret.").Required().StringVar(&o.name)
-	cmd.Arg("value", "The value of the secret.").StringVar(&o.value)
+	cmd.Arg("value", "The value of the secret. If omitted, the value is read from stdin.").StringVar(&o.value)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {
 		beaker, err := beaker.NewClient(parentOpts.addr, config.UserToken)
