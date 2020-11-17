@@ -8,11 +8,11 @@ import (
 	"text/tabwriter"
 	"time"
 
+	beaker "github.com/beaker/client/client"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/allenai/beaker/cmd/beaker/options"
 	"github.com/allenai/beaker/config"
-	beaker "github.com/beaker/client/client"
 )
 
 type secretOptions struct {
