@@ -19,8 +19,7 @@ func NewWorkspaceCmd(
 	config *config.Config,
 ) {
 	o := &workspaceOptions{AppOptions: parentOpts}
-	// TODO: Remove the "under development" when it no longer applies.
-	cmd := parent.Command("workspace", "Manage workspaces (under development)")
+	cmd := parent.Command("workspace", "Manage workspaces")
 
 	cmd.Flag("addr", "Address of the Beaker service.").Default(config.BeakerAddress).StringVar(&o.addr)
 
