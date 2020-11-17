@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"text/tabwriter"
+	"time"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
@@ -198,9 +200,16 @@ func newListCmd(
 			return err
 		}
 
-		encoder := json.NewEncoder(os.Stdout)
-		encoder.SetIndent("", "    ")
-		return encoder.Encode(secrets)
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
+		const rowFormat = "%s\t%s\t%s\n"
+		fmt.Fprintf(w, rowFormat, "NAME", "CREATED", "UPDATED")
+		for _, secret := range secrets {
+			fmt.Fprintf(w, rowFormat,
+				secret.Name,
+				secret.Created.Format(time.RFC3339),
+				secret.Updated.Format(time.RFC3339))
+		}
+		return w.Flush()
 	})
 }
 
