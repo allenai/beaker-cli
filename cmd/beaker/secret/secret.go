@@ -154,7 +154,7 @@ func newListCmd(
 			return err
 		}
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 		const rowFormat = "%s\t%s\t%s\n"
 		fmt.Fprintf(w, rowFormat, "NAME", "CREATED", "UPDATED")
 		for _, secret := range secrets {
