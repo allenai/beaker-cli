@@ -2,7 +2,6 @@ package secret
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -61,17 +60,10 @@ func newWriteCmd(
 	o := &writeOptions{}
 	cmd := parent.Command("write", "Write a new secret or update an existing secret")
 	cmd.Flag("workspace", "Workspace containing the secret.").Required().StringVar(&o.workspace)
-	cmd.Flag("stdin", "Read value from stdin").BoolVar(&o.stdin)
 	cmd.Arg("name", "The name of the secret.").Required().StringVar(&o.name)
 	cmd.Arg("value", "The value of the secret.").StringVar(&o.value)
 
 	cmd.Action(func(c *kingpin.ParseContext) error {
-		if o.value == "" && !o.stdin {
-			return errors.New("either 'value' argument or --stdin flag must be provided")
-		} else if o.value != "" && o.stdin {
-			return errors.New("only one of 'value' argument and --stdin flag may be provided")
-		}
-
 		beaker, err := beaker.NewClient(parentOpts.addr, config.UserToken)
 		if err != nil {
 			return err
@@ -84,13 +76,12 @@ func newWriteCmd(
 		}
 
 		var value []byte
-		if o.stdin {
-			value, err = ioutil.ReadAll(os.Stdin)
+		if o.value == "" {
+			if value, err = ioutil.ReadAll(os.Stdin); err != nil {
+				return err
+			}
 		} else {
 			value = []byte(o.value)
-		}
-		if err != nil {
-			return err
 		}
 
 		_, err = workspace.PutSecret(ctx, o.name, value)
