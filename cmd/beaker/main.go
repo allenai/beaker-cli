@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -10,7 +11,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var ctx context.Context
+
 func main() {
+	var cancel context.CancelFunc
+	ctx, cancel = withSignal(context.Background())
+	defer cancel()
+
 	errorPrefix := color.RedString("Error:")
 
 	config, err := config.New()
@@ -29,7 +36,7 @@ func main() {
 		Use:   "beaker",
 		Short: "Beaker is a tool for running machine learning experiments.",
 		// TODO What do these do?
-		SilenceUsage: true,
+		// SilenceUsage: true,
 		// SilenceErrors: true,
 	}
 

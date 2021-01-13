@@ -6,10 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/signal"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/beaker/client/api"
@@ -73,16 +71,6 @@ func newClusterCreateCommand(client *client.Client) *cobra.Command {
 			},
 		}
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		go func() {
-			quit := make(chan os.Signal, 1)
-			defer close(quit)
-			signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-			<-quit
-			cancel()
-		}()
-
 		cluster, err := client.CreateCluster(ctx, account, spec)
 		if err != nil {
 			return err
@@ -90,6 +78,8 @@ func newClusterCreateCommand(client *client.Client) *cobra.Command {
 
 		fmt.Printf("Cluster %s created (ID %s)\n", color.BlueString(cluster.Name), color.BlueString(cluster.ID))
 		fmt.Printf("Preparing cluster...")
+
+		// TODO Don't poll for non-autoscale clusters.
 
 		ticker := time.NewTicker(3 * time.Second)
 		for {
@@ -150,7 +140,7 @@ func newClusterInspectCommand(client *client.Client) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var clusters []*api.Cluster
 			for _, id := range args {
-				info, err := client.Cluster(id).Get(context.Background())
+				info, err := client.Cluster(id).Get(ctx)
 				if err != nil {
 					return err
 				}
@@ -171,7 +161,7 @@ func newClusterTerminateCommand(client *client.Client) *cobra.Command {
 		Short: "Permanently expire a cluster",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := client.Cluster(args[0]).Terminate(context.Background()); err != nil {
+			if err := client.Cluster(args[0]).Terminate(ctx); err != nil {
 				return err
 			}
 
