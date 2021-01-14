@@ -12,6 +12,7 @@ import (
 )
 
 var ctx context.Context
+var quiet bool
 
 func main() {
 	var cancel context.CancelFunc
@@ -40,7 +41,10 @@ func main() {
 		// SilenceErrors: true,
 	}
 
+	root.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Quiet mode")
+
 	root.AddCommand(newClusterCommand(client))
+	root.AddCommand(newDatasetCommand(client))
 
 	root.Execute()
 }
