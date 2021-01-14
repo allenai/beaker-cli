@@ -61,6 +61,7 @@ func main() {
 	root.AddCommand(newExperimentCommand())
 	root.AddCommand(newGroupCommand())
 	root.AddCommand(newImageCommand())
+	root.AddCommand(newSecretCommand())
 
 	root.Execute()
 }
