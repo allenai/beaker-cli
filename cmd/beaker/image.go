@@ -194,7 +194,10 @@ func newImagePullCommand() *cobra.Command {
 		Args:  cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			imageRef := args[0]
-			tag := args[1]
+			var tag string
+			if len(args) > 1 {
+				tag = args[1]
+			}
 
 			docker, err := docker.NewEnvClient()
 			if err != nil {
