@@ -56,6 +56,11 @@ func newDatasetCreateCommand() *cobra.Command {
 			return errors.Errorf("%s is a %s", source, modeToString(info.Mode()))
 		}
 
+		workspace, err = ensureWorkspace(workspace)
+		if err != nil {
+			return err
+		}
+
 		spec := api.DatasetSpec{
 			Description: description,
 			Workspace:   workspace,
