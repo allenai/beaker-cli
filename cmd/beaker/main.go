@@ -62,6 +62,7 @@ func main() {
 	root.AddCommand(newGroupCommand())
 	root.AddCommand(newImageCommand())
 	root.AddCommand(newSecretCommand())
+	root.AddCommand(newTaskCommand())
 
 	root.Execute()
 }
