@@ -5,23 +5,22 @@ import (
 	"os"
 
 	"github.com/beaker/client/api"
-	"github.com/beaker/client/client"
 	"github.com/beaker/fileheap/cli"
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
-func newDatasetCommand(client *client.Client) *cobra.Command {
+func newDatasetCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "dataset",
 		Short: "Manage datasets",
 	}
-	cmd.AddCommand(newDatasetCreateCommand(client))
+	cmd.AddCommand(newDatasetCreateCommand())
 	return cmd
 }
 
-func newDatasetCreateCommand(client *client.Client) *cobra.Command {
+func newDatasetCreateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create <source>",
 		Short: "Create a new dataset",
@@ -53,7 +52,7 @@ func newDatasetCreateCommand(client *client.Client) *cobra.Command {
 			FileHeap:    true,
 		}
 
-		dataset, err := client.CreateDataset(ctx, spec, name)
+		dataset, err := beaker.CreateDataset(ctx, spec, name)
 		if err != nil {
 			return err
 		}

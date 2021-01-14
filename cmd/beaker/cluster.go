@@ -11,24 +11,23 @@ import (
 	"time"
 
 	"github.com/beaker/client/api"
-	"github.com/beaker/client/client"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
-func newClusterCommand(client *client.Client) *cobra.Command {
+func newClusterCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cluster",
 		Short: "Manage clusters",
 	}
-	cmd.AddCommand(newClusterCreateCommand(client))
-	cmd.AddCommand(newClusterInspectCommand(client))
-	cmd.AddCommand(newClusterTerminateCommand(client))
-	cmd.AddCommand(newClusterUpdateCommand(client))
+	cmd.AddCommand(newClusterCreateCommand())
+	cmd.AddCommand(newClusterInspectCommand())
+	cmd.AddCommand(newClusterTerminateCommand())
+	cmd.AddCommand(newClusterUpdateCommand())
 	return cmd
 }
 
-func newClusterCreateCommand(client *client.Client) *cobra.Command {
+func newClusterCreateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create <name>",
 		Short: "Create a new cluster",
@@ -71,7 +70,7 @@ func newClusterCreateCommand(client *client.Client) *cobra.Command {
 			},
 		}
 
-		cluster, err := client.CreateCluster(ctx, account, spec)
+		cluster, err := beaker.CreateCluster(ctx, account, spec)
 		if err != nil {
 			return err
 		}
@@ -89,7 +88,7 @@ func newClusterCreateCommand(client *client.Client) *cobra.Command {
 				os.Exit(1)
 
 			case <-ticker.C:
-				cluster, err = client.Cluster(cluster.ID).Get(ctx)
+				cluster, err = beaker.Cluster(cluster.ID).Get(ctx)
 				if err != nil {
 					fmt.Println(" failed")
 					return err
@@ -132,7 +131,7 @@ func newClusterCreateCommand(client *client.Client) *cobra.Command {
 	return cmd
 }
 
-func newClusterInspectCommand(client *client.Client) *cobra.Command {
+func newClusterInspectCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "inspect <cluster...>",
 		Short: "Display detailed information about one or more clusters",
@@ -140,7 +139,7 @@ func newClusterInspectCommand(client *client.Client) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var clusters []*api.Cluster
 			for _, id := range args {
-				info, err := client.Cluster(id).Get(ctx)
+				info, err := beaker.Cluster(id).Get(ctx)
 				if err != nil {
 					return err
 				}
@@ -155,13 +154,13 @@ func newClusterInspectCommand(client *client.Client) *cobra.Command {
 	}
 }
 
-func newClusterTerminateCommand(client *client.Client) *cobra.Command {
+func newClusterTerminateCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "terminate <cluster>",
 		Short: "Permanently expire a cluster",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := client.Cluster(args[0]).Terminate(ctx); err != nil {
+			if err := beaker.Cluster(args[0]).Terminate(ctx); err != nil {
 				return err
 			}
 
@@ -171,7 +170,7 @@ func newClusterTerminateCommand(client *client.Client) *cobra.Command {
 	}
 }
 
-func newClusterUpdateCommand(client *client.Client) *cobra.Command {
+func newClusterUpdateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update <cluster>",
 		Short: "Modify a cluster",
@@ -192,7 +191,7 @@ func newClusterUpdateCommand(client *client.Client) *cobra.Command {
 			return nil
 		}
 
-		cluster, err := client.Cluster(args[0]).Patch(context.Background(), &patch)
+		cluster, err := beaker.Cluster(args[0]).Patch(context.Background(), &patch)
 		if err != nil {
 			return err
 		}

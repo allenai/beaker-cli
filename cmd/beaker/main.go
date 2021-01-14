@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var beaker *client.Client
 var ctx context.Context
 var quiet bool
 
@@ -27,7 +28,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	client, err := client.NewClient(config.BeakerAddress, config.UserToken)
+	beaker, err = client.NewClient(config.BeakerAddress, config.UserToken)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s %+v\n", errorPrefix, err)
 		os.Exit(1)
@@ -43,8 +44,8 @@ func main() {
 
 	root.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Quiet mode")
 
-	root.AddCommand(newClusterCommand(client))
-	root.AddCommand(newDatasetCommand(client))
+	root.AddCommand(newClusterCommand())
+	root.AddCommand(newDatasetCommand())
 
 	root.Execute()
 }
