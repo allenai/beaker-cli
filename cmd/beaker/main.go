@@ -14,6 +14,11 @@ import (
 var beaker *client.Client
 var ctx context.Context
 var quiet bool
+var format string
+
+const (
+	formatJSON = "json"
+)
 
 func main() {
 	var cancel context.CancelFunc
@@ -43,6 +48,7 @@ func main() {
 	}
 
 	root.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Quiet mode")
+	root.PersistentFlags().StringVarP(&format, "format", "f", "", "Output format")
 
 	root.AddCommand(newClusterCommand())
 	root.AddCommand(newDatasetCommand())
