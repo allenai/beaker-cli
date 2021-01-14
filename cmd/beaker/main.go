@@ -59,6 +59,7 @@ func main() {
 	root.AddCommand(newClusterCommand())
 	root.AddCommand(newDatasetCommand())
 	root.AddCommand(newExperimentCommand())
+	root.AddCommand(newGroupCommand())
 
 	root.Execute()
 }
