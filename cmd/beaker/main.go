@@ -60,6 +60,7 @@ func main() {
 	root.AddCommand(newDatasetCommand())
 	root.AddCommand(newExperimentCommand())
 	root.AddCommand(newGroupCommand())
+	root.AddCommand(newImageCommand())
 
 	root.Execute()
 }
