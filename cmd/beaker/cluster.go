@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -191,7 +190,7 @@ func newClusterUpdateCommand() *cobra.Command {
 			return nil
 		}
 
-		cluster, err := beaker.Cluster(args[0]).Patch(context.Background(), &patch)
+		cluster, err := beaker.Cluster(args[0]).Patch(ctx, &patch)
 		if err != nil {
 			return err
 		}

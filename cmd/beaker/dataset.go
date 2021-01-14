@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -179,8 +178,6 @@ func newDatasetInspectCommand() *cobra.Command {
 			type detail struct {
 				api.Dataset
 			}
-
-			ctx := context.TODO()
 
 			var datasets []detail
 			for _, name := range args {

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"reflect"
@@ -117,7 +116,7 @@ func newConfigTestCommand() *cobra.Command {
 				fmt.Println("No default org set.")
 			} else {
 				fmt.Printf("Verifying default org: %q\n\n", cfg.DefaultOrg)
-				_, err := beaker.Organization(cfg.DefaultOrg).Get(context.TODO())
+				_, err := beaker.Organization(cfg.DefaultOrg).Get(ctx)
 				if err != nil {
 					fmt.Println("There was a problem verifying your default org.")
 					fmt.Println("Set the default organization in your config in the format `default_org: <org_name>`. Note that the name may be different from the name displayed in beaker UI.")

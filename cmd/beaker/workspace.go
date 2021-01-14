@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -114,7 +113,6 @@ func newWorkspaceMoveCommand() *cobra.Command {
 		Short: "Move items into a workspace",
 		Args:  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := context.TODO()
 			workspace, err := beaker.Workspace(ctx, args[0])
 			if err != nil {
 				return err
