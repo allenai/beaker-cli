@@ -61,7 +61,7 @@ func main() {
 	}
 
 	root.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Quiet mode")
-	root.PersistentFlags().StringVarP(&format, "format", "f", "", "Output format")
+	root.PersistentFlags().StringVar(&format, "format", "", "Output format")
 
 	root.AddCommand(&cobra.Command{
 		Use:   "version",
