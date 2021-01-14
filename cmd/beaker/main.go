@@ -16,6 +16,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// These variables are set externally by the linker.
+var (
+	version = "dev"
+	commit  = "unknown"
+)
+
 var beaker *client.Client
 var beakerConfig *config.Config
 var ctx context.Context
@@ -56,6 +62,15 @@ func main() {
 
 	root.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Quiet mode")
 	root.PersistentFlags().StringVarP(&format, "format", "f", "", "Output format")
+
+	root.AddCommand(&cobra.Command{
+		Use:   "version",
+		Short: "Print the Beaker CLI version",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Printf("Beaker %s ('%s')\n", version, commit)
+			return nil
+		},
+	})
 
 	root.AddCommand(newClusterCommand())
 	root.AddCommand(newConfigCommand())
