@@ -63,6 +63,7 @@ func main() {
 	root.AddCommand(newImageCommand())
 	root.AddCommand(newSecretCommand())
 	root.AddCommand(newTaskCommand())
+	root.AddCommand(newWorkspaceCommand())
 
 	root.Execute()
 }
