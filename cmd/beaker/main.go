@@ -58,6 +58,7 @@ func main() {
 	root.PersistentFlags().StringVarP(&format, "format", "f", "", "Output format")
 
 	root.AddCommand(newClusterCommand())
+	root.AddCommand(newConfigCommand())
 	root.AddCommand(newDatasetCommand())
 	root.AddCommand(newExperimentCommand())
 	root.AddCommand(newGroupCommand())
