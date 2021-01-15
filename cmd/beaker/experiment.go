@@ -35,23 +35,20 @@ func newExperimentCommand() *cobra.Command {
 
 func newExperimentCreateCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create -f <spec file>",
+		Use:   "create <spec file>",
 		Short: "Create a new experiment",
-		Args:  cobra.NoArgs,
+		Args:  cobra.ExactArgs(1),
 	}
 
-	var specPath string
 	var name string
 	var workspace string
 	var priority string
-	// TODO Weird that this is a required flag, should be an argument instead.
-	cmd.Flags().StringVarP(&specPath, "file", "f", "", "Load experiment spec from a file")
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the experiment")
 	cmd.Flags().StringVarP(&workspace, "workspace", "w", "", "Workspace where the experiment will be placed")
 	cmd.Flags().StringVarP(&priority, "priority", "p", "", "Assign an execution priority to the experiment")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		specFile, err := openPath(specPath)
+		specFile, err := openPath(args[0])
 		if err != nil {
 			return err
 		}
