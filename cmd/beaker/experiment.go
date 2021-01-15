@@ -204,20 +204,16 @@ func newExperimentRenameCommand() *cobra.Command {
 
 func newExperimentResumeCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "resume",
+		Use:   "resume <experiment>",
 		Short: "Resume a preempted experiment and return the experiment ID for the new experiment",
-		Args:  cobra.NoArgs,
+		Args:  cobra.ExactArgs(1),
 	}
 
-	// TODO: This should be an argument not a flag, also confusing that we have --experiment-name and --name
-	// which is also an experiment name.
-	var experimentToResume string
 	var name string
-	cmd.Flags().StringVarP(&experimentToResume, "experiment-name", "e", "", "Experiment to resume")
-	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the experiment")
+	cmd.Flags().StringVarP(&name, "name", "n", "", "Name for the new experiment")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		experiment, err := beaker.ResumeExperiment(ctx, experimentToResume, name)
+		experiment, err := beaker.ResumeExperiment(ctx, args[0], name)
 		if err != nil {
 			return err
 		}
