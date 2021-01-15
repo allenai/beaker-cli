@@ -58,19 +58,11 @@ func main() {
 		// TODO What do these do?
 		// SilenceUsage: true,
 		// SilenceErrors: true,
+		Version: fmt.Sprintf("Beaker %s (%q)", version, commit),
 	}
 
 	root.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Quiet mode")
 	root.PersistentFlags().StringVar(&format, "format", "", "Output format")
-
-	root.AddCommand(&cobra.Command{
-		Use:   "version",
-		Short: "Print the Beaker CLI version",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Printf("Beaker %s ('%s')\n", version, commit)
-			return nil
-		},
-	})
 
 	root.AddCommand(newClusterCommand())
 	root.AddCommand(newConfigCommand())
