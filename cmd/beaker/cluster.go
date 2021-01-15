@@ -75,10 +75,11 @@ func newClusterCreateCommand() *cobra.Command {
 		}
 
 		fmt.Printf("Cluster %s created (ID %s)\n", color.BlueString(cluster.Name), color.BlueString(cluster.ID))
+		if !cluster.Autoscale {
+			return nil
+		}
+
 		fmt.Printf("Preparing cluster...")
-
-		// TODO Don't poll for non-autoscale clusters.
-
 		ticker := time.NewTicker(3 * time.Second)
 		for {
 			select {
