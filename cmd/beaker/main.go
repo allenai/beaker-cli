@@ -12,7 +12,6 @@ import (
 	"github.com/allenai/beaker/config"
 	"github.com/beaker/client/api"
 	"github.com/beaker/client/client"
-	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -37,21 +36,6 @@ func main() {
 	ctx, cancel = withSignal(context.Background())
 	defer cancel()
 
-	errorPrefix := color.RedString("Error:")
-
-	var err error
-	beakerConfig, err = config.New()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s %+v\n", errorPrefix, err)
-		os.Exit(1)
-	}
-
-	beaker, err = client.NewClient(beakerConfig.BeakerAddress, beakerConfig.UserToken)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s %+v\n", errorPrefix, err)
-		os.Exit(1)
-	}
-
 	root := &cobra.Command{
 		Use:   "beaker <command>",
 		Short: "Beaker is a tool for running machine learning experiments.",
@@ -59,6 +43,18 @@ func main() {
 		// SilenceUsage: true,
 		// SilenceErrors: true,
 		Version: fmt.Sprintf("Beaker %s (%q)", version, commit),
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			var err error
+			if beakerConfig, err = config.New(); err != nil {
+				return err
+			}
+
+			beaker, err = client.NewClient(
+				beakerConfig.BeakerAddress,
+				beakerConfig.UserToken,
+			)
+			return err
+		},
 	}
 
 	root.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Quiet mode")
