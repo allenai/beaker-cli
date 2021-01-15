@@ -1,76 +1,142 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"os"
+	"os/signal"
+	"strings"
 
-	"github.com/fatih/color"
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
-	"github.com/allenai/beaker/cmd/beaker/cluster"
-	configCmd "github.com/allenai/beaker/cmd/beaker/config"
-	"github.com/allenai/beaker/cmd/beaker/dataset"
-	"github.com/allenai/beaker/cmd/beaker/experiment"
-	"github.com/allenai/beaker/cmd/beaker/group"
-	"github.com/allenai/beaker/cmd/beaker/image"
-	"github.com/allenai/beaker/cmd/beaker/options"
-	"github.com/allenai/beaker/cmd/beaker/secret"
-	"github.com/allenai/beaker/cmd/beaker/task"
-	"github.com/allenai/beaker/cmd/beaker/workspace"
 	"github.com/allenai/beaker/config"
+	"github.com/beaker/client/api"
+	"github.com/beaker/client/client"
+	"github.com/fatih/color"
+	"github.com/spf13/cobra"
+)
+
+// These variables are set externally by the linker.
+var (
+	version = "dev"
+	commit  = "unknown"
+)
+
+var beaker *client.Client
+var beakerConfig *config.Config
+var ctx context.Context
+var quiet bool
+var format string
+
+const (
+	formatJSON = "json"
 )
 
 func main() {
-	errorPrefix := color.RedString("Error:")
+	var cancel context.CancelFunc
+	ctx, cancel = withSignal(context.Background())
+	defer cancel()
 
-	config, err := config.New()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s %+v\n", errorPrefix, err)
-		os.Exit(1)
+	root := &cobra.Command{
+		Use:           "beaker <command>",
+		Short:         "Beaker is a tool for running machine learning experiments.",
+		SilenceUsage:  true,
+		SilenceErrors: true,
+		Version:       fmt.Sprintf("Beaker %s (%q)", version, commit),
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			var err error
+			if beakerConfig, err = config.New(); err != nil {
+				return err
+			}
+
+			beaker, err = client.NewClient(
+				beakerConfig.BeakerAddress,
+				beakerConfig.UserToken,
+			)
+			return err
+		},
 	}
 
-	if opts, err := newApp(config); err != nil {
-		if opts.Debug {
-			fmt.Fprintf(os.Stderr, "%s %+v\n", errorPrefix, err)
-		} else {
-			fmt.Fprintf(os.Stderr, "%s %v\n", errorPrefix, err)
-		}
+	root.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Quiet mode")
+	root.PersistentFlags().StringVar(&format, "format", "", "Output format")
+
+	root.AddCommand(newClusterCommand())
+	root.AddCommand(newConfigCommand())
+	root.AddCommand(newDatasetCommand())
+	root.AddCommand(newExperimentCommand())
+	root.AddCommand(newGroupCommand())
+	root.AddCommand(newImageCommand())
+	root.AddCommand(newSecretCommand())
+	root.AddCommand(newTaskCommand())
+	root.AddCommand(newWorkspaceCommand())
+
+	if err := root.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "%s %+v\n", color.RedString("Error:"), err)
 		os.Exit(1)
 	}
 }
 
-// newApp creates a root application containing all Beaker subcommands.
-func newApp(config *config.Config) (*options.AppOptions, error) {
-	o := &options.AppOptions{}
-	app := kingpin.New("beaker", "Beaker is a lab assistant to run and view experiments.")
+// ensureWorkspace ensures that workspaceRef exists or that the default workspace
+// exists if workspaceRef is empty.
+// Returns an error if workspaceRef and the default workspace are empty.
+func ensureWorkspace(workspaceRef string) (string, error) {
+	if workspaceRef == "" {
+		if beakerConfig.DefaultWorkspace == "" {
+			return "", errors.New(`workspace not provided, either:
+1. Pass the --workspace flag
+2. Configure a default workspace with 'beaker config set default_workspace <workspace>'`)
+		}
+		workspaceRef = beakerConfig.DefaultWorkspace
+	}
 
-	// Set a usage template to print better help messages.
-	app.UsageTemplate(usageTemplate)
+	// Create the workspace if it doesn't exist.
+	if _, err := beaker.Workspace(ctx, workspaceRef); err != nil {
+		if apiErr, ok := err.(api.Error); ok && apiErr.Code == http.StatusNotFound {
+			parts := strings.Split(workspaceRef, "/")
+			if len(parts) != 2 {
+				return "", errors.New("workspace must be formatted like '<account>/<name>'")
+			}
 
-	// Disable interspersing flags with positional args.
-	app.Interspersed(false)
+			if _, err = beaker.CreateWorkspace(ctx, api.WorkspaceSpec{
+				Organization: parts[0],
+				Name:         parts[1],
+			}); err != nil {
+				return "", err
+			}
+		} else {
+			return "", err
+		}
+	}
 
-	// Add global flags. These flags will also be available to sub-commands.
-	app.HelpFlag.Short('h')
-	app.Version(makeVersion())
-	app.VersionFlag.Short('v')
-	app.Flag("debug", "Print verbose stack traces on error.").BoolVar(&o.Debug)
+	return workspaceRef, nil
+}
 
-	// Build out sub-command groups.
-	cluster.NewClusterCmd(app, o, config)
-	configCmd.NewConfigCmd(app, o, config)
-	dataset.NewDatasetCmd(app, o, config)
-	experiment.NewExperimentCmd(app, o, config)
-	group.NewGroupCmd(app, o, config)
-	image.NewImageCmd(app, o, config)
-	secret.NewSecretCmd(app, o, config)
-	task.NewTaskCmd(app, o, config)
-	workspace.NewWorkspaceCmd(app, o, config)
+// Return a cancelable context which ends on signal interrupt.
+//
+// The first interrupt cancels the context, allowing callers to terminate
+// gracefully. Upon receiving a second interrupt the process is terminated with
+// exit code 130 (128 + SIGINT)
+func withSignal(parent context.Context) (context.Context, context.CancelFunc) {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt)
 
-	// Attach sub-commands.
-	NewVersionCmd(app)
+	ctx, cancel := context.WithCancel(context.Background())
 
-	// Parse command line input.
-	_, err := app.Parse(os.Args[1:])
-	return o, err
+	// In most cases this routine will leak due to the lack of a second signal.
+	// That's OK since this is expected to last for the life of the process.
+	go func() {
+		select {
+		case <-sigChan:
+			cancel()
+		case <-ctx.Done():
+			// Do nothing.
+		}
+		<-sigChan
+		os.Exit(130)
+	}()
+
+	return ctx, func() {
+		signal.Stop(sigChan)
+		cancel()
+	}
 }
