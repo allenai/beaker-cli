@@ -53,25 +53,27 @@ func newGroupAddCommand() *cobra.Command {
 
 func newGroupCreateCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create <experiment?>",
+		Use:   "create <name> <experiment...>",
 		Short: "Create a new experiment group",
-		Args:  cobra.ArbitraryArgs,
+		Args:  cobra.MinimumNArgs(1),
 	}
 
 	var description string
-	var name string
 	var workspace string
 	cmd.Flags().StringVar(&description, "desc", "", "Group description")
-	// TODO Required flag should be an argument instead.
-	cmd.Flags().StringVarP(&name, "name", "n", "", "Group name")
 	cmd.Flags().StringVarP(&workspace, "workspace", "w", "", "Group workspace")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		var err error
+		if workspace, err = ensureWorkspace(workspace); err != nil {
+			return err
+		}
+
 		spec := api.GroupSpec{
-			Name:        name,
+			Name:        args[0],
 			Description: description,
 			Workspace:   workspace,
-			Experiments: trimAndUnique(args),
+			Experiments: trimAndUnique(args[1:]),
 		}
 		group, err := beaker.CreateGroup(ctx, spec)
 		if err != nil {
