@@ -12,6 +12,7 @@ import (
 	"github.com/allenai/beaker/config"
 	"github.com/beaker/client/api"
 	"github.com/beaker/client/client"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -37,12 +38,11 @@ func main() {
 	defer cancel()
 
 	root := &cobra.Command{
-		Use:   "beaker <command>",
-		Short: "Beaker is a tool for running machine learning experiments.",
-		// TODO What do these do?
-		// SilenceUsage: true,
-		// SilenceErrors: true,
-		Version: fmt.Sprintf("Beaker %s (%q)", version, commit),
+		Use:           "beaker <command>",
+		Short:         "Beaker is a tool for running machine learning experiments.",
+		SilenceUsage:  true,
+		SilenceErrors: true,
+		Version:       fmt.Sprintf("Beaker %s (%q)", version, commit),
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			var err error
 			if beakerConfig, err = config.New(); err != nil {
@@ -70,7 +70,10 @@ func main() {
 	root.AddCommand(newTaskCommand())
 	root.AddCommand(newWorkspaceCommand())
 
-	root.Execute()
+	if err := root.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "%s %+v\n", color.RedString("Error:"), err)
+		os.Exit(1)
+	}
 }
 
 // ensureWorkspace ensures that workspaceRef exists or that the default workspace
