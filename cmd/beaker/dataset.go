@@ -18,7 +18,7 @@ import (
 
 func newDatasetCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "dataset",
+		Use:   "dataset <command>",
 		Short: "Manage datasets",
 	}
 	cmd.AddCommand(newDatasetCreateCommand())

@@ -12,7 +12,7 @@ import (
 
 func newSecretCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "secret",
+		Use:   "secret <command>",
 		Short: "Manage secrets",
 	}
 	cmd.AddCommand(newSecretDeleteCommand())

@@ -16,7 +16,7 @@ import (
 
 func newClusterCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "cluster",
+		Use:   "cluster <command>",
 		Short: "Manage clusters",
 	}
 	cmd.AddCommand(newClusterCreateCommand())

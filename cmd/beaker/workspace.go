@@ -12,7 +12,7 @@ import (
 
 func newWorkspaceCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "workspace",
+		Use:   "workspace <command>",
 		Short: "Manage workspaces",
 	}
 	cmd.AddCommand(newWorkspaceArchiveCommand())

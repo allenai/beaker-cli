@@ -10,7 +10,7 @@ import (
 
 func newTaskCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "task",
+		Use:   "task <command>",
 		Short: "Manage tasks",
 	}
 	cmd.AddCommand(newTaskInspectCommand())

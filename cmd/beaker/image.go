@@ -20,7 +20,7 @@ import (
 
 func newImageCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "image",
+		Use:   "image <command>",
 		Short: "Manage images",
 	}
 	cmd.AddCommand(newImageCreateCommand())

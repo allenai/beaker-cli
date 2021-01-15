@@ -13,7 +13,7 @@ import (
 
 func newGroupCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "group",
+		Use:   "group <command>",
 		Short: "Manage groups",
 	}
 	cmd.AddCommand(newGroupAddCommand())

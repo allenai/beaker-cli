@@ -21,7 +21,7 @@ import (
 
 func newExperimentCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "experiment",
+		Use:   "experiment <command>",
 		Short: "Manage experiments",
 	}
 	cmd.AddCommand(newExperimentCreateCommand())

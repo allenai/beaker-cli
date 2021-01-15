@@ -16,7 +16,7 @@ const userTokenHelp = "Login on the Beaker website and follow the instructions t
 
 func newConfigCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "config",
+		Use:   "config <command>",
 		Short: "Manage Beaker configuration",
 	}
 	cmd.AddCommand(newConfigListCommand())

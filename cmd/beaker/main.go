@@ -53,7 +53,7 @@ func main() {
 	}
 
 	root := &cobra.Command{
-		Use:   "beaker",
+		Use:   "beaker <command>",
 		Short: "Beaker is a tool for running machine learning experiments.",
 		// TODO What do these do?
 		// SilenceUsage: true,
