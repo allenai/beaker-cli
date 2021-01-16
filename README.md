@@ -11,7 +11,9 @@
    These instructions will guide you through installing and configuring the
    Beaker CLI. See [below](#install-beaker-cli) for more options.
 
-   Request credentials to run an experiment from a Beaker admin.
+   If you signed up using your @allenai.org email address, then you should
+   automatically have credentials.  Otherwise you will need to
+   request credentials to run an experiment from a Beaker admin.
    You can either ask on #beaker-users or email bunsen@allenai.org.
    Please include the email address associated with your Beaker account.
 
