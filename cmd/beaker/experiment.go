@@ -35,7 +35,7 @@ func newExperimentCommand() *cobra.Command {
 
 func newExperimentCreateCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create <spec file>",
+		Use:   "create <spec-file>",
 		Short: "Create a new experiment",
 		Args:  cobra.ExactArgs(1),
 	}
