@@ -14,6 +14,7 @@ func newTaskCommand() *cobra.Command {
 		Short: "Manage tasks",
 	}
 	cmd.AddCommand(newTaskInspectCommand())
+	cmd.AddCommand(newTaskLogsCommand())
 	return cmd
 }
 
@@ -36,6 +37,23 @@ func newTaskInspectCommand() *cobra.Command {
 			encoder := json.NewEncoder(os.Stdout)
 			encoder.SetIndent("", "    ")
 			return encoder.Encode(tasks)
+		},
+	}
+}
+
+func newTaskLogsCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "logs <task>",
+		Short: "Fetch logs for the most recent execution of a task",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			task, err := beaker.Task(args[0]).Get(ctx)
+			if err != nil {
+				return err
+			}
+
+			// Most recent execution is last.
+			return printExecutionLogs(task.Executions[len(task.Executions)-1].ID)
 		},
 	}
 }
