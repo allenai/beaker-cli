@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 
 	"github.com/beaker/client/api"
 	"github.com/fatih/color"
@@ -99,10 +97,7 @@ func newWorkspaceInspectCommand() *cobra.Command {
 
 				workspaces = append(workspaces, exp)
 			}
-
-			encoder := json.NewEncoder(os.Stdout)
-			encoder.SetIndent("", "    ")
-			return encoder.Encode(workspaces)
+			return printJSON(workspaces)
 		},
 	}
 }

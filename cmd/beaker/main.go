@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/allenai/beaker/config"
 	"github.com/beaker/client/api"
@@ -32,7 +34,25 @@ const (
 	formatJSON = "json"
 )
 
+var jsonOut *json.Encoder
+var tableOut *tabwriter.Writer
+
+func printJSON(v interface{}) error {
+	return jsonOut.Encode(v)
+}
+
+func printTableRow(cells ...string) error {
+	_, err := fmt.Fprintln(tableOut, strings.Join(cells, "\t"))
+	return err
+}
+
 func main() {
+	jsonOut = json.NewEncoder(os.Stdout)
+	jsonOut.SetIndent("", "    ")
+
+	tableOut = tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	defer tableOut.Flush()
+
 	var cancel context.CancelFunc
 	ctx, cancel = withSignal(context.Background())
 	defer cancel()

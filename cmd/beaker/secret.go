@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"text/tabwriter"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -54,16 +53,19 @@ func newSecretListCommand() *cobra.Command {
 				return err
 			}
 
-			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-			const rowFormat = "%s\t%s\t%s\n"
-			fmt.Fprintf(w, rowFormat, "NAME", "CREATED", "UPDATED")
+			if err := printTableRow("NAME", "CREATED", "UPDATED"); err != nil {
+				return err
+			}
 			for _, secret := range secrets {
-				fmt.Fprintf(w, rowFormat,
+				if err := printTableRow(
 					secret.Name,
 					secret.Created.Format(time.RFC3339),
-					secret.Updated.Format(time.RFC3339))
+					secret.Updated.Format(time.RFC3339),
+				); err != nil {
+					return err
+				}
 			}
-			return w.Flush()
+			return nil
 		},
 	}
 }

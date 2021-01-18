@@ -1,13 +1,11 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
-	"text/tabwriter"
 	"time"
 
 	"github.com/beaker/client/api"
@@ -149,10 +147,7 @@ func newClusterInspectCommand() *cobra.Command {
 				clusters = append(clusters, info)
 			}
 
-			// TODO: Print this in a more human-friendly way, and include node summary.
-			encoder := json.NewEncoder(os.Stdout)
-			encoder.SetIndent("", "    ")
-			return encoder.Encode(clusters)
+			return printJSON(clusters)
 		},
 	}
 }
@@ -185,17 +180,17 @@ func newClusterListCommand() *cobra.Command {
 
 			switch format {
 			case formatJSON:
-				encoder := json.NewEncoder(os.Stdout)
-				encoder.SetIndent("", "    ")
-				return encoder.Encode(clusters)
+				return printJSON(clusters)
 			default:
-				w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-				const rowFormat = "%s\n"
-				fmt.Fprintf(w, rowFormat, "NAME")
-				for _, cluster := range clusters {
-					fmt.Fprintf(w, rowFormat, cluster.Name)
+				if err := printTableRow("NAME"); err != nil {
+					return err
 				}
-				return w.Flush()
+				for _, cluster := range clusters {
+					if err := printTableRow(cluster.Name); err != nil {
+						return err
+					}
+				}
+				return nil
 			}
 		},
 	}

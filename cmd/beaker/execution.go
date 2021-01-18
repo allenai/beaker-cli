@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"io"
 	"os"
 
@@ -34,10 +33,7 @@ func newExecutionInspectCommand() *cobra.Command {
 
 				executions = append(executions, info)
 			}
-
-			encoder := json.NewEncoder(os.Stdout)
-			encoder.SetIndent("", "    ")
-			return encoder.Encode(executions)
+			return printJSON(executions)
 		},
 	}
 }
