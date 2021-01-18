@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/beaker/client/api"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -50,6 +51,10 @@ func newTaskLogsCommand() *cobra.Command {
 			task, err := beaker.Task(args[0]).Get(ctx)
 			if err != nil {
 				return err
+			}
+
+			if len(task.Executions) == 0 {
+				return errors.Errorf("task has no executions")
 			}
 
 			// Most recent execution is last.
