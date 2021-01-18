@@ -63,6 +63,7 @@ func main() {
 	root.AddCommand(newClusterCommand())
 	root.AddCommand(newConfigCommand())
 	root.AddCommand(newDatasetCommand())
+	root.AddCommand(newExecutionCommand())
 	root.AddCommand(newExperimentCommand())
 	root.AddCommand(newGroupCommand())
 	root.AddCommand(newImageCommand())
