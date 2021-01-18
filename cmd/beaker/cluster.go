@@ -7,9 +7,11 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"text/tabwriter"
 	"time"
 
 	"github.com/beaker/client/api"
+	"github.com/beaker/client/client"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -21,6 +23,7 @@ func newClusterCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newClusterCreateCommand())
 	cmd.AddCommand(newClusterInspectCommand())
+	cmd.AddCommand(newClusterListCommand())
 	cmd.AddCommand(newClusterTerminateCommand())
 	cmd.AddCommand(newClusterUpdateCommand())
 	return cmd
@@ -150,6 +153,50 @@ func newClusterInspectCommand() *cobra.Command {
 			encoder := json.NewEncoder(os.Stdout)
 			encoder.SetIndent("", "    ")
 			return encoder.Encode(clusters)
+		},
+	}
+}
+
+func newClusterListCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "list <account>",
+		Short: "List clusters under an account",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			terminated := false
+			var clusters []api.Cluster
+			var cursor string
+			for {
+				var page []api.Cluster
+				var err error
+				page, cursor, err = beaker.ListClusters(ctx, args[0], &client.ListClusterOptions{
+					Cursor:     cursor,
+					Terminated: &terminated,
+				})
+				if err != nil {
+					return err
+				}
+
+				clusters = append(clusters, page...)
+				if cursor == "" {
+					break
+				}
+			}
+
+			switch format {
+			case formatJSON:
+				encoder := json.NewEncoder(os.Stdout)
+				encoder.SetIndent("", "    ")
+				return encoder.Encode(clusters)
+			default:
+				w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+				const rowFormat = "%s\n"
+				fmt.Fprintf(w, rowFormat, "NAME")
+				for _, cluster := range clusters {
+					fmt.Fprintf(w, rowFormat, cluster.Name)
+				}
+				return w.Flush()
+			}
 		},
 	}
 }
