@@ -144,41 +144,7 @@ func newClusterExecutionsCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			switch format {
-			case formatJSON:
-				return printJSON(executions)
-			default:
-				if err := printTableRow(
-					"ID",
-					"TASK",
-					"NAME",
-					"NODE",
-					"CPU COUNT",
-					"GPU COUNT",
-					"MEMORY",
-					"PRIORITY",
-					"STATUS",
-				); err != nil {
-					return err
-				}
-				for _, execution := range executions {
-					if err := printTableRow(
-						execution.ID,
-						execution.Task,
-						execution.Spec.Name,
-						execution.Node,
-						execution.Limits.CPUCount,
-						execution.Limits.GPUCount,
-						execution.Limits.Memory,
-						execution.Priority,
-						executionStatus(execution.State),
-					); err != nil {
-						return err
-					}
-				}
-				return nil
-			}
+			return printExecutions(executions)
 		},
 	}
 }
@@ -333,10 +299,15 @@ func newClusterNodesCommand() *cobra.Command {
 					"GPU COUNT",
 					"GPU TYPE",
 					"MEMORY",
+					"CORDONED",
 				); err != nil {
 					return err
 				}
 				for _, node := range nodes {
+					var cordoned string
+					if node.Cordoned != nil {
+						cordoned = "true"
+					}
 					if err := printTableRow(
 						node.ID,
 						node.Hostname,
@@ -345,6 +316,7 @@ func newClusterNodesCommand() *cobra.Command {
 						node.Limits.GPUCount,
 						node.Limits.GPUType,
 						node.Limits.Memory,
+						cordoned,
 					); err != nil {
 						return err
 					}

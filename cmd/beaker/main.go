@@ -91,6 +91,7 @@ func main() {
 	root.AddCommand(newExperimentCommand())
 	root.AddCommand(newGroupCommand())
 	root.AddCommand(newImageCommand())
+	root.AddCommand(newNodeCommand())
 	root.AddCommand(newSecretCommand())
 	root.AddCommand(newTaskCommand())
 	root.AddCommand(newWorkspaceCommand())

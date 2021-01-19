@@ -24,16 +24,15 @@ func newExecutionInspectCommand() *cobra.Command {
 		Short: "Display detailed information about one or more executions",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var executions []*api.Execution
+			var executions []api.Execution
 			for _, id := range args {
 				info, err := beaker.Execution(id).Get(ctx)
 				if err != nil {
 					return err
 				}
-
-				executions = append(executions, info)
+				executions = append(executions, *info)
 			}
-			return printJSON(executions)
+			return printExecutions(executions)
 		},
 	}
 }
@@ -46,6 +45,43 @@ func newExecutionLogsCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return printExecutionLogs(args[0])
 		},
+	}
+}
+
+func printExecutions(executions []api.Execution) error {
+	switch format {
+	case formatJSON:
+		return printJSON(executions)
+	default:
+		if err := printTableRow(
+			"ID",
+			"TASK",
+			"NAME",
+			"NODE",
+			"CPU COUNT",
+			"GPU COUNT",
+			"MEMORY",
+			"PRIORITY",
+			"STATUS",
+		); err != nil {
+			return err
+		}
+		for _, execution := range executions {
+			if err := printTableRow(
+				execution.ID,
+				execution.Task,
+				execution.Spec.Name,
+				execution.Node,
+				execution.Limits.CPUCount,
+				execution.Limits.GPUCount,
+				execution.Limits.Memory,
+				execution.Priority,
+				executionStatus(execution.State),
+			); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 }
 
