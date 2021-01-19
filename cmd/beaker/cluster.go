@@ -20,6 +20,7 @@ func newClusterCommand() *cobra.Command {
 		Short: "Manage clusters",
 	}
 	cmd.AddCommand(newClusterCreateCommand())
+	cmd.AddCommand(newClusterExecutionsCommand())
 	cmd.AddCommand(newClusterInspectCommand())
 	cmd.AddCommand(newClusterListCommand())
 	cmd.AddCommand(newClusterNodesCommand())
@@ -131,6 +132,69 @@ func newClusterCreateCommand() *cobra.Command {
 		}
 	}
 	return cmd
+}
+
+func newClusterExecutionsCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "executions <cluster>",
+		Short: "List executions in a cluster",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			executions, err := beaker.Cluster(args[0]).ListExecutions(ctx, nil)
+			if err != nil {
+				return err
+			}
+
+			switch format {
+			case formatJSON:
+				return printJSON(executions)
+			default:
+				if err := printTableRow(
+					"ID",
+					"TASK",
+					"NODE",
+					"CPU COUNT",
+					"GPU COUNT",
+					"MEMORY",
+					"PRIORITY",
+					"STATUS",
+				); err != nil {
+					return err
+				}
+				for _, execution := range executions {
+					if err := printTableRow(
+						execution.ID,
+						execution.Task,
+						execution.Node,
+						execution.Limits.CPUCount,
+						execution.Limits.GPUCount,
+						execution.Limits.Memory,
+						execution.Priority,
+						executionStatus(execution.State),
+					); err != nil {
+						return err
+					}
+				}
+				return nil
+			}
+		},
+	}
+}
+
+func executionStatus(state api.ExecutionState) string {
+	if state.Scheduled == nil {
+		return "pending"
+	}
+	if state.Started == nil {
+		return "starting"
+	}
+	if state.Ended == nil {
+		return "running"
+	}
+	if state.Finalized == nil {
+		return "finalizing"
+	}
+	return "finished"
 }
 
 func newClusterInspectCommand() *cobra.Command {
@@ -247,7 +311,7 @@ func newClusterListCommand() *cobra.Command {
 func newClusterNodesCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "nodes <cluster>",
-		Short: "List all nodes in a cluster",
+		Short: "List nodes in a cluster",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			nodes, err := beaker.Cluster(args[0]).ListClusterNodes(ctx)
