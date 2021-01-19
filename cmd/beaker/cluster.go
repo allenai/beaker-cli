@@ -135,69 +135,52 @@ func newClusterCreateCommand() *cobra.Command {
 }
 
 func newClusterExecutionsCommand() *cobra.Command {
-	cmd := &cobra.Command{
+	return &cobra.Command{
 		Use:   "executions <cluster>",
 		Short: "List executions in a cluster",
 		Args:  cobra.ExactArgs(1),
-	}
-
-	var scheduled bool
-	var unscheduled bool
-	cmd.Flags().BoolVar(&scheduled, "scheduled", false, "Only show scheduled executions")
-	cmd.Flags().BoolVar(&unscheduled, "unscheduled", false, "Only show unscheduled executions")
-
-	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		if scheduled && unscheduled {
-			return fmt.Errorf("only one of --scheduled and --unscheduled may be set")
-		}
-
-		var scheduledOpt *bool
-		if scheduled || unscheduled {
-			scheduledOpt = &scheduled
-		}
-		executions, err := beaker.Cluster(args[0]).ListExecutions(ctx, &client.ExecutionFilters{
-			Scheduled: scheduledOpt,
-		})
-		if err != nil {
-			return err
-		}
-
-		switch format {
-		case formatJSON:
-			return printJSON(executions)
-		default:
-			if err := printTableRow(
-				"ID",
-				"TASK",
-				"NAME",
-				"NODE",
-				"CPU COUNT",
-				"GPU COUNT",
-				"MEMORY",
-				"PRIORITY",
-				"STATUS",
-			); err != nil {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			executions, err := beaker.Cluster(args[0]).ListExecutions(ctx, nil)
+			if err != nil {
 				return err
 			}
-			for _, execution := range executions {
+
+			switch format {
+			case formatJSON:
+				return printJSON(executions)
+			default:
 				if err := printTableRow(
-					execution.ID,
-					execution.Task,
-					execution.Spec.Name,
-					execution.Node,
-					execution.Limits.CPUCount,
-					execution.Limits.GPUCount,
-					execution.Limits.Memory,
-					execution.Priority,
-					executionStatus(execution.State),
+					"ID",
+					"TASK",
+					"NAME",
+					"NODE",
+					"CPU COUNT",
+					"GPU COUNT",
+					"MEMORY",
+					"PRIORITY",
+					"STATUS",
 				); err != nil {
 					return err
 				}
+				for _, execution := range executions {
+					if err := printTableRow(
+						execution.ID,
+						execution.Task,
+						execution.Spec.Name,
+						execution.Node,
+						execution.Limits.CPUCount,
+						execution.Limits.GPUCount,
+						execution.Limits.Memory,
+						execution.Priority,
+						executionStatus(execution.State),
+					); err != nil {
+						return err
+					}
+				}
+				return nil
 			}
-			return nil
-		}
+		},
 	}
-	return cmd
 }
 
 func executionStatus(state api.ExecutionState) string {
