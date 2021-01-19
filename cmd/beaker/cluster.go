@@ -159,7 +159,16 @@ func newClusterListCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 	}
 
+	var cloud bool
+	var onPrem bool
+	cmd.Flags().BoolVar(&cloud, "cloud", false, "Only show cloud (autoscaling) clusters")
+	cmd.Flags().BoolVar(&onPrem, "on-prem", false, "Only show on-premise (non-autoscaling) clusters")
+
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		if cloud && onPrem {
+			return fmt.Errorf("only one of --cloud and --on-prem may be set")
+		}
+
 		terminated := false
 		var clusters []api.Cluster
 		var cursor string
@@ -174,7 +183,19 @@ func newClusterListCommand() *cobra.Command {
 				return err
 			}
 
-			clusters = append(clusters, page...)
+			for _, cluster := range page {
+				if cloud {
+					if !cluster.Autoscale {
+						continue
+					}
+				}
+				if onPrem {
+					if cluster.Autoscale {
+						continue
+					}
+				}
+				clusters = append(clusters, cluster)
+			}
 			if cursor == "" {
 				break
 			}
