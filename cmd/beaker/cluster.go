@@ -153,71 +153,73 @@ func newClusterInspectCommand() *cobra.Command {
 }
 
 func newClusterListCommand() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "list <account>",
 		Short: "List clusters under an account",
 		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			terminated := false
-			var clusters []api.Cluster
-			var cursor string
-			for {
-				var page []api.Cluster
-				var err error
-				page, cursor, err = beaker.ListClusters(ctx, args[0], &client.ListClusterOptions{
-					Cursor:     cursor,
-					Terminated: &terminated,
-				})
-				if err != nil {
-					return err
-				}
+	}
 
-				clusters = append(clusters, page...)
-				if cursor == "" {
-					break
-				}
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		terminated := false
+		var clusters []api.Cluster
+		var cursor string
+		for {
+			var page []api.Cluster
+			var err error
+			page, cursor, err = beaker.ListClusters(ctx, args[0], &client.ListClusterOptions{
+				Cursor:     cursor,
+				Terminated: &terminated,
+			})
+			if err != nil {
+				return err
 			}
 
-			switch format {
-			case formatJSON:
-				return printJSON(clusters)
-			default:
+			clusters = append(clusters, page...)
+			if cursor == "" {
+				break
+			}
+		}
+
+		switch format {
+		case formatJSON:
+			return printJSON(clusters)
+		default:
+			if err := printTableRow(
+				"NAME",
+				"GPU TYPE",
+				"GPU COUNT",
+				"CPU COUNT",
+				"MEMORY",
+			); err != nil {
+				return err
+			}
+			for _, cluster := range clusters {
+				var (
+					gpuType  string
+					gpuCount string
+					cpuCount string
+					memory   string
+				)
+				if cluster.NodeShape != nil {
+					gpuType = fmt.Sprintf("%v", cluster.NodeShape.GPUType)
+					gpuCount = fmt.Sprintf("%v", cluster.NodeShape.GPUCount)
+					cpuCount = fmt.Sprintf("%v", cluster.NodeShape.CPUCount)
+					memory = fmt.Sprintf("%v", cluster.NodeShape.Memory)
+				}
 				if err := printTableRow(
-					"NAME",
-					"GPU TYPE",
-					"GPU COUNT",
-					"CPU COUNT",
-					"MEMORY",
+					cluster.Name,
+					gpuType,
+					gpuCount,
+					cpuCount,
+					memory,
 				); err != nil {
 					return err
 				}
-				for _, cluster := range clusters {
-					var (
-						gpuType  string
-						gpuCount string
-						cpuCount string
-						memory   string
-					)
-					if cluster.NodeShape != nil {
-						gpuType = fmt.Sprintf("%v", cluster.NodeShape.GPUType)
-						gpuCount = fmt.Sprintf("%v", cluster.NodeShape.GPUCount)
-						cpuCount = fmt.Sprintf("%v", cluster.NodeShape.CPUCount)
-						memory = fmt.Sprintf("%v", cluster.NodeShape.Memory)
-					}
-					if err := printTableRow(
-						cluster.Name,
-						gpuType,
-						gpuCount,
-						cpuCount,
-						memory,
-					); err != nil {
-						return err
-					}
-				}
-				return nil
 			}
-		},
+			return nil
+		}
 	}
+	return cmd
 }
 
 func newClusterTerminateCommand() *cobra.Command {
