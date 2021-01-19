@@ -41,8 +41,12 @@ func printJSON(v interface{}) error {
 	return jsonOut.Encode(v)
 }
 
-func printTableRow(cells ...string) error {
-	_, err := fmt.Fprintln(tableOut, strings.Join(cells, "\t"))
+func printTableRow(cells ...interface{}) error {
+	var cellStrings []string
+	for _, cell := range cells {
+		cellStrings = append(cellStrings, fmt.Sprintf("%v", cell))
+	}
+	_, err := fmt.Fprintln(tableOut, strings.Join(cellStrings, "\t"))
 	return err
 }
 

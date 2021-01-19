@@ -22,6 +22,7 @@ func newClusterCommand() *cobra.Command {
 	cmd.AddCommand(newClusterCreateCommand())
 	cmd.AddCommand(newClusterInspectCommand())
 	cmd.AddCommand(newClusterListCommand())
+	cmd.AddCommand(newClusterNodesCommand())
 	cmd.AddCommand(newClusterTerminateCommand())
 	cmd.AddCommand(newClusterUpdateCommand())
 	return cmd
@@ -241,6 +242,51 @@ func newClusterListCommand() *cobra.Command {
 		}
 	}
 	return cmd
+}
+
+func newClusterNodesCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "nodes <cluster>",
+		Short: "List all nodes in a cluster",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			nodes, err := beaker.Cluster(args[0]).ListClusterNodes(ctx)
+			if err != nil {
+				return err
+			}
+
+			switch format {
+			case formatJSON:
+				return printJSON(nodes)
+			default:
+				if err := printTableRow(
+					"ID",
+					"HOSTNAME",
+					"CREATED",
+					"CPU COUNT",
+					"GPU COUNT",
+					"GPU TYPE",
+					"MEMORY",
+				); err != nil {
+					return err
+				}
+				for _, node := range nodes {
+					if err := printTableRow(
+						node.ID,
+						node.Hostname,
+						node.Created,
+						node.Limits.CPUCount,
+						node.Limits.GPUCount,
+						node.Limits.GPUType,
+						node.Limits.Memory,
+					); err != nil {
+						return err
+					}
+				}
+				return nil
+			}
+		},
+	}
 }
 
 func newClusterTerminateCommand() *cobra.Command {
