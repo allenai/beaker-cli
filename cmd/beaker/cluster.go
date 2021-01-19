@@ -182,11 +182,35 @@ func newClusterListCommand() *cobra.Command {
 			case formatJSON:
 				return printJSON(clusters)
 			default:
-				if err := printTableRow("NAME"); err != nil {
+				if err := printTableRow(
+					"NAME",
+					"GPU TYPE",
+					"GPU COUNT",
+					"CPU COUNT",
+					"MEMORY",
+				); err != nil {
 					return err
 				}
 				for _, cluster := range clusters {
-					if err := printTableRow(cluster.Name); err != nil {
+					var (
+						gpuType  string
+						gpuCount string
+						cpuCount string
+						memory   string
+					)
+					if cluster.NodeShape != nil {
+						gpuType = fmt.Sprintf("%v", cluster.NodeShape.GPUType)
+						gpuCount = fmt.Sprintf("%v", cluster.NodeShape.GPUCount)
+						cpuCount = fmt.Sprintf("%v", cluster.NodeShape.CPUCount)
+						memory = fmt.Sprintf("%v", cluster.NodeShape.Memory)
+					}
+					if err := printTableRow(
+						cluster.Name,
+						gpuType,
+						gpuCount,
+						cpuCount,
+						memory,
+					); err != nil {
 						return err
 					}
 				}
