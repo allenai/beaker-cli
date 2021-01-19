@@ -152,6 +152,7 @@ func newClusterExecutionsCommand() *cobra.Command {
 				if err := printTableRow(
 					"ID",
 					"TASK",
+					"NAME",
 					"NODE",
 					"CPU COUNT",
 					"GPU COUNT",
@@ -165,6 +166,7 @@ func newClusterExecutionsCommand() *cobra.Command {
 					if err := printTableRow(
 						execution.ID,
 						execution.Task,
+						execution.Spec.Name,
 						execution.Node,
 						execution.Limits.CPUCount,
 						execution.Limits.GPUCount,
