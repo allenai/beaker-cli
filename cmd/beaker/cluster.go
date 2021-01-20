@@ -249,15 +249,15 @@ func newClusterListCommand() *cobra.Command {
 			for _, cluster := range clusters {
 				var (
 					gpuType  string
-					gpuCount string
-					cpuCount string
+					gpuCount int
+					cpuCount float64
 					memory   string
 				)
 				if cluster.NodeShape != nil {
-					gpuType = fmt.Sprintf("%v", cluster.NodeShape.GPUType)
-					gpuCount = fmt.Sprintf("%v", cluster.NodeShape.GPUCount)
-					cpuCount = fmt.Sprintf("%v", cluster.NodeShape.CPUCount)
-					memory = fmt.Sprintf("%v", cluster.NodeShape.Memory)
+					gpuType = cluster.NodeShape.GPUType
+					gpuCount = cluster.NodeShape.GPUCount
+					cpuCount = cluster.NodeShape.CPUCount
+					memory = cluster.NodeShape.Memory
 				}
 				if err := printTableRow(
 					cluster.Name,
