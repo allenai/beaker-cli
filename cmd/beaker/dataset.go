@@ -198,10 +198,7 @@ func newDatasetInspectCommand() *cobra.Command {
 
 				datasets = append(datasets, detail{*info})
 			}
-
-			encoder := json.NewEncoder(os.Stdout)
-			encoder.SetIndent("", "    ")
-			return encoder.Encode(datasets)
+			return printJSON(datasets)
 		},
 	}
 }

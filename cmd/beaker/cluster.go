@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	"github.com/beaker/client/api"
+	"github.com/beaker/client/client"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -20,7 +20,10 @@ func newClusterCommand() *cobra.Command {
 		Short: "Manage clusters",
 	}
 	cmd.AddCommand(newClusterCreateCommand())
+	cmd.AddCommand(newClusterExecutionsCommand())
 	cmd.AddCommand(newClusterInspectCommand())
+	cmd.AddCommand(newClusterListCommand())
+	cmd.AddCommand(newClusterNodesCommand())
 	cmd.AddCommand(newClusterTerminateCommand())
 	cmd.AddCommand(newClusterUpdateCommand())
 	return cmd
@@ -131,6 +134,36 @@ func newClusterCreateCommand() *cobra.Command {
 	return cmd
 }
 
+func newClusterExecutionsCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "executions <cluster>",
+		Short: "List executions in a cluster",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			executions, err := beaker.Cluster(args[0]).ListExecutions(ctx, nil)
+			if err != nil {
+				return err
+			}
+			return printExecutions(executions)
+		},
+	}
+}
+
+func executionStatus(state api.ExecutionState) string {
+	switch {
+	case state.Scheduled == nil:
+		return "pending"
+	case state.Started == nil:
+		return "starting"
+	case state.Ended == nil:
+		return "running"
+	case state.Finalized == nil:
+		return "finalizing"
+	default:
+		return "finished"
+	}
+}
+
 func newClusterInspectCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "inspect <cluster...>",
@@ -146,10 +179,149 @@ func newClusterInspectCommand() *cobra.Command {
 				clusters = append(clusters, info)
 			}
 
-			// TODO: Print this in a more human-friendly way, and include node summary.
-			encoder := json.NewEncoder(os.Stdout)
-			encoder.SetIndent("", "    ")
-			return encoder.Encode(clusters)
+			return printJSON(clusters)
+		},
+	}
+}
+
+func newClusterListCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list <account>",
+		Short: "List clusters under an account",
+		Args:  cobra.ExactArgs(1),
+	}
+
+	var cloud bool
+	var onPrem bool
+	cmd.Flags().BoolVar(&cloud, "cloud", false, "Only show cloud (autoscaling) clusters")
+	cmd.Flags().BoolVar(&onPrem, "on-prem", false, "Only show on-premise (non-autoscaling) clusters")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		if cloud && onPrem {
+			return fmt.Errorf("only one of --cloud and --on-prem may be set")
+		}
+
+		terminated := false
+		var clusters []api.Cluster
+		var cursor string
+		for {
+			var page []api.Cluster
+			var err error
+			page, cursor, err = beaker.ListClusters(ctx, args[0], &client.ListClusterOptions{
+				Cursor:     cursor,
+				Terminated: &terminated,
+			})
+			if err != nil {
+				return err
+			}
+
+			for _, cluster := range page {
+				if cloud {
+					if !cluster.Autoscale {
+						continue
+					}
+				}
+				if onPrem {
+					if cluster.Autoscale {
+						continue
+					}
+				}
+				clusters = append(clusters, cluster)
+			}
+			if cursor == "" {
+				break
+			}
+		}
+
+		switch format {
+		case formatJSON:
+			return printJSON(clusters)
+		default:
+			if err := printTableRow(
+				"NAME",
+				"GPU TYPE",
+				"GPU COUNT",
+				"CPU COUNT",
+				"MEMORY",
+				"AUTOSCALE",
+			); err != nil {
+				return err
+			}
+			for _, cluster := range clusters {
+				var (
+					gpuType  string
+					gpuCount int
+					cpuCount float64
+					memory   string
+				)
+				if cluster.NodeShape != nil {
+					gpuType = cluster.NodeShape.GPUType
+					gpuCount = cluster.NodeShape.GPUCount
+					cpuCount = cluster.NodeShape.CPUCount
+					memory = cluster.NodeShape.Memory
+				}
+				if err := printTableRow(
+					cluster.Name,
+					gpuType,
+					gpuCount,
+					cpuCount,
+					memory,
+					cluster.Autoscale,
+				); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}
+	return cmd
+}
+
+func newClusterNodesCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "nodes <cluster>",
+		Short: "List nodes in a cluster",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			nodes, err := beaker.Cluster(args[0]).ListClusterNodes(ctx)
+			if err != nil {
+				return err
+			}
+
+			switch format {
+			case formatJSON:
+				return printJSON(nodes)
+			default:
+				if err := printTableRow(
+					"ID",
+					"HOSTNAME",
+					"CPU COUNT",
+					"GPU COUNT",
+					"GPU TYPE",
+					"MEMORY",
+					"STATUS",
+				); err != nil {
+					return err
+				}
+				for _, node := range nodes {
+					status := "ok"
+					if node.Cordoned != nil {
+						status = "cordoned"
+					}
+					if err := printTableRow(
+						node.ID,
+						node.Hostname,
+						node.Limits.CPUCount,
+						node.Limits.GPUCount,
+						node.Limits.GPUType,
+						node.Limits.Memory,
+						status,
+					); err != nil {
+						return err
+					}
+				}
+				return nil
+			}
 		},
 	}
 }

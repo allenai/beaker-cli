@@ -179,10 +179,7 @@ func newImageInspectCommand() *cobra.Command {
 
 				images = append(images, exp)
 			}
-
-			encoder := json.NewEncoder(os.Stdout)
-			encoder.SetIndent("", "    ")
-			return encoder.Encode(images)
+			return printJSON(images)
 		},
 	}
 }

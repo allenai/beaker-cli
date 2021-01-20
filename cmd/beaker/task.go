@@ -1,9 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"os"
-
 	"github.com/beaker/client/api"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -34,10 +31,7 @@ func newTaskInspectCommand() *cobra.Command {
 
 				tasks = append(tasks, info)
 			}
-
-			encoder := json.NewEncoder(os.Stdout)
-			encoder.SetIndent("", "    ")
-			return encoder.Encode(tasks)
+			return printJSON(tasks)
 		},
 	}
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -160,10 +159,7 @@ func newExperimentInspectCommand() *cobra.Command {
 
 				experiments = append(experiments, exp)
 			}
-
-			encoder := json.NewEncoder(os.Stdout)
-			encoder.SetIndent("", "    ")
-			return encoder.Encode(experiments)
+			return printJSON(experiments)
 		},
 	}
 }

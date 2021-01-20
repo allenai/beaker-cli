@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/beaker/client/api"
@@ -152,10 +150,7 @@ func newGroupInspectCommand() *cobra.Command {
 
 			groups = append(groups, detail{*info, experiments})
 		}
-
-		encoder := json.NewEncoder(os.Stdout)
-		encoder.SetIndent("", "    ")
-		return encoder.Encode(groups)
+		return printJSON(groups)
 	}
 	return cmd
 }
