@@ -293,7 +293,6 @@ func newClusterNodesCommand() *cobra.Command {
 				if err := printTableRow(
 					"ID",
 					"HOSTNAME",
-					"CREATED",
 					"CPU COUNT",
 					"GPU COUNT",
 					"GPU TYPE",
@@ -310,7 +309,6 @@ func newClusterNodesCommand() *cobra.Command {
 					if err := printTableRow(
 						node.ID,
 						node.Hostname,
-						node.Created,
 						node.Limits.CPUCount,
 						node.Limits.GPUCount,
 						node.Limits.GPUType,
