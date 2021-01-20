@@ -33,7 +33,7 @@ func newNodeCordonCommand() *cobra.Command {
 func newNodeExecutionsCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "executions <node>",
-		Short: "Cordon a node preventing it from running new executions",
+		Short: "List the executions of a node",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			executions, err := beaker.Node(args[0]).ListExecutions(ctx)
