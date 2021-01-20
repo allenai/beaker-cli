@@ -361,3 +361,46 @@ func modeToString(mode os.FileMode) string {
 		return "file"
 	}
 }
+
+func printDatasets(datasets []api.Dataset) error {
+	switch format {
+	case formatJSON:
+		return printJSON(datasets)
+	default:
+		if err := printTableRow(
+			"ID",
+			"WORKSPACE",
+			"AUTHOR",
+			"COMMITTED",
+			"SOURCE TASK",
+			"ARCHIVED",
+		); err != nil {
+			return err
+		}
+		for _, dataset := range datasets {
+			name := dataset.ID
+			if dataset.Name != "" {
+				name = dataset.Name
+			}
+			var source string
+			if dataset.SourceTask != nil {
+				source = *dataset.SourceTask
+			}
+			var archived string
+			if dataset.Archived {
+				archived = "archived"
+			}
+			if err := printTableRow(
+				name,
+				dataset.Workspace.Name,
+				dataset.Author.Name,
+				dataset.Committed,
+				source,
+				archived,
+			); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}

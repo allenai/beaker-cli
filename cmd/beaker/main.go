@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	"github.com/allenai/beaker/config"
 	"github.com/beaker/client/api"
@@ -44,7 +45,15 @@ func printJSON(v interface{}) error {
 func printTableRow(cells ...interface{}) error {
 	var cellStrings []string
 	for _, cell := range cells {
-		cellStrings = append(cellStrings, fmt.Sprintf("%v", cell))
+		var formatted string
+		if t, ok := cell.(time.Time); ok {
+			if !t.IsZero() {
+				formatted = t.Format(time.RFC3339)
+			}
+		} else {
+			formatted = fmt.Sprintf("%v", cell)
+		}
+		cellStrings = append(cellStrings, formatted)
 	}
 	_, err := fmt.Fprintln(tableOut, strings.Join(cellStrings, "\t"))
 	return err

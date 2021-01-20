@@ -17,6 +17,7 @@ func newWorkspaceCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newWorkspaceArchiveCommand())
 	cmd.AddCommand(newWorkspaceCreateCommand())
+	cmd.AddCommand(newWorkspaceDatasetsCommand())
 	cmd.AddCommand(newWorkspaceInspectCommand())
 	cmd.AddCommand(newWorkspaceListCommand())
 	cmd.AddCommand(newWorkspacePermissionsCommand())
@@ -77,6 +78,57 @@ func newWorkspaceCreateCommand() *cobra.Command {
 			fmt.Printf("Workspace %s created (ID %s)\n", color.BlueString(spec.Name), color.BlueString(workspace.ID()))
 		}
 		return nil
+	}
+	return cmd
+}
+
+func newWorkspaceDatasetsCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "datasets <workspace>",
+		Short: "List datasets in a workspace",
+		Args:  cobra.ExactArgs(1),
+	}
+
+	var all bool
+	var archived bool
+	var result bool
+	var uncommitted bool
+	cmd.Flags().BoolVar(&all, "all", false, "Show all datasets including archived, result, and uncommitted datasets")
+	cmd.Flags().BoolVar(&archived, "archived", false, "Show only archived datasets")
+	cmd.Flags().BoolVar(&result, "result", false, "Show only result datasets")
+	cmd.Flags().BoolVar(&uncommitted, "uncommitted", false, "Show only uncommitted datasets")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		workspace, err := beaker.Workspace(ctx, args[0])
+		if err != nil {
+			return err
+		}
+
+		var datasets []api.Dataset
+		var cursor string
+		for {
+			opts := &client.ListDatasetOptions{
+				Cursor: cursor,
+			}
+			if !all {
+				opts.Archived = &archived
+				opts.ResultsOnly = &result
+				committed := !uncommitted
+				opts.CommittedOnly = &committed
+			}
+
+			var page []api.Dataset
+			var err error
+			page, cursor, err = workspace.Datasets(ctx, opts)
+			if err != nil {
+				return err
+			}
+			datasets = append(datasets, page...)
+			if cursor == "" {
+				break
+			}
+		}
+		return printDatasets(datasets)
 	}
 	return cmd
 }
