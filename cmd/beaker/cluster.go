@@ -298,14 +298,14 @@ func newClusterNodesCommand() *cobra.Command {
 					"GPU COUNT",
 					"GPU TYPE",
 					"MEMORY",
-					"CORDONED",
+					"STATUS",
 				); err != nil {
 					return err
 				}
 				for _, node := range nodes {
-					var cordoned string
+					status := "ok"
 					if node.Cordoned != nil {
-						cordoned = "true"
+						status = "cordoned"
 					}
 					if err := printTableRow(
 						node.ID,
@@ -315,7 +315,7 @@ func newClusterNodesCommand() *cobra.Command {
 						node.Limits.GPUCount,
 						node.Limits.GPUType,
 						node.Limits.Memory,
-						cordoned,
+						status,
 					); err != nil {
 						return err
 					}
