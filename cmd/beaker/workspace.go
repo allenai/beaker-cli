@@ -87,21 +87,21 @@ func newWorkspaceInspectCommand() *cobra.Command {
 		Short: "Display detailed information about one or more workspaces",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var workspaces []*api.Workspace
+			var workspaces []api.Workspace
 			for _, name := range args {
 				workspace, err := beaker.Workspace(ctx, name)
 				if err != nil {
 					return err
 				}
 
-				exp, err := workspace.Get(ctx)
+				workspaceInfo, err := workspace.Get(ctx)
 				if err != nil {
 					return err
 				}
 
-				workspaces = append(workspaces, exp)
+				workspaces = append(workspaces, *workspaceInfo)
 			}
-			return printJSON(workspaces)
+			return printWorkspaces(workspaces)
 		},
 	}
 }
@@ -134,35 +134,7 @@ func newWorkspaceListCommand() *cobra.Command {
 				break
 			}
 		}
-
-		switch format {
-		case formatJSON:
-			return printJSON(workspaces)
-		default:
-			if err := printTableRow(
-				"NAME",
-				"AUTHOR",
-				"DATASETS",
-				"EXPERIMENTS",
-				"GROUPS",
-				"IMAGES",
-			); err != nil {
-				return err
-			}
-			for _, workspace := range workspaces {
-				if err := printTableRow(
-					workspace.Name,
-					workspace.Author.Name,
-					workspace.Size.Datasets,
-					workspace.Size.Experiments,
-					workspace.Size.Groups,
-					workspace.Size.Images,
-				); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
+		return printWorkspaces(workspaces)
 	}
 	return cmd
 }
@@ -383,5 +355,36 @@ func newWorkspaceUnarchiveCommand() *cobra.Command {
 			fmt.Printf("Workspace %s unarchived\n", color.BlueString(args[0]))
 			return nil
 		},
+	}
+}
+
+func printWorkspaces(workspaces []api.Workspace) error {
+	switch format {
+	case formatJSON:
+		return printJSON(workspaces)
+	default:
+		if err := printTableRow(
+			"NAME",
+			"AUTHOR",
+			"DATASETS",
+			"EXPERIMENTS",
+			"GROUPS",
+			"IMAGES",
+		); err != nil {
+			return err
+		}
+		for _, workspace := range workspaces {
+			if err := printTableRow(
+				workspace.Name,
+				workspace.Author.Name,
+				workspace.Size.Datasets,
+				workspace.Size.Experiments,
+				workspace.Size.Groups,
+				workspace.Size.Images,
+			); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 }
