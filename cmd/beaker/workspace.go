@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/beaker/client/api"
+	"github.com/beaker/client/client"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -16,6 +17,7 @@ func newWorkspaceCommand() *cobra.Command {
 	cmd.AddCommand(newWorkspaceArchiveCommand())
 	cmd.AddCommand(newWorkspaceCreateCommand())
 	cmd.AddCommand(newWorkspaceInspectCommand())
+	cmd.AddCommand(newWorkspaceListCommand())
 	cmd.AddCommand(newWorkspaceMoveCommand())
 	cmd.AddCommand(newWorkspaceRenameCommand())
 	cmd.AddCommand(newWorkspaceUnarchiveCommand())
@@ -100,6 +102,67 @@ func newWorkspaceInspectCommand() *cobra.Command {
 			return printJSON(workspaces)
 		},
 	}
+}
+
+func newWorkspaceListCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list <account>",
+		Short: "List workspaces in an account",
+		Args:  cobra.ExactArgs(1),
+	}
+
+	var archived bool
+	cmd.Flags().BoolVar(&archived, "archived", false, "Only show archived workspaces")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		var workspaces []api.Workspace
+		var cursor string
+		for {
+			var page []api.Workspace
+			var err error
+			page, cursor, err = beaker.ListWorkspaces(ctx, args[0], &client.ListWorkspaceOptions{
+				Cursor:   cursor,
+				Archived: &archived,
+			})
+			if err != nil {
+				return err
+			}
+			workspaces = append(workspaces, page...)
+			if cursor == "" {
+				break
+			}
+		}
+
+		switch format {
+		case formatJSON:
+			return printJSON(workspaces)
+		default:
+			if err := printTableRow(
+				"NAME",
+				"AUTHOR",
+				"DATASETS",
+				"EXPERIMENTS",
+				"GROUPS",
+				"IMAGES",
+			); err != nil {
+				return err
+			}
+			for _, workspace := range workspaces {
+				if err := printTableRow(
+					workspace.Name,
+					workspace.Author.Name,
+					workspace.Size.Datasets,
+					workspace.Size.Experiments,
+					workspace.Size.Groups,
+					workspace.Size.Images,
+				); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}
+	return cmd
 }
 
 func newWorkspaceMoveCommand() *cobra.Command {
