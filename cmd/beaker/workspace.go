@@ -18,6 +18,7 @@ func newWorkspaceCommand() *cobra.Command {
 	cmd.AddCommand(newWorkspaceArchiveCommand())
 	cmd.AddCommand(newWorkspaceCreateCommand())
 	cmd.AddCommand(newWorkspaceDatasetsCommand())
+	cmd.AddCommand(newWorkspaceExperimentsCommand())
 	cmd.AddCommand(newWorkspaceInspectCommand())
 	cmd.AddCommand(newWorkspaceListCommand())
 	cmd.AddCommand(newWorkspacePermissionsCommand())
@@ -78,6 +79,50 @@ func newWorkspaceCreateCommand() *cobra.Command {
 			fmt.Printf("Workspace %s created (ID %s)\n", color.BlueString(spec.Name), color.BlueString(workspace.ID()))
 		}
 		return nil
+	}
+	return cmd
+}
+
+func newWorkspaceExperimentsCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "experiments <workspace>",
+		Short: "List experiments in a workspace",
+		Args:  cobra.ExactArgs(1),
+	}
+
+	var all bool
+	var archived bool
+	cmd.Flags().BoolVar(&all, "all", false, "Show all experiments including archived experiments")
+	cmd.Flags().BoolVar(&archived, "archived", false, "Show only archived experiments")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		workspace, err := beaker.Workspace(ctx, args[0])
+		if err != nil {
+			return err
+		}
+
+		var experiments []api.Experiment
+		var cursor string
+		for {
+			opts := &client.ListExperimentOptions{
+				Cursor: cursor,
+			}
+			if !all {
+				opts.Archived = &archived
+			}
+
+			var page []api.Experiment
+			var err error
+			page, cursor, err = workspace.Experiments(ctx, opts)
+			if err != nil {
+				return err
+			}
+			experiments = append(experiments, page...)
+			if cursor == "" {
+				break
+			}
+		}
+		return printExperiments(experiments)
 	}
 	return cmd
 }

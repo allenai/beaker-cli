@@ -149,21 +149,6 @@ func newClusterExecutionsCommand() *cobra.Command {
 	}
 }
 
-func executionStatus(state api.ExecutionState) string {
-	switch {
-	case state.Scheduled == nil:
-		return "pending"
-	case state.Started == nil:
-		return "starting"
-	case state.Ended == nil:
-		return "running"
-	case state.Finalized == nil:
-		return "finalizing"
-	default:
-		return "finished"
-	}
-}
-
 func newClusterInspectCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "inspect <cluster...>",
