@@ -6,6 +6,7 @@ import (
 	"github.com/beaker/client/api"
 	"github.com/beaker/client/client"
 	"github.com/fatih/color"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -18,6 +19,7 @@ func newWorkspaceCommand() *cobra.Command {
 	cmd.AddCommand(newWorkspaceCreateCommand())
 	cmd.AddCommand(newWorkspaceInspectCommand())
 	cmd.AddCommand(newWorkspaceListCommand())
+	cmd.AddCommand(newWorkspacePermissionsCommand())
 	cmd.AddCommand(newWorkspaceMoveCommand())
 	cmd.AddCommand(newWorkspaceRenameCommand())
 	cmd.AddCommand(newWorkspaceUnarchiveCommand())
@@ -163,6 +165,150 @@ func newWorkspaceListCommand() *cobra.Command {
 		}
 	}
 	return cmd
+}
+
+func newWorkspacePermissionsCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "permissions <command>",
+		Short: "Manage workspace permissions",
+	}
+	cmd.AddCommand(newWorkspacePermissionsGrantCommand())
+	cmd.AddCommand(newWorkspacePermissionsInspectCommand())
+	cmd.AddCommand(newWorkspacePermissionsRevokeCommand())
+	cmd.AddCommand(newWorkspacePermissionsSetVisibilityCommand())
+	return cmd
+}
+
+func newWorkspacePermissionsGrantCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "grant <workspace> <account> <read|write|all>",
+		Short: "Grant permissions on a workspace to an account",
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			workspace, err := beaker.Workspace(ctx, args[0])
+			if err != nil {
+				return err
+			}
+
+			var permission api.Permission
+			switch args[2] {
+			case "read":
+				permission = api.Read
+			case "write":
+				permission = api.Write
+			case "all":
+				permission = api.FullControl
+			default:
+				return errors.Errorf(`invalid permission: %q; must be "read", "write", or "all"`, args[2])
+			}
+
+			return workspace.SetPermissions(ctx, api.WorkspacePermissionPatch{
+				Authorizations: map[string]api.Permission{
+					args[1]: permission,
+				},
+			})
+		},
+	}
+}
+
+func newWorkspacePermissionsInspectCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "inspect <workspace>",
+		Short: "Inspect workspace permissions",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			workspace, err := beaker.Workspace(ctx, args[0])
+			if err != nil {
+				return err
+			}
+
+			permissions, err := workspace.Permissions(ctx)
+			if err != nil {
+				return err
+			}
+
+			switch format {
+			case formatJSON:
+				return printJSON(permissions)
+			default:
+				visibility := "private"
+				if permissions.Public {
+					visibility = "public"
+				}
+				fmt.Printf("Visibility: %s\n", visibility)
+				if len(permissions.Authorizations) == 0 {
+					return nil
+				}
+
+				fmt.Println()
+				if err := printTableRow("ACCOUNT", "PERMISSION"); err != nil {
+					return err
+				}
+				for account, permission := range permissions.Authorizations {
+					user, err := beaker.User(ctx, account)
+					if err != nil {
+						return err
+					}
+
+					accountInfo, err := user.Get(ctx)
+					if err != nil {
+						return err
+					}
+
+					if err := printTableRow(accountInfo.Name, permission); err != nil {
+						return err
+					}
+				}
+				return nil
+			}
+		},
+	}
+}
+
+func newWorkspacePermissionsRevokeCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "revoke <workspace> <account>",
+		Short: "Revoke permissions on a workspace from an account",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			workspace, err := beaker.Workspace(ctx, args[0])
+			if err != nil {
+				return err
+			}
+
+			return workspace.SetPermissions(ctx, api.WorkspacePermissionPatch{
+				Authorizations: map[string]api.Permission{
+					args[1]: api.NoPermission,
+				},
+			})
+		},
+	}
+}
+
+func newWorkspacePermissionsSetVisibilityCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "set-visibility <workspace> <public|private>",
+		Short: "Set the visibility of a workspace to public or private",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			workspace, err := beaker.Workspace(ctx, args[0])
+			if err != nil {
+				return err
+			}
+
+			var public bool
+			switch args[1] {
+			case "public":
+				public = true
+			case "private":
+			default:
+				return fmt.Errorf(`invalid visibility: %q; must be "public" or "private"`, args[1])
+			}
+			return workspace.SetPermissions(ctx, api.WorkspacePermissionPatch{
+				Public: &public,
+			})
+		},
+	}
 }
 
 func newWorkspaceMoveCommand() *cobra.Command {
