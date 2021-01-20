@@ -243,6 +243,7 @@ func newClusterListCommand() *cobra.Command {
 				"GPU COUNT",
 				"CPU COUNT",
 				"MEMORY",
+				"AUTOSCALE",
 			); err != nil {
 				return err
 			}
@@ -265,6 +266,7 @@ func newClusterListCommand() *cobra.Command {
 					gpuCount,
 					cpuCount,
 					memory,
+					cluster.Autoscale,
 				); err != nil {
 					return err
 				}
