@@ -25,10 +25,12 @@ func newExperimentCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newExperimentCreateCommand())
 	cmd.AddCommand(newExperimentDeleteCommand())
+	cmd.AddCommand(newExperimentExecutionsCommand())
 	cmd.AddCommand(newExperimentInspectCommand())
 	cmd.AddCommand(newExperimentRenameCommand())
 	cmd.AddCommand(newExperimentResumeCommand())
 	cmd.AddCommand(newExperimentStopCommand())
+	cmd.AddCommand(newExperimentTasksCommand())
 	return cmd
 }
 
@@ -139,6 +141,31 @@ func newExperimentDeleteCommand() *cobra.Command {
 	}
 }
 
+func newExperimentExecutionsCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "executions <experiment>",
+		Short: "List the executions in an experiment",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			experiment, err := beaker.Experiment(ctx, args[0])
+			if err != nil {
+				return err
+			}
+
+			info, err := experiment.Get(ctx)
+			if err != nil {
+				return err
+			}
+
+			var executions []api.Execution
+			for _, execution := range info.Executions {
+				executions = append(executions, *execution)
+			}
+			return printExecutions(executions)
+		},
+	}
+}
+
 func newExperimentInspectCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "inspect <experiment...>",
@@ -238,6 +265,26 @@ func newExperimentStopCommand() *cobra.Command {
 				fmt.Println(experiment.ID())
 			}
 			return nil
+		},
+	}
+}
+
+func newExperimentTasksCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "tasks <experiment>",
+		Short: "List the tasks in an experiment",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			experiment, err := beaker.Experiment(ctx, args[0])
+			if err != nil {
+				return err
+			}
+
+			tasks, err := experiment.Tasks(ctx)
+			if err != nil {
+				return err
+			}
+			return printTasks(tasks)
 		},
 	}
 }
