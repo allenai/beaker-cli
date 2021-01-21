@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -216,53 +215,47 @@ func newDatasetLsCommand() *cobra.Command {
 				return err
 			}
 
-			var totalFiles, totalBytes int64
+			var files []*client.FileInfo
 			var prefix string
 			if len(args) > 1 {
 				prefix = args[1]
 			}
-			files, err := dataset.Files(ctx, prefix)
+			fileIterator, err := dataset.Files(ctx, prefix)
 			if err != nil {
 				return err
 			}
 			for {
-				_, info, err := files.Next()
+				_, info, err := fileIterator.Next()
 				if err == client.ErrDone {
 					break
 				}
 				if err != nil {
 					return err
 				}
-				totalFiles++
-				totalBytes += info.Size
-
-				switch format {
-				case formatJSON:
-					buf, err := json.Marshal(fileInfo{
-						Path:    info.Path,
-						Size:    info.Size,
-						Updated: info.Updated,
-					})
-					if err != nil {
-						return err
-					}
-					fmt.Println(string(buf))
-				default:
-					fmt.Printf(
-						"%10s  %s  %s\n",
-						bytefmt.FormatBytes(info.Size),
-						info.Updated.Format(time.RFC3339),
-						info.Path,
-					)
-				}
+				files = append(files, info)
 			}
 
 			switch format {
 			case formatJSON:
+				return printJSON(files)
 			default:
-				fmt.Printf("Total: %d files, %s\n", totalFiles, bytefmt.FormatBytes(totalBytes))
+				if err := printTableRow(
+					"PATH",
+					"SIZE",
+					"UPDATED",
+				); err != nil {
+					return err
+				}
+				for _, file := range files {
+					if err := printTableRow(
+						file.Path,
+						bytefmt.FormatBytes(file.Size),
+						file.Updated,
+					); err != nil {
+						return err
+					}
+				}
 			}
-
 			return nil
 		},
 	}
