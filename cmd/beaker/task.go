@@ -11,9 +11,25 @@ func newTaskCommand() *cobra.Command {
 		Use:   "task <command>",
 		Short: "Manage tasks",
 	}
+	cmd.AddCommand(newTaskExecutionsCommand())
 	cmd.AddCommand(newTaskInspectCommand())
 	cmd.AddCommand(newTaskLogsCommand())
 	return cmd
+}
+
+func newTaskExecutionsCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "executions <task>",
+		Short: "List the executions in a task",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			task, err := beaker.Task(args[0]).Get(ctx)
+			if err != nil {
+				return err
+			}
+			return printExecutions(task.Executions)
+		},
+	}
 }
 
 func newTaskInspectCommand() *cobra.Command {
