@@ -165,21 +165,20 @@ func newImageInspectCommand() *cobra.Command {
 		Short: "Display detailed information about one or more images",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var images []*api.Image
+			var images []api.Image
 			for _, name := range args {
 				image, err := beaker.Image(ctx, name)
 				if err != nil {
 					return err
 				}
 
-				exp, err := image.Get(ctx)
+				info, err := image.Get(ctx)
 				if err != nil {
 					return err
 				}
-
-				images = append(images, exp)
+				images = append(images, *info)
 			}
-			return printJSON(images)
+			return printImages(images)
 		},
 	}
 }
@@ -302,5 +301,36 @@ func newImageRenameCommand() *cobra.Command {
 			}
 			return nil
 		},
+	}
+}
+
+func printImages(images []api.Image) error {
+	switch format {
+	case formatJSON:
+		return printJSON(images)
+	default:
+		if err := printTableRow(
+			"ID",
+			"WORKSPACE",
+			"AUTHOR",
+			"CREATED",
+		); err != nil {
+			return err
+		}
+		for _, image := range images {
+			name := image.ID
+			if image.Name != "" {
+				name = image.Name
+			}
+			if err := printTableRow(
+				name,
+				image.Workspace.Name,
+				image.Author.Name,
+				image.Created,
+			); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 }

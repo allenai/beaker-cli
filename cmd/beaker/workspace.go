@@ -20,6 +20,7 @@ func newWorkspaceCommand() *cobra.Command {
 	cmd.AddCommand(newWorkspaceDatasetsCommand())
 	cmd.AddCommand(newWorkspaceExperimentsCommand())
 	cmd.AddCommand(newWorkspaceGroupsCommand())
+	cmd.AddCommand(newWorkspaceImagesCommand())
 	cmd.AddCommand(newWorkspaceInspectCommand())
 	cmd.AddCommand(newWorkspaceListCommand())
 	cmd.AddCommand(newWorkspacePermissionsCommand())
@@ -221,6 +222,40 @@ func newWorkspaceGroupsCommand() *cobra.Command {
 		return printGroups(groups)
 	}
 	return cmd
+}
+
+func newWorkspaceImagesCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "images <workspace>",
+		Short: "List images in a workspace",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			workspace, err := beaker.Workspace(ctx, args[0])
+			if err != nil {
+				return err
+			}
+
+			var images []api.Image
+			var cursor string
+			for {
+				opts := &client.ListImageOptions{
+					Cursor: cursor,
+				}
+
+				var page []api.Image
+				var err error
+				page, cursor, err = workspace.Images(ctx, opts)
+				if err != nil {
+					return err
+				}
+				images = append(images, page...)
+				if cursor == "" {
+					break
+				}
+			}
+			return printImages(images)
+		},
+	}
 }
 
 func newWorkspaceInspectCommand() *cobra.Command {
