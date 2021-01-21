@@ -145,7 +145,7 @@ func newExperimentInspectCommand() *cobra.Command {
 		Short: "Display detailed information about one or more experiments",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var experiments []*api.Experiment
+			var experiments []api.Experiment
 			for _, name := range args {
 				experiment, err := beaker.Experiment(ctx, name)
 				if err != nil {
@@ -157,9 +157,9 @@ func newExperimentInspectCommand() *cobra.Command {
 					return err
 				}
 
-				experiments = append(experiments, exp)
+				experiments = append(experiments, *exp)
 			}
-			return printJSON(experiments)
+			return printExperiments(experiments)
 		},
 	}
 }

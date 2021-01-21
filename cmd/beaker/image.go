@@ -165,21 +165,20 @@ func newImageInspectCommand() *cobra.Command {
 		Short: "Display detailed information about one or more images",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var images []*api.Image
+			var images []api.Image
 			for _, name := range args {
 				image, err := beaker.Image(ctx, name)
 				if err != nil {
 					return err
 				}
 
-				exp, err := image.Get(ctx)
+				info, err := image.Get(ctx)
 				if err != nil {
 					return err
 				}
-
-				images = append(images, exp)
+				images = append(images, *info)
 			}
-			return printJSON(images)
+			return printImages(images)
 		},
 	}
 }

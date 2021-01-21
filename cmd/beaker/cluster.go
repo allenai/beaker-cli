@@ -149,21 +149,6 @@ func newClusterExecutionsCommand() *cobra.Command {
 	}
 }
 
-func executionStatus(state api.ExecutionState) string {
-	switch {
-	case state.Scheduled == nil:
-		return "pending"
-	case state.Started == nil:
-		return "starting"
-	case state.Ended == nil:
-		return "running"
-	case state.Finalized == nil:
-		return "finalizing"
-	default:
-		return "finished"
-	}
-}
-
 func newClusterInspectCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "inspect <cluster...>",
@@ -232,47 +217,7 @@ func newClusterListCommand() *cobra.Command {
 				break
 			}
 		}
-
-		switch format {
-		case formatJSON:
-			return printJSON(clusters)
-		default:
-			if err := printTableRow(
-				"NAME",
-				"GPU TYPE",
-				"GPU COUNT",
-				"CPU COUNT",
-				"MEMORY",
-				"AUTOSCALE",
-			); err != nil {
-				return err
-			}
-			for _, cluster := range clusters {
-				var (
-					gpuType  string
-					gpuCount int
-					cpuCount float64
-					memory   string
-				)
-				if cluster.NodeShape != nil {
-					gpuType = cluster.NodeShape.GPUType
-					gpuCount = cluster.NodeShape.GPUCount
-					cpuCount = cluster.NodeShape.CPUCount
-					memory = cluster.NodeShape.Memory
-				}
-				if err := printTableRow(
-					cluster.Name,
-					gpuType,
-					gpuCount,
-					cpuCount,
-					memory,
-					cluster.Autoscale,
-				); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
+		return printClusters(clusters)
 	}
 	return cmd
 }
@@ -287,41 +232,7 @@ func newClusterNodesCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			switch format {
-			case formatJSON:
-				return printJSON(nodes)
-			default:
-				if err := printTableRow(
-					"ID",
-					"HOSTNAME",
-					"CPU COUNT",
-					"GPU COUNT",
-					"GPU TYPE",
-					"MEMORY",
-					"STATUS",
-				); err != nil {
-					return err
-				}
-				for _, node := range nodes {
-					status := "ok"
-					if node.Cordoned != nil {
-						status = "cordoned"
-					}
-					if err := printTableRow(
-						node.ID,
-						node.Hostname,
-						node.Limits.CPUCount,
-						node.Limits.GPUCount,
-						node.Limits.GPUType,
-						node.Limits.Memory,
-						status,
-					); err != nil {
-						return err
-					}
-				}
-				return nil
-			}
+			return printNodes(nodes)
 		},
 	}
 }

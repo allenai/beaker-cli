@@ -37,19 +37,6 @@ const (
 var jsonOut *json.Encoder
 var tableOut *tabwriter.Writer
 
-func printJSON(v interface{}) error {
-	return jsonOut.Encode(v)
-}
-
-func printTableRow(cells ...interface{}) error {
-	var cellStrings []string
-	for _, cell := range cells {
-		cellStrings = append(cellStrings, fmt.Sprintf("%v", cell))
-	}
-	_, err := fmt.Fprintln(tableOut, strings.Join(cellStrings, "\t"))
-	return err
-}
-
 func main() {
 	jsonOut = json.NewEncoder(os.Stdout)
 	jsonOut.SetIndent("", "    ")

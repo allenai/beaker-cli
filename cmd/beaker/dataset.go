@@ -180,11 +180,7 @@ func newDatasetInspectCommand() *cobra.Command {
 		Short: "Display detailed information about one or more datasets",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			type detail struct {
-				api.Dataset
-			}
-
-			var datasets []detail
+			var datasets []api.Dataset
 			for _, name := range args {
 				dataset, err := beaker.Dataset(ctx, name)
 				if err != nil {
@@ -196,9 +192,9 @@ func newDatasetInspectCommand() *cobra.Command {
 					return err
 				}
 
-				datasets = append(datasets, detail{*info})
+				datasets = append(datasets, *info)
 			}
-			return printJSON(datasets)
+			return printDatasets(datasets)
 		},
 	}
 }
