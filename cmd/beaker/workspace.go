@@ -534,34 +534,3 @@ func newWorkspaceUnarchiveCommand() *cobra.Command {
 		},
 	}
 }
-
-func printWorkspaces(workspaces []api.Workspace) error {
-	switch format {
-	case formatJSON:
-		return printJSON(workspaces)
-	default:
-		if err := printTableRow(
-			"NAME",
-			"AUTHOR",
-			"DATASETS",
-			"EXPERIMENTS",
-			"GROUPS",
-			"IMAGES",
-		); err != nil {
-			return err
-		}
-		for _, workspace := range workspaces {
-			if err := printTableRow(
-				workspace.Name,
-				workspace.Author.Name,
-				workspace.Size.Datasets,
-				workspace.Size.Experiments,
-				workspace.Size.Groups,
-				workspace.Size.Images,
-			); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-}

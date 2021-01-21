@@ -303,34 +303,3 @@ func newImageRenameCommand() *cobra.Command {
 		},
 	}
 }
-
-func printImages(images []api.Image) error {
-	switch format {
-	case formatJSON:
-		return printJSON(images)
-	default:
-		if err := printTableRow(
-			"ID",
-			"WORKSPACE",
-			"AUTHOR",
-			"CREATED",
-		); err != nil {
-			return err
-		}
-		for _, image := range images {
-			name := image.ID
-			if image.Name != "" {
-				name = image.Name
-			}
-			if err := printTableRow(
-				name,
-				image.Workspace.Name,
-				image.Author.Name,
-				image.Created,
-			); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-}

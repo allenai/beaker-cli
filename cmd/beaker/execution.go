@@ -48,43 +48,6 @@ func newExecutionLogsCommand() *cobra.Command {
 	}
 }
 
-func printExecutions(executions []api.Execution) error {
-	switch format {
-	case formatJSON:
-		return printJSON(executions)
-	default:
-		if err := printTableRow(
-			"ID",
-			"TASK",
-			"NAME",
-			"NODE",
-			"CPU COUNT",
-			"GPU COUNT",
-			"MEMORY",
-			"PRIORITY",
-			"STATUS",
-		); err != nil {
-			return err
-		}
-		for _, execution := range executions {
-			if err := printTableRow(
-				execution.ID,
-				execution.Task,
-				execution.Spec.Name,
-				execution.Node,
-				execution.Limits.CPUCount,
-				execution.Limits.GPUCount,
-				execution.Limits.Memory,
-				execution.Priority,
-				executionStatus(execution.State),
-			); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-}
-
 func printExecutionLogs(executionID string) error {
 	logs, err := beaker.Execution(executionID).GetLogs(ctx)
 	if err != nil {
@@ -93,19 +56,4 @@ func printExecutionLogs(executionID string) error {
 
 	_, err = io.Copy(os.Stdout, logs)
 	return err
-}
-
-func executionStatus(state api.ExecutionState) string {
-	switch {
-	case state.Scheduled == nil:
-		return "pending"
-	case state.Started == nil:
-		return "starting"
-	case state.Ended == nil:
-		return "running"
-	case state.Finalized == nil:
-		return "finalizing"
-	default:
-		return "finished"
-	}
 }
