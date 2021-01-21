@@ -296,6 +296,33 @@ func printNodes(nodes []api.Node) error {
 	}
 }
 
+func printTasks(tasks []api.Task) error {
+	switch format {
+	case formatJSON:
+		return printJSON(tasks)
+	default:
+		if err := printTableRow(
+			"ID",
+			"EXPERIMENT",
+			"NAME",
+			"AUTHOR",
+		); err != nil {
+			return err
+		}
+		for _, task := range tasks {
+			if err := printTableRow(
+				task.ID,
+				task.ExperimentID,
+				task.Name,
+				task.Author.Name,
+			); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
 func printWorkspaces(workspaces []api.Workspace) error {
 	switch format {
 	case formatJSON:

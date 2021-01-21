@@ -22,16 +22,16 @@ func newTaskInspectCommand() *cobra.Command {
 		Short: "Display detailed information about one or more tasks",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var tasks []*api.Task
+			var tasks []api.Task
 			for _, id := range args {
 				info, err := beaker.Task(id).Get(ctx)
 				if err != nil {
 					return err
 				}
 
-				tasks = append(tasks, info)
+				tasks = append(tasks, *info)
 			}
-			return printJSON(tasks)
+			return printTasks(tasks)
 		},
 	}
 }
