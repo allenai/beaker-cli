@@ -327,6 +327,43 @@ func printWorkspaces(workspaces []api.Workspace) error {
 	}
 }
 
+func printWorkspacePermissions(permissions *api.WorkspacePermissionSummary) error {
+	switch format {
+	case formatJSON:
+		return printJSON(permissions)
+	default:
+		visibility := "private"
+		if permissions.Public {
+			visibility = "public"
+		}
+		fmt.Printf("Visibility: %s\n", visibility)
+		if len(permissions.Authorizations) == 0 {
+			return nil
+		}
+
+		fmt.Println()
+		if err := printTableRow("ACCOUNT", "PERMISSION"); err != nil {
+			return err
+		}
+		for account, permission := range permissions.Authorizations {
+			user, err := beaker.User(ctx, account)
+			if err != nil {
+				return err
+			}
+
+			accountInfo, err := user.Get(ctx)
+			if err != nil {
+				return err
+			}
+
+			if err := printTableRow(accountInfo.Name, permission); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
 func executionStatus(state api.ExecutionState) string {
 	switch {
 	case state.Scheduled == nil:

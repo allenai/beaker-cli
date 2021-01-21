@@ -351,11 +351,22 @@ func newWorkspacePermissionsGrantCommand() *cobra.Command {
 				return errors.Errorf(`invalid permission: %q; must be "read", "write", or "all"`, args[2])
 			}
 
-			return workspace.SetPermissions(ctx, api.WorkspacePermissionPatch{
+			if err := workspace.SetPermissions(ctx, api.WorkspacePermissionPatch{
 				Authorizations: map[string]api.Permission{
 					args[1]: permission,
 				},
-			})
+			}); err != nil {
+				return err
+			}
+
+			if quiet {
+				return nil
+			}
+			permissions, err := workspace.Permissions(ctx)
+			if err != nil {
+				return err
+			}
+			return printWorkspacePermissions(permissions)
 		},
 	}
 }
@@ -375,41 +386,7 @@ func newWorkspacePermissionsInspectCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			switch format {
-			case formatJSON:
-				return printJSON(permissions)
-			default:
-				visibility := "private"
-				if permissions.Public {
-					visibility = "public"
-				}
-				fmt.Printf("Visibility: %s\n", visibility)
-				if len(permissions.Authorizations) == 0 {
-					return nil
-				}
-
-				fmt.Println()
-				if err := printTableRow("ACCOUNT", "PERMISSION"); err != nil {
-					return err
-				}
-				for account, permission := range permissions.Authorizations {
-					user, err := beaker.User(ctx, account)
-					if err != nil {
-						return err
-					}
-
-					accountInfo, err := user.Get(ctx)
-					if err != nil {
-						return err
-					}
-
-					if err := printTableRow(accountInfo.Name, permission); err != nil {
-						return err
-					}
-				}
-				return nil
-			}
+			return printWorkspacePermissions(permissions)
 		},
 	}
 }
@@ -425,11 +402,22 @@ func newWorkspacePermissionsRevokeCommand() *cobra.Command {
 				return err
 			}
 
-			return workspace.SetPermissions(ctx, api.WorkspacePermissionPatch{
+			if err := workspace.SetPermissions(ctx, api.WorkspacePermissionPatch{
 				Authorizations: map[string]api.Permission{
 					args[1]: api.NoPermission,
 				},
-			})
+			}); err != nil {
+				return err
+			}
+
+			if quiet {
+				return nil
+			}
+			permissions, err := workspace.Permissions(ctx)
+			if err != nil {
+				return err
+			}
+			return printWorkspacePermissions(permissions)
 		},
 	}
 }
@@ -453,9 +441,20 @@ func newWorkspacePermissionsSetVisibilityCommand() *cobra.Command {
 			default:
 				return fmt.Errorf(`invalid visibility: %q; must be "public" or "private"`, args[1])
 			}
-			return workspace.SetPermissions(ctx, api.WorkspacePermissionPatch{
+			if err := workspace.SetPermissions(ctx, api.WorkspacePermissionPatch{
 				Public: &public,
-			})
+			}); err != nil {
+				return err
+			}
+
+			if quiet {
+				return nil
+			}
+			permissions, err := workspace.Permissions(ctx)
+			if err != nil {
+				return err
+			}
+			return printWorkspacePermissions(permissions)
 		},
 	}
 }
