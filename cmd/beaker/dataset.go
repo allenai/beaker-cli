@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"time"
 
 	"github.com/beaker/client/api"
 	"github.com/beaker/client/client"
@@ -26,6 +25,7 @@ func newDatasetCommand() *cobra.Command {
 	cmd.AddCommand(newDatasetInspectCommand())
 	cmd.AddCommand(newDatasetLsCommand())
 	cmd.AddCommand(newDatasetRenameCommand())
+	cmd.AddCommand(newDatasetSizeCommand())
 	cmd.AddCommand(newDatasetStreamFileCommand())
 	return cmd
 }
@@ -199,12 +199,6 @@ func newDatasetInspectCommand() *cobra.Command {
 }
 
 func newDatasetLsCommand() *cobra.Command {
-	type fileInfo struct {
-		Path    string    `json:"path"`
-		Size    int64     `json:"size"`
-		Updated time.Time `json:"updated"`
-	}
-
 	return &cobra.Command{
 		Use:   "ls <dataset> <prefix?>",
 		Short: "List files in a dataset",
@@ -288,6 +282,64 @@ func newDatasetRenameCommand() *cobra.Command {
 				fmt.Printf("Renamed %s to %s\n", color.BlueString(info.ID), info.DisplayID())
 			}
 			return nil
+		},
+	}
+}
+
+func newDatasetSizeCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "size <dataset> <prefix?>",
+		Short: "Calculate the size of a dataset",
+		Args:  cobra.RangeArgs(1, 2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			dataset, err := beaker.Dataset(ctx, args[0])
+			if err != nil {
+				return err
+			}
+
+			var totalFiles, totalBytes int64
+			var prefix string
+			if len(args) > 1 {
+				prefix = args[1]
+			}
+			fileIterator, err := dataset.Files(ctx, prefix)
+			if err != nil {
+				return err
+			}
+			for {
+				_, info, err := fileIterator.Next()
+				if err == client.ErrDone {
+					break
+				}
+				if err != nil {
+					return err
+				}
+				totalFiles++
+				totalBytes += info.Size
+			}
+
+			switch format {
+			case formatJSON:
+				type size struct {
+					Files int64 `json:"files"`
+					Bytes int64 `json:"bytes"`
+				}
+				return printJSON(size{
+					Files: totalFiles,
+					Bytes: totalBytes,
+				})
+			default:
+				if err := printTableRow(
+					"FILES",
+					"SIZE",
+				); err != nil {
+					return err
+				}
+				return printTableRow(
+					totalFiles,
+					bytefmt.FormatBytes(totalBytes),
+				)
+			}
 		},
 	}
 }
