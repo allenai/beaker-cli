@@ -17,6 +17,7 @@ func newGroupCommand() *cobra.Command {
 	cmd.AddCommand(newGroupAddCommand())
 	cmd.AddCommand(newGroupCreateCommand())
 	cmd.AddCommand(newGroupDeleteCommand())
+	cmd.AddCommand(newGroupExperimentsCommand())
 	cmd.AddCommand(newGroupInspectCommand())
 	cmd.AddCommand(newGroupRemoveCommand())
 	cmd.AddCommand(newGroupRenameCommand())
@@ -113,46 +114,62 @@ func newGroupDeleteCommand() *cobra.Command {
 	}
 }
 
+func newGroupExperimentsCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "experiments <group>",
+		Short: "List experiments in a group",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			group, err := beaker.Group(ctx, args[0])
+			if err != nil {
+				return err
+			}
+
+			experimentIDs, err := group.Experiments(ctx)
+			if err != nil {
+				return err
+			}
+
+			var experiments []api.Experiment
+			for _, experimentID := range experimentIDs {
+				experiment, err := beaker.Experiment(ctx, experimentID)
+				if err != nil {
+					return err
+				}
+
+				info, err := experiment.Get(ctx)
+				if err != nil {
+					return err
+				}
+				experiments = append(experiments, *info)
+			}
+			return printExperiments(experiments)
+		},
+	}
+}
+
 func newGroupInspectCommand() *cobra.Command {
-	cmd := &cobra.Command{
+	return &cobra.Command{
 		Use:   "inspect <group...>",
 		Short: "Display detailed information about one or more groups",
 		Args:  cobra.MinimumNArgs(1),
-	}
-
-	var contents bool
-	cmd.Flags().BoolVar(&contents, "contents", false, "Include group contents in output")
-
-	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		type detail struct {
-			api.Group
-			Experiments []string `json:"experiments,omitempty"`
-		}
-
-		var groups []detail
-		for _, name := range args {
-			group, err := beaker.Group(ctx, name)
-			if err != nil {
-				return err
-			}
-
-			info, err := group.Get(ctx)
-			if err != nil {
-				return err
-			}
-
-			var experiments []string
-			if contents {
-				if experiments, err = group.Experiments(ctx); err != nil {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var groups []api.Group
+			for _, name := range args {
+				group, err := beaker.Group(ctx, name)
+				if err != nil {
 					return err
 				}
-			}
 
-			groups = append(groups, detail{*info, experiments})
-		}
-		return printJSON(groups)
+				info, err := group.Get(ctx)
+				if err != nil {
+					return err
+				}
+				groups = append(groups, *info)
+			}
+			return printGroups(groups)
+		},
 	}
-	return cmd
 }
 
 func newGroupRemoveCommand() *cobra.Command {
@@ -229,4 +246,41 @@ func trimAndUnique(ids []string) []string {
 	}
 
 	return unique
+}
+
+func printGroups(groups []api.Group) error {
+	switch format {
+	case formatJSON:
+		return printJSON(groups)
+	default:
+		if err := printTableRow(
+			"ID",
+			"WORKSPACE",
+			"AUTHOR",
+			"CREATED",
+			"ARCHIVED",
+		); err != nil {
+			return err
+		}
+		for _, group := range groups {
+			name := group.ID
+			if group.Name != "" {
+				name = group.Name
+			}
+			var archived string
+			if group.Archived {
+				archived = "archived"
+			}
+			if err := printTableRow(
+				name,
+				group.Workspace.Name,
+				group.Author.Name,
+				group.Created,
+				archived,
+			); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 }
