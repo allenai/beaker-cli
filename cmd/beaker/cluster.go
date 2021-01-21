@@ -155,16 +155,15 @@ func newClusterInspectCommand() *cobra.Command {
 		Short: "Display detailed information about one or more clusters",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var clusters []*api.Cluster
+			var clusters []api.Cluster
 			for _, id := range args {
 				info, err := beaker.Cluster(id).Get(ctx)
 				if err != nil {
 					return err
 				}
-				clusters = append(clusters, info)
+				clusters = append(clusters, *info)
 			}
-
-			return printJSON(clusters)
+			return printClusters(clusters)
 		},
 	}
 }
