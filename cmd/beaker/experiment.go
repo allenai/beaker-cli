@@ -296,7 +296,7 @@ func newExperimentSpecCommand() *cobra.Command {
 			return err
 		}
 
-		spec, err := experiment.Spec(ctx, version)
+		spec, err := experiment.Spec(ctx, version, format == formatJSON)
 		if err != nil {
 			return err
 		}
