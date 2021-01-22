@@ -12,7 +12,7 @@ func newOrganizationCommand() *cobra.Command {
 	}
 	//cmd.AddCommand(newOrganizationCreateCommand())
 	cmd.AddCommand(newOrganizationInspectCommand())
-	//cmd.AddCommand(newOrganizationListCommand())
+	cmd.AddCommand(newOrganizationListCommand())
 	cmd.AddCommand(newOrganizationMembersCommand())
 	return cmd
 }
@@ -42,8 +42,28 @@ func newOrganizationInspectCommand() *cobra.Command {
 }
 
 func newOrganizationListCommand() *cobra.Command {
-	// TODO client support
-	return nil
+	return &cobra.Command{
+		Use:   "list",
+		Short: "List all organizations",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var orgs []api.Organization
+			var cursor string
+			for {
+				var page []api.Organization
+				var err error
+				page, cursor, err = beaker.ListOrganizations(ctx, cursor)
+				if err != nil {
+					return err
+				}
+				orgs = append(orgs, page...)
+				if cursor == "" {
+					break
+				}
+			}
+			return printOrganizations(orgs)
+		},
+	}
 }
 
 func newOrganizationMembersCommand() *cobra.Command {
