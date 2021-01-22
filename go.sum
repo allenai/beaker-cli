@@ -14,8 +14,8 @@ github.com/VividCortex/ewma v1.1.1 h1:MnEK4VOv6n0RSY4vtRe3h11qjxL3+t0B8yOL8iMXdc
 github.com/VividCortex/ewma v1.1.1/go.mod h1:2Tkkvm3sRDVXaiyucHiACn4cqf7DpdyLvmxzcbUokwA=
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d h1:licZJFw2RwpHMqeKTCYkitsPqHNxTmd4SNR5r94FGM8=
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d/go.mod h1:asat636LX7Bqt5lYEZ27JNDcqxfjdBQuJ/MM4CN/Lzo=
-github.com/beaker/client v0.0.0-20201216232306-726a7089d8c1 h1:cTKeSh6iCiYDXCkR1pB97FHMVUEtrkM3T/5FZNbnxWs=
-github.com/beaker/client v0.0.0-20201216232306-726a7089d8c1/go.mod h1:D0s5YdnSsRWWTegUjTasZ/nusfTfaZZffpUvZPZ30BI=
+github.com/beaker/client v0.0.0-20210118223131-eec0dee2c067 h1:Yw+m/i8b13eiuERkGsZtKCPatYFKFaFkoZme5UE/qwE=
+github.com/beaker/client v0.0.0-20210118223131-eec0dee2c067/go.mod h1:D0s5YdnSsRWWTegUjTasZ/nusfTfaZZffpUvZPZ30BI=
 github.com/beaker/fileheap v0.0.0-20200106234808-5c201f881591 h1:BKRHEopDd5dTFHRGB0dP1Xpon6z3LJciIyDuSf63+w4=
 github.com/beaker/fileheap v0.0.0-20200106234808-5c201f881591/go.mod h1:6LpIYqPQ8c/lIzNI0LtQGFJceTbx15gdbFBCP7u5LMQ=
 github.com/cpuguy83/go-md2man/v2 v2.0.0/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsrgA7czyZG/E6dU=
