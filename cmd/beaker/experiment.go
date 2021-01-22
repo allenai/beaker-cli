@@ -30,6 +30,7 @@ func newExperimentCommand() *cobra.Command {
 	cmd.AddCommand(newExperimentInspectCommand())
 	cmd.AddCommand(newExperimentRenameCommand())
 	cmd.AddCommand(newExperimentResumeCommand())
+	cmd.AddCommand(newExperimentSpecCommand())
 	cmd.AddCommand(newExperimentStopCommand())
 	cmd.AddCommand(newExperimentTasksCommand())
 	return cmd
@@ -275,6 +276,34 @@ func newExperimentResumeCommand() *cobra.Command {
 
 		fmt.Println(experiment.ID())
 		return nil
+	}
+	return cmd
+}
+
+func newExperimentSpecCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "spec <experiment>",
+		Short: "Get the spec of an experiment as YAML",
+		Args:  cobra.ExactArgs(1),
+	}
+
+	var version string
+	cmd.Flags().StringVar(&version, "version", "v2", "Spec version: v1 or v2")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		experiment, err := beaker.Experiment(ctx, args[0])
+		if err != nil {
+			return err
+		}
+
+		spec, err := experiment.Spec(ctx, version)
+		if err != nil {
+			return err
+		}
+		defer spec.Close()
+
+		_, err = io.Copy(os.Stdout, spec)
+		return err
 	}
 	return cmd
 }
