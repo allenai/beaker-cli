@@ -10,7 +10,7 @@ func newOrganizationCommand() *cobra.Command {
 		Use:   "organization <command>",
 		Short: "Manage organizations",
 	}
-	//cmd.AddCommand(newOrganizationCreateCommand())
+	cmd.AddCommand(newOrganizationCreateCommand())
 	cmd.AddCommand(newOrganizationInspectCommand())
 	cmd.AddCommand(newOrganizationListCommand())
 	cmd.AddCommand(newOrganizationMembersCommand())
@@ -18,8 +18,37 @@ func newOrganizationCommand() *cobra.Command {
 }
 
 func newOrganizationCreateCommand() *cobra.Command {
-	// TODO client support
-	return nil
+	cmd := &cobra.Command{
+		Use:   "create <name>",
+		Short: "Create an organization with a name",
+		Args:  cobra.ExactArgs(1),
+	}
+
+	var displayName string
+	var description string
+	var owner string
+	cmd.Flags().StringVar(&displayName, "display-name", "", "Organization display name")
+	cmd.Flags().StringVar(&description, "description", "", "Organization description")
+	cmd.Flags().StringVar(&owner, "owner", "", "Organization owner (if different than creator)")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		if owner == "" {
+			currentUser, err := beaker.WhoAmI(ctx)
+			if err != nil {
+				return err
+			}
+			owner = currentUser.Name
+		}
+
+		_, err := beaker.CreateOrganization(ctx, api.OrganizationSpec{
+			Name:        args[0],
+			Owner:       owner,
+			DisplayName: displayName,
+			Description: description,
+		})
+		return err
+	}
+	return cmd
 }
 
 func newOrganizationInspectCommand() *cobra.Command {
