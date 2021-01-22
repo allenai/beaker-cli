@@ -79,6 +79,7 @@ func main() {
 	root.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Quiet mode")
 	root.PersistentFlags().StringVar(&format, "format", "", "Output format")
 
+	root.AddCommand(newAccountCommand())
 	root.AddCommand(newClusterCommand())
 	root.AddCommand(newConfigCommand())
 	root.AddCommand(newDatasetCommand())
