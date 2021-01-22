@@ -12,7 +12,7 @@ func newAccountCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newAccountWhoAmICommand())
 	//cmd.AddCommand(newAccountListCommand())
-	//cmd.AddCommand(newAccountOrganizationsCommand())
+	cmd.AddCommand(newAccountOrganizationsCommand())
 	return cmd
 }
 
@@ -27,6 +27,21 @@ func newAccountWhoAmICommand() *cobra.Command {
 				return err
 			}
 			return printUsers([]api.UserDetail{*user})
+		},
+	}
+}
+
+func newAccountOrganizationsCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "organizations",
+		Short: "List organizations that you are a member of",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			orgs, err := beaker.ListMyOrgs(ctx)
+			if err != nil {
+				return err
+			}
+			return printOrganizations(orgs)
 		},
 	}
 }
