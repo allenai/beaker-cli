@@ -31,16 +31,27 @@ func newOrganizationMembersCommand() *cobra.Command {
 		Use:   "member <command>",
 		Short: "Manage organization membership",
 	}
-	//cmd.AddCommand(newOrganizationMemberAddCommand())
+	cmd.AddCommand(newOrganizationMemberAddCommand())
 	cmd.AddCommand(newOrganizationMemberInspectCommand())
 	cmd.AddCommand(newOrganizationMemberListCommand())
-	//cmd.AddCommand(newOrganizationMemberRemoveCommand())
+	cmd.AddCommand(newOrganizationMemberRemoveCommand())
 	return cmd
 }
 
 func newOrganizationMemberAddCommand() *cobra.Command {
-	// TODO client support
-	return nil
+	cmd := &cobra.Command{
+		Use:   "add <organization> <account>",
+		Short: "Add an account to an organization",
+		Args:  cobra.ExactArgs(2),
+	}
+
+	var role string
+	cmd.Flags().StringVar(&role, "role", "member", `Role in the organization, defaults to "member"`)
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		return beaker.Organization(args[0]).SetMember(ctx, args[1], role)
+	}
+	return cmd
 }
 
 func newOrganizationMemberInspectCommand() *cobra.Command {
@@ -88,6 +99,12 @@ func newOrganizationMemberListCommand() *cobra.Command {
 }
 
 func newOrganizationMemberRemoveCommand() *cobra.Command {
-	// TODO client support
-	return nil
+	return &cobra.Command{
+		Use:   "remove <organization> <member>",
+		Short: "Remove a member from an organization",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return beaker.Organization(args[0]).RemoveMember(ctx, args[1])
+		},
+	}
 }
