@@ -11,6 +11,7 @@ func newOrganizationCommand() *cobra.Command {
 		Short: "Manage organizations",
 	}
 	//cmd.AddCommand(newOrganizationCreateCommand())
+	cmd.AddCommand(newOrganizationInspectCommand())
 	//cmd.AddCommand(newOrganizationListCommand())
 	cmd.AddCommand(newOrganizationMembersCommand())
 	return cmd
@@ -19,6 +20,25 @@ func newOrganizationCommand() *cobra.Command {
 func newOrganizationCreateCommand() *cobra.Command {
 	// TODO client support
 	return nil
+}
+
+func newOrganizationInspectCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "inspect <organization...>",
+		Short: "Display detailed information about one or more organizations",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var orgs []api.Organization
+			for _, name := range args {
+				org, err := beaker.Organization(name).Get(ctx)
+				if err != nil {
+					return err
+				}
+				orgs = append(orgs, *org)
+			}
+			return printOrganizations(orgs)
+		},
+	}
 }
 
 func newOrganizationListCommand() *cobra.Command {

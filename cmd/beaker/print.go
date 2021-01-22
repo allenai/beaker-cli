@@ -323,6 +323,31 @@ func printNodes(nodes []api.Node) error {
 	}
 }
 
+func printOrganizations(orgs []api.Organization) error {
+	switch format {
+	case formatJSON:
+		return printJSON(orgs)
+	default:
+		if err := printTableRow(
+			"ID",
+			"NAME",
+			"DISPLAY NAME",
+		); err != nil {
+			return err
+		}
+		for _, org := range orgs {
+			if err := printTableRow(
+				org.ID,
+				org.Name,
+				org.DisplayName,
+			); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
 func printSecrets(secrets []api.Secret) error {
 	switch format {
 	case formatJSON:
