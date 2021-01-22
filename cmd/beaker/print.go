@@ -405,6 +405,7 @@ func printUsers(users []api.UserDetail) error {
 			"ID",
 			"NAME",
 			"DISPLAY NAME",
+			"ROLE",
 		); err != nil {
 			return err
 		}
@@ -413,6 +414,7 @@ func printUsers(users []api.UserDetail) error {
 				user.ID,
 				user.Name,
 				user.DisplayName,
+				user.Role,
 			); err != nil {
 				return err
 			}

@@ -10,23 +10,33 @@ func newAccountCommand() *cobra.Command {
 		Use:   "account <command>",
 		Short: "Manage accounts",
 	}
-	cmd.AddCommand(newAccountWhoAmICommand())
-	//cmd.AddCommand(newAccountListCommand())
+	cmd.AddCommand(newAccountListCommand())
 	cmd.AddCommand(newAccountOrganizationsCommand())
+	cmd.AddCommand(newAccountWhoAmICommand())
 	return cmd
 }
 
-func newAccountWhoAmICommand() *cobra.Command {
+func newAccountListCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "whoami",
-		Short: "Display information about your account",
+		Use:   "list",
+		Short: "List all accounts",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			user, err := beaker.WhoAmI(ctx)
-			if err != nil {
-				return err
+			var users []api.UserDetail
+			var cursor string
+			for {
+				var page []api.UserDetail
+				var err error
+				page, cursor, err = beaker.ListUsers(ctx, cursor)
+				if err != nil {
+					return err
+				}
+				users = append(users, page...)
+				if cursor == "" {
+					break
+				}
 			}
-			return printUsers([]api.UserDetail{*user})
+			return printUsers(users)
 		},
 	}
 }
@@ -42,6 +52,21 @@ func newAccountOrganizationsCommand() *cobra.Command {
 				return err
 			}
 			return printOrganizations(orgs)
+		},
+	}
+}
+
+func newAccountWhoAmICommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "whoami",
+		Short: "Display information about your account",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			user, err := beaker.WhoAmI(ctx)
+			if err != nil {
+				return err
+			}
+			return printUsers([]api.UserDetail{*user})
 		},
 	}
 }
