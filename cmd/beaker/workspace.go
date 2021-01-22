@@ -114,7 +114,7 @@ func newWorkspaceDatasetsCommand() *cobra.Command {
 		for {
 			opts := &client.ListDatasetOptions{
 				Cursor: cursor,
-				Search: text,
+				Text:   text,
 			}
 			if !all {
 				opts.Archived = &archived
@@ -164,7 +164,7 @@ func newWorkspaceExperimentsCommand() *cobra.Command {
 		for {
 			opts := &client.ListExperimentOptions{
 				Cursor: cursor,
-				Search: text,
+				Text:   text,
 			}
 			if !all {
 				opts.Archived = &archived
@@ -211,7 +211,7 @@ func newWorkspaceGroupsCommand() *cobra.Command {
 		for {
 			opts := &client.ListGroupOptions{
 				Cursor: cursor,
-				Search: text,
+				Text:   text,
 			}
 			if !all {
 				opts.Archived = &archived
@@ -254,7 +254,7 @@ func newWorkspaceImagesCommand() *cobra.Command {
 		for {
 			opts := &client.ListImageOptions{
 				Cursor: cursor,
-				Search: text,
+				Text:   text,
 			}
 
 			var page []api.Image
@@ -319,7 +319,7 @@ func newWorkspaceListCommand() *cobra.Command {
 			page, cursor, err = beaker.ListWorkspaces(ctx, args[0], &client.ListWorkspaceOptions{
 				Cursor:   cursor,
 				Archived: &archived,
-				Search:   text,
+				Text:     text,
 			})
 			if err != nil {
 				return err
