@@ -296,6 +296,79 @@ func printNodes(nodes []api.Node) error {
 	}
 }
 
+func printSecrets(secrets []api.Secret) error {
+	switch format {
+	case formatJSON:
+		return printJSON(secrets)
+	default:
+		if err := printTableRow("NAME", "CREATED", "UPDATED"); err != nil {
+			return err
+		}
+		for _, secret := range secrets {
+			if err := printTableRow(
+				secret.Name,
+				secret.Created,
+				secret.Updated,
+			); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+func printTasks(tasks []api.Task) error {
+	switch format {
+	case formatJSON:
+		return printJSON(tasks)
+	default:
+		if err := printTableRow(
+			"ID",
+			"EXPERIMENT",
+			"NAME",
+			"AUTHOR",
+		); err != nil {
+			return err
+		}
+		for _, task := range tasks {
+			if err := printTableRow(
+				task.ID,
+				task.ExperimentID,
+				task.Name,
+				task.Author.Name,
+			); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+func printUsers(users []api.UserDetail) error {
+	switch format {
+	case formatJSON:
+		return printJSON(users)
+	default:
+		if err := printTableRow(
+			"ID",
+			"NAME",
+			"DISPLAY NAME",
+		); err != nil {
+			return err
+		}
+		for _, user := range users {
+			if err := printTableRow(
+				user.ID,
+				user.Name,
+				user.DisplayName,
+			); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
 func printWorkspaces(workspaces []api.Workspace) error {
 	switch format {
 	case formatJSON:
