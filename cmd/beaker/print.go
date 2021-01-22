@@ -259,6 +259,33 @@ func printImages(images []api.Image) error {
 	}
 }
 
+func printMembers(members []api.OrgMembership) error {
+	switch format {
+	case formatJSON:
+		return printJSON(members)
+	default:
+		if err := printTableRow(
+			"ID",
+			"NAME",
+			"DISPLAY NAME",
+			"ROLE",
+		); err != nil {
+			return err
+		}
+		for _, member := range members {
+			if err := printTableRow(
+				member.User.ID,
+				member.User.Name,
+				member.User.DisplayName,
+				member.Role,
+			); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
 func printNodes(nodes []api.Node) error {
 	switch format {
 	case formatJSON:

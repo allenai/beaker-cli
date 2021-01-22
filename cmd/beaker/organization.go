@@ -32,7 +32,7 @@ func newOrganizationMembersCommand() *cobra.Command {
 		Short: "Manage organization membership",
 	}
 	//cmd.AddCommand(newOrganizationMemberAddCommand())
-	//cmd.AddCommand(newOrganizationMemberInspectCommand())
+	cmd.AddCommand(newOrganizationMemberInspectCommand())
 	cmd.AddCommand(newOrganizationMemberListCommand())
 	//cmd.AddCommand(newOrganizationMemberRemoveCommand())
 	return cmd
@@ -44,8 +44,22 @@ func newOrganizationMemberAddCommand() *cobra.Command {
 }
 
 func newOrganizationMemberInspectCommand() *cobra.Command {
-	// TODO client support
-	return nil
+	return &cobra.Command{
+		Use:   "inspect <organization> <member...>",
+		Short: "Display detailed information about one or more organization members",
+		Args:  cobra.MinimumNArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var members []api.OrgMembership
+			for _, name := range args[1:] {
+				member, err := beaker.Organization(args[0]).GetMember(ctx, name)
+				if err != nil {
+					return err
+				}
+				members = append(members, *member)
+			}
+			return printMembers(members)
+		},
+	}
 }
 
 func newOrganizationMemberListCommand() *cobra.Command {
