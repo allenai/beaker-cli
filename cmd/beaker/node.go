@@ -11,6 +11,7 @@ func newNodeCommand() *cobra.Command {
 		Short: "Manage nodes",
 	}
 	cmd.AddCommand(newNodeCordonCommand())
+	cmd.AddCommand(newNodeDeleteCommand())
 	cmd.AddCommand(newNodeExecutionsCommand())
 	cmd.AddCommand(newNodeUncordonCommand())
 	return cmd
@@ -26,6 +27,17 @@ func newNodeCordonCommand() *cobra.Command {
 			return beaker.Node(args[0]).Patch(ctx, &api.NodePatchSpec{
 				Cordoned: &cordoned,
 			})
+		},
+	}
+}
+
+func newNodeDeleteCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "delete <node>",
+		Short: "Permanently delete a node",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return beaker.Node(args[0]).Delete(ctx)
 		},
 	}
 }
