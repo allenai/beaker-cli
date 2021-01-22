@@ -12,11 +12,28 @@ func newAccountCommand() *cobra.Command {
 		Use:   "account <command>",
 		Short: "Manage accounts",
 	}
+	cmd.AddCommand(newAccountGenerateTokenCommand())
 	cmd.AddCommand(newAccountListCommand())
 	cmd.AddCommand(newAccountOrganizationsCommand())
 	cmd.AddCommand(newAccountTokenCommand())
 	cmd.AddCommand(newAccountWhoAmICommand())
 	return cmd
+}
+
+func newAccountGenerateTokenCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "generate-token",
+		Short: "Generate a new token for authentication",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			token, err := beaker.GenerateToken(ctx)
+			if err != nil {
+				return err
+			}
+			_, err = fmt.Println(token)
+			return err
+		},
+	}
 }
 
 func newAccountListCommand() *cobra.Command {
