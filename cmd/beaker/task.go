@@ -14,6 +14,7 @@ func newTaskCommand() *cobra.Command {
 	cmd.AddCommand(newTaskExecutionsCommand())
 	cmd.AddCommand(newTaskInspectCommand())
 	cmd.AddCommand(newTaskLogsCommand())
+	cmd.AddCommand(newTaskPreemptCommand())
 	return cmd
 }
 
@@ -69,6 +70,17 @@ func newTaskLogsCommand() *cobra.Command {
 
 			// Most recent execution is last.
 			return printExecutionLogs(task.Executions[len(task.Executions)-1].ID)
+		},
+	}
+}
+
+func newTaskPreemptCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "preempt <task>",
+		Short: "Preempt a task stopping its execution",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return beaker.Task(args[0]).Preempt(ctx)
 		},
 	}
 }
