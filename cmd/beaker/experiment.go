@@ -26,6 +26,7 @@ func newExperimentCommand() *cobra.Command {
 	cmd.AddCommand(newExperimentCreateCommand())
 	cmd.AddCommand(newExperimentDeleteCommand())
 	cmd.AddCommand(newExperimentExecutionsCommand())
+	cmd.AddCommand(newExperimentGroupsCommand())
 	cmd.AddCommand(newExperimentInspectCommand())
 	cmd.AddCommand(newExperimentRenameCommand())
 	cmd.AddCommand(newExperimentResumeCommand())
@@ -162,6 +163,40 @@ func newExperimentExecutionsCommand() *cobra.Command {
 				executions = append(executions, *execution)
 			}
 			return printExecutions(executions)
+		},
+	}
+}
+
+func newExperimentGroupsCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "groups <experiment>",
+		Short: "List the groups that the experiments belongs to",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			experiment, err := beaker.Experiment(ctx, args[0])
+			if err != nil {
+				return err
+			}
+
+			groupIDs, err := experiment.Groups(ctx)
+			if err != nil {
+				return err
+			}
+
+			var groups []api.Group
+			for _, id := range groupIDs {
+				group, err := beaker.Group(ctx, id)
+				if err != nil {
+					return err
+				}
+
+				info, err := group.Get(ctx)
+				if err != nil {
+					return err
+				}
+				groups = append(groups, *info)
+			}
+			return printGroups(groups)
 		},
 	}
 }
