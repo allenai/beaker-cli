@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/beaker/client/api"
 	"github.com/spf13/cobra"
 )
@@ -12,6 +14,7 @@ func newAccountCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newAccountListCommand())
 	cmd.AddCommand(newAccountOrganizationsCommand())
+	cmd.AddCommand(newAccountTokenCommand())
 	cmd.AddCommand(newAccountWhoAmICommand())
 	return cmd
 }
@@ -52,6 +55,18 @@ func newAccountOrganizationsCommand() *cobra.Command {
 				return err
 			}
 			return printOrganizations(orgs)
+		},
+	}
+}
+
+func newAccountTokenCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "token",
+		Short: "Print user token",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			_, err := fmt.Println(beakerConfig.UserToken)
+			return err
 		},
 	}
 }
