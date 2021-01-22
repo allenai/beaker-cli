@@ -296,6 +296,27 @@ func printNodes(nodes []api.Node) error {
 	}
 }
 
+func printSecrets(secrets []api.Secret) error {
+	switch format {
+	case formatJSON:
+		return printJSON(secrets)
+	default:
+		if err := printTableRow("NAME", "CREATED", "UPDATED"); err != nil {
+			return err
+		}
+		for _, secret := range secrets {
+			if err := printTableRow(
+				secret.Name,
+				secret.Created,
+				secret.Updated,
+			); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
 func printTasks(tasks []api.Task) error {
 	switch format {
 	case formatJSON:

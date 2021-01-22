@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"time"
 
+	"github.com/beaker/client/api"
 	"github.com/spf13/cobra"
 )
 
@@ -15,6 +15,7 @@ func newSecretCommand() *cobra.Command {
 		Short: "Manage secrets",
 	}
 	cmd.AddCommand(newSecretDeleteCommand())
+	cmd.AddCommand(newSecretInspectCommand())
 	cmd.AddCommand(newSecretListCommand())
 	cmd.AddCommand(newSecretReadCommand())
 	cmd.AddCommand(newSecretWriteCommand())
@@ -37,6 +38,30 @@ func newSecretDeleteCommand() *cobra.Command {
 	}
 }
 
+func newSecretInspectCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "inspect <workspace> <secret...>",
+		Short: "Display detailed information about one or more secrets",
+		Args:  cobra.MinimumNArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			workspace, err := beaker.Workspace(ctx, args[0])
+			if err != nil {
+				return err
+			}
+
+			var secrets []api.Secret
+			for _, name := range args[1:] {
+				secret, err := workspace.GetSecret(ctx, name)
+				if err != nil {
+					return err
+				}
+				secrets = append(secrets, *secret)
+			}
+			return printSecrets(secrets)
+		},
+	}
+}
+
 func newSecretListCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "list <workspace>",
@@ -52,20 +77,7 @@ func newSecretListCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			if err := printTableRow("NAME", "CREATED", "UPDATED"); err != nil {
-				return err
-			}
-			for _, secret := range secrets {
-				if err := printTableRow(
-					secret.Name,
-					secret.Created.Format(time.RFC3339),
-					secret.Updated.Format(time.RFC3339),
-				); err != nil {
-					return err
-				}
-			}
-			return nil
+			return printSecrets(secrets)
 		},
 	}
 }
