@@ -29,6 +29,7 @@ func newImageCommand() *cobra.Command {
 	cmd.AddCommand(newImageInspectCommand())
 	cmd.AddCommand(newImagePullCommand())
 	cmd.AddCommand(newImageRenameCommand())
+	cmd.AddCommand(newImageSetDescriptionCommand())
 	return cmd
 }
 
@@ -326,6 +327,21 @@ func newImageRenameCommand() *cobra.Command {
 				fmt.Printf("Renamed %s to %s\n", color.BlueString(exp.ID), exp.DisplayID())
 			}
 			return nil
+		},
+	}
+}
+
+func newImageSetDescriptionCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "set-description <image> <description>",
+		Short: "Set the description of an image",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			image, err := beaker.Image(ctx, args[0])
+			if err != nil {
+				return err
+			}
+			return image.SetDescription(ctx, args[1])
 		},
 	}
 }
