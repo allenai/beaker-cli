@@ -12,6 +12,7 @@ func newNodeCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newNodeCordonCommand())
 	cmd.AddCommand(newNodeExecutionsCommand())
+	cmd.AddCommand(newNodeInspectCommand())
 	cmd.AddCommand(newNodeUncordonCommand())
 	return cmd
 }
@@ -41,6 +42,25 @@ func newNodeExecutionsCommand() *cobra.Command {
 				return err
 			}
 			return printExecutions(executions.Data)
+		},
+	}
+}
+
+func newNodeInspectCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "inspect <node...>",
+		Short: "Display detailed information about one or more nodes",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var nodes []api.Node
+			for _, id := range args {
+				node, err := beaker.Node(id).Get(ctx)
+				if err != nil {
+					return err
+				}
+				nodes = append(nodes, *node)
+			}
+			return printNodes(nodes)
 		},
 	}
 }
