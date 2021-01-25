@@ -43,7 +43,14 @@ func newImageCommitCommand() *cobra.Command {
 				return err
 			}
 
-			return image.Commit(ctx)
+			if err := image.Commit(ctx); err != nil {
+				return err
+			}
+
+			if !quiet {
+				fmt.Printf("Committed %s\n", color.BlueString(args[0]))
+			}
+			return nil
 		},
 	}
 }
@@ -170,7 +177,9 @@ func newImageDeleteCommand() *cobra.Command {
 				return err
 			}
 
-			fmt.Printf("Deleted %s\n", color.BlueString(args[0]))
+			if !quiet {
+				fmt.Printf("Deleted %s\n", color.BlueString(args[0]))
+			}
 			return nil
 		},
 	}

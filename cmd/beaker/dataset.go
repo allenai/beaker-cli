@@ -21,6 +21,7 @@ func newDatasetCommand() *cobra.Command {
 		Use:   "dataset <command>",
 		Short: "Manage datasets",
 	}
+	cmd.AddCommand(newDatasetCommitCommand())
 	cmd.AddCommand(newDatasetCreateCommand())
 	cmd.AddCommand(newDatasetDeleteCommand())
 	cmd.AddCommand(newDatasetFetchCommand())
@@ -29,6 +30,29 @@ func newDatasetCommand() *cobra.Command {
 	cmd.AddCommand(newDatasetRenameCommand())
 	cmd.AddCommand(newDatasetStreamFileCommand())
 	return cmd
+}
+
+func newDatasetCommitCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "commit <dataset>",
+		Short: "Commit a dataset preventing further modification",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			dataset, err := beaker.Dataset(ctx, args[0])
+			if err != nil {
+				return err
+			}
+
+			if err := dataset.Commit(ctx); err != nil {
+				return err
+			}
+
+			if !quiet {
+				fmt.Printf("Committed %s\n", color.BlueString(args[0]))
+			}
+			return nil
+		},
+	}
 }
 
 func newDatasetCreateCommand() *cobra.Command {
@@ -133,7 +157,9 @@ func newDatasetDeleteCommand() *cobra.Command {
 				return err
 			}
 
-			fmt.Printf("Deleted %s\n", color.BlueString(args[0]))
+			if !quiet {
+				fmt.Printf("Deleted %s\n", color.BlueString(args[0]))
+			}
 			return nil
 		},
 	}
