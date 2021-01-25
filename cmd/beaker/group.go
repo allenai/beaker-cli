@@ -21,6 +21,7 @@ func newGroupCommand() *cobra.Command {
 	cmd.AddCommand(newGroupInspectCommand())
 	cmd.AddCommand(newGroupRemoveCommand())
 	cmd.AddCommand(newGroupRenameCommand())
+	cmd.AddCommand(newGroupSetDescriptionCommand())
 	return cmd
 }
 
@@ -225,6 +226,21 @@ func newGroupRenameCommand() *cobra.Command {
 				fmt.Printf("Renamed %s to %s\n", color.BlueString(info.ID), info.DisplayID())
 			}
 			return nil
+		},
+	}
+}
+
+func newGroupSetDescriptionCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "set-description <group> <description>",
+		Short: "Set the description of an group",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			group, err := beaker.Group(ctx, args[0])
+			if err != nil {
+				return err
+			}
+			return group.SetDescription(ctx, args[1])
 		},
 	}
 }
