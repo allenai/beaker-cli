@@ -26,6 +26,16 @@ func newAccountGenerateTokenCommand() *cobra.Command {
 		Short: "Generate a new token for authentication",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Println("Generating a new token will invalidate your old token.")
+			fmt.Print("Are you sure want to generate a new token (yes/no)? ")
+			confirmed, err := confirm()
+			if err != nil {
+				return err
+			}
+			if !confirmed {
+				return nil
+			}
+
 			token, err := beaker.GenerateToken(ctx)
 			if err != nil {
 				return err
