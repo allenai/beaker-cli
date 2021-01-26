@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/allenai/beaker/config"
+
 	"github.com/beaker/client/api"
 	"github.com/spf13/cobra"
 )
@@ -21,29 +23,44 @@ func newAccountCommand() *cobra.Command {
 }
 
 func newAccountGenerateTokenCommand() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "generate-token",
 		Short: "Generate a new token for authentication",
 		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Println("Generating a new token will invalidate your old token.")
-			fmt.Print("Are you sure want to generate a new token (yes/no)? ")
-			confirmed, err := confirm()
-			if err != nil {
-				return err
-			}
-			if !confirmed {
-				return nil
-			}
-
-			token, err := beaker.GenerateToken(ctx)
-			if err != nil {
-				return err
-			}
-			_, err = fmt.Println(token)
-			return err
-		},
 	}
+
+	var noUpdateConfig bool
+	cmd.Flags().BoolVar(&noUpdateConfig, "no-update-config", false, "Don't update config with the new token.")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		fmt.Println("Generating a new token will invalidate your old token.")
+		fmt.Print("Are you sure want to generate a new token (yes/[no])? ")
+		confirmed, err := confirm()
+		if err != nil {
+			return err
+		}
+		if !confirmed {
+			return nil
+		}
+
+		token, err := beaker.GenerateToken(ctx)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("New token: %q\n", token)
+
+		if noUpdateConfig {
+			return nil
+		}
+
+		beakerConfig.UserToken = token
+		if err := config.WriteConfig(beakerConfig, config.GetFilePath()); err != nil {
+			return err
+		}
+		fmt.Println("New token written to config")
+		return nil
+	}
+	return cmd
 }
 
 func newAccountListCommand() *cobra.Command {
