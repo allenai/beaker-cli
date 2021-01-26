@@ -91,7 +91,14 @@ func main() {
 	root.AddCommand(newTaskCommand())
 	root.AddCommand(newWorkspaceCommand())
 
-	if err := root.Execute(); err != nil {
+	err := root.Execute()
+	if err != nil && err.Error() == "invalid authentication token" {
+		err = login()
+		if err == nil {
+			err = root.Execute()
+		}
+	}
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s %+v\n", color.RedString("Error:"), err)
 		os.Exit(1)
 	}
