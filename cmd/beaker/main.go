@@ -178,7 +178,10 @@ func login() error {
 	}
 	loginURL.Path = path.Join(loginURL.Path, "user")
 
-	fmt.Println("You are not logged in. To log in, find your user token here:", loginURL.String())
+	fmt.Println(
+		"You are not logged in. To log in, find your user token here:",
+		color.BlueString(loginURL.String()),
+	)
 	fmt.Print("Enter your user token: ")
 	reader := bufio.NewReader(os.Stdin)
 	for {
