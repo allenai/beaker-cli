@@ -77,7 +77,7 @@ func newTaskLogsCommand() *cobra.Command {
 func newTaskPreemptCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "preempt <task>",
-		Short: "Preempt a task stopping its execution",
+		Short: "Stop a task and schedule it to run again",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return beaker.Task(args[0]).Preempt(ctx)
