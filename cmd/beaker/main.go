@@ -189,7 +189,7 @@ func login() error {
 		if err != nil {
 			return err
 		}
-		beakerConfig.UserToken = strings.TrimSuffix(input, "\n")
+		beakerConfig.UserToken = strings.TrimSpace(input)
 
 		beaker, err = client.NewClient(
 			beakerConfig.BeakerAddress,
