@@ -96,10 +96,12 @@ func newWorkspaceDatasetsCommand() *cobra.Command {
 	var all bool
 	var archived bool
 	var result bool
+	var text string
 	var uncommitted bool
 	cmd.Flags().BoolVar(&all, "all", false, "Show all datasets including archived, result, and uncommitted datasets")
 	cmd.Flags().BoolVar(&archived, "archived", false, "Show only archived datasets")
 	cmd.Flags().BoolVar(&result, "result", false, "Show only result datasets")
+	cmd.Flags().StringVar(&text, "text", "", "Only show datasets matching the text")
 	cmd.Flags().BoolVar(&uncommitted, "uncommitted", false, "Show only uncommitted datasets")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
@@ -113,6 +115,7 @@ func newWorkspaceDatasetsCommand() *cobra.Command {
 		for {
 			opts := &client.ListDatasetOptions{
 				Cursor: cursor,
+				Text:   text,
 			}
 			if !all {
 				opts.Archived = &archived
@@ -146,8 +149,10 @@ func newWorkspaceExperimentsCommand() *cobra.Command {
 
 	var all bool
 	var archived bool
+	var text string
 	cmd.Flags().BoolVar(&all, "all", false, "Show all experiments including archived experiments")
 	cmd.Flags().BoolVar(&archived, "archived", false, "Show only archived experiments")
+	cmd.Flags().StringVar(&text, "text", "", "Only show experiments matching the text")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		workspace, err := beaker.Workspace(ctx, args[0])
@@ -160,6 +165,7 @@ func newWorkspaceExperimentsCommand() *cobra.Command {
 		for {
 			opts := &client.ListExperimentOptions{
 				Cursor: cursor,
+				Text:   text,
 			}
 			if !all {
 				opts.Archived = &archived
@@ -190,8 +196,10 @@ func newWorkspaceGroupsCommand() *cobra.Command {
 
 	var all bool
 	var archived bool
+	var text string
 	cmd.Flags().BoolVar(&all, "all", false, "Show all groups including archived groups")
 	cmd.Flags().BoolVar(&archived, "archived", false, "Show only archived groups")
+	cmd.Flags().StringVar(&text, "text", "", "Only show groups matching the text")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		workspace, err := beaker.Workspace(ctx, args[0])
@@ -204,6 +212,7 @@ func newWorkspaceGroupsCommand() *cobra.Command {
 		for {
 			opts := &client.ListGroupOptions{
 				Cursor: cursor,
+				Text:   text,
 			}
 			if !all {
 				opts.Archived = &archived
@@ -226,37 +235,43 @@ func newWorkspaceGroupsCommand() *cobra.Command {
 }
 
 func newWorkspaceImagesCommand() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "images <workspace>",
 		Short: "List images in a workspace",
 		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			workspace, err := beaker.Workspace(ctx, args[0])
+	}
+
+	var text string
+	cmd.Flags().StringVar(&text, "text", "", "Only show images matching the text")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		workspace, err := beaker.Workspace(ctx, args[0])
+		if err != nil {
+			return err
+		}
+
+		var images []api.Image
+		var cursor string
+		for {
+			opts := &client.ListImageOptions{
+				Cursor: cursor,
+				Text:   text,
+			}
+
+			var page []api.Image
+			var err error
+			page, cursor, err = workspace.Images(ctx, opts)
 			if err != nil {
 				return err
 			}
-
-			var images []api.Image
-			var cursor string
-			for {
-				opts := &client.ListImageOptions{
-					Cursor: cursor,
-				}
-
-				var page []api.Image
-				var err error
-				page, cursor, err = workspace.Images(ctx, opts)
-				if err != nil {
-					return err
-				}
-				images = append(images, page...)
-				if cursor == "" {
-					break
-				}
+			images = append(images, page...)
+			if cursor == "" {
+				break
 			}
-			return printImages(images)
-		},
+		}
+		return printImages(images)
 	}
+	return cmd
 }
 
 func newWorkspaceInspectCommand() *cobra.Command {
@@ -292,7 +307,9 @@ func newWorkspaceListCommand() *cobra.Command {
 	}
 
 	var archived bool
+	var text string
 	cmd.Flags().BoolVar(&archived, "archived", false, "Only show archived workspaces")
+	cmd.Flags().StringVar(&text, "text", "", "Only show workspaces matching the text")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		var workspaces []api.Workspace
@@ -303,6 +320,7 @@ func newWorkspaceListCommand() *cobra.Command {
 			page, cursor, err = beaker.ListWorkspaces(ctx, args[0], &client.ListWorkspaceOptions{
 				Cursor:   cursor,
 				Archived: &archived,
+				Text:     text,
 			})
 			if err != nil {
 				return err

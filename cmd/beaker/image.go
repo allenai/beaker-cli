@@ -212,7 +212,7 @@ func newImageInspectCommand() *cobra.Command {
 
 func newImagePullCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "pull <image> <tag?>",
+		Use:   "pull <image> [tag]",
 		Short: "Pull an image",
 		Args:  cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {

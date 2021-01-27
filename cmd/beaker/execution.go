@@ -15,6 +15,7 @@ func newExecutionCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newExecutionInspectCommand())
 	cmd.AddCommand(newExecutionLogsCommand())
+	cmd.AddCommand(newExecutionResultsCommand())
 	return cmd
 }
 
@@ -44,6 +45,35 @@ func newExecutionLogsCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return printExecutionLogs(args[0])
+		},
+	}
+}
+
+func newExecutionResultsCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "results <execution>",
+		Short: "Get execution results",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			results, err := beaker.Execution(args[0]).GetResults(ctx)
+			if err != nil {
+				return err
+			}
+
+			switch format {
+			case formatJSON:
+				return printJSON(results)
+			default:
+				if err := printTableRow("METRIC", "VALUE"); err != nil {
+					return err
+				}
+				for metric, value := range results.Metrics {
+					if err := printTableRow(metric, value); err != nil {
+						return err
+					}
+				}
+				return nil
+			}
 		},
 	}
 }
