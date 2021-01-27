@@ -19,9 +19,10 @@ func newOrganizationCommand() *cobra.Command {
 
 func newOrganizationCreateCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create <name>",
-		Short: "Create an organization with a name",
-		Args:  cobra.ExactArgs(1),
+		Use:    "create <name>",
+		Short:  "Create an organization with a name",
+		Args:   cobra.ExactArgs(1),
+		Hidden: true,
 	}
 
 	var displayName string
@@ -72,9 +73,10 @@ func newOrganizationInspectCommand() *cobra.Command {
 
 func newOrganizationListCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "list",
-		Short: "List all organizations",
-		Args:  cobra.NoArgs,
+		Use:    "list",
+		Short:  "List all organizations",
+		Args:   cobra.NoArgs,
+		Hidden: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var orgs []api.Organization
 			var cursor string
