@@ -65,9 +65,10 @@ func newAccountGenerateTokenCommand() *cobra.Command {
 
 func newAccountListCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "list",
-		Short: "List all accounts",
-		Args:  cobra.NoArgs,
+		Use:    "list",
+		Short:  "List all accounts",
+		Args:   cobra.NoArgs,
+		Hidden: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var users []api.UserDetail
 			var cursor string
