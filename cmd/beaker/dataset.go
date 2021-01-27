@@ -200,7 +200,7 @@ func newDatasetInspectCommand() *cobra.Command {
 
 func newDatasetLsCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "ls <dataset> <prefix?>",
+		Use:   "ls <dataset> [prefix]",
 		Short: "List files in a dataset",
 		Args:  cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -288,7 +288,7 @@ func newDatasetRenameCommand() *cobra.Command {
 
 func newDatasetSizeCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "size <dataset> <prefix?>",
+		Use:   "size <dataset> [prefix]",
 		Short: "Calculate the size of a dataset",
 		Args:  cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {

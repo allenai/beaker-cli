@@ -105,7 +105,7 @@ func newSecretReadCommand() *cobra.Command {
 
 func newSecretWriteCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "write <workspace> <secret> <value?>",
+		Use:   "write <workspace> <secret> [value]",
 		Short: "Write a new secret or update an existing secret",
 		Args:  cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {
