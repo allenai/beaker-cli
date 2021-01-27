@@ -176,12 +176,16 @@ func printExperiments(experiments []api.Experiment) error {
 			if experiment.Archived {
 				archived = "archived"
 			}
+			var executions []api.Execution
+			for _, execution := range experiment.Executions {
+				executions = append(executions, *execution)
+			}
 			if err := printTableRow(
 				name,
 				experiment.Workspace.Name,
 				experiment.Author.Name,
 				experiment.Created,
-				experimentStatus(experiment),
+				executionsStatus(executions),
 				archived,
 			); err != nil {
 				return err
@@ -327,6 +331,7 @@ func printTasks(tasks []api.Task) error {
 			"EXPERIMENT",
 			"NAME",
 			"AUTHOR",
+			"STATUS",
 		); err != nil {
 			return err
 		}
@@ -336,6 +341,7 @@ func printTasks(tasks []api.Task) error {
 				task.ExperimentID,
 				task.Name,
 				task.Author.Name,
+				executionsStatus(task.Executions),
 			); err != nil {
 				return err
 			}
@@ -427,9 +433,9 @@ func executionStatus(state api.ExecutionState) string {
 	}
 }
 
-func experimentStatus(experiment api.Experiment) string {
+func executionsStatus(executions []api.Execution) string {
 	counts := make(map[string]int)
-	for _, execution := range experiment.Executions {
+	for _, execution := range executions {
 		status := executionStatus(execution.State)
 		count, ok := counts[status]
 		if ok {
