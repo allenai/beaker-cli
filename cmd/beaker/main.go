@@ -178,8 +178,8 @@ func login() error {
 	}
 	loginURL.Path = path.Join(loginURL.Path, "user")
 
-	fmt.Println("You are not logged in to Beaker. Please visit", loginURL.String())
-	fmt.Print("Then enter your user token: ")
+	fmt.Println("You are not logged in. To log in, find your user token here:", loginURL.String())
+	fmt.Print("Enter your user token: ")
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		input, err := reader.ReadString('\n')
