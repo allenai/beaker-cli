@@ -17,10 +17,12 @@ func newGroupCommand() *cobra.Command {
 	cmd.AddCommand(newGroupAddCommand())
 	cmd.AddCommand(newGroupCreateCommand())
 	cmd.AddCommand(newGroupDeleteCommand())
+	cmd.AddCommand(newGroupExecutionsCommand())
 	cmd.AddCommand(newGroupExperimentsCommand())
 	cmd.AddCommand(newGroupInspectCommand())
 	cmd.AddCommand(newGroupRemoveCommand())
 	cmd.AddCommand(newGroupRenameCommand())
+	cmd.AddCommand(newGroupTasksCommand())
 	return cmd
 }
 
@@ -110,6 +112,42 @@ func newGroupDeleteCommand() *cobra.Command {
 				fmt.Println("Deleted group " + color.BlueString(group.ID()))
 			}
 			return nil
+		},
+	}
+}
+
+func newGroupExecutionsCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "executions <group>",
+		Short: "List executions in a group",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			group, err := beaker.Group(ctx, args[0])
+			if err != nil {
+				return err
+			}
+
+			experimentIDs, err := group.Experiments(ctx)
+			if err != nil {
+				return err
+			}
+
+			var executions []api.Execution
+			for _, experimentID := range experimentIDs {
+				experiment, err := beaker.Experiment(ctx, experimentID)
+				if err != nil {
+					return err
+				}
+
+				info, err := experiment.Get(ctx)
+				if err != nil {
+					return err
+				}
+				for _, execution := range info.Executions {
+					executions = append(executions, *execution)
+				}
+			}
+			return printExecutions(executions)
 		},
 	}
 }
@@ -225,6 +263,40 @@ func newGroupRenameCommand() *cobra.Command {
 				fmt.Printf("Renamed %s to %s\n", color.BlueString(info.ID), info.DisplayID())
 			}
 			return nil
+		},
+	}
+}
+
+func newGroupTasksCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "tasks <group>",
+		Short: "List tasks in a group",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			group, err := beaker.Group(ctx, args[0])
+			if err != nil {
+				return err
+			}
+
+			experimentIDs, err := group.Experiments(ctx)
+			if err != nil {
+				return err
+			}
+
+			var tasks []api.Task
+			for _, experimentID := range experimentIDs {
+				experiment, err := beaker.Experiment(ctx, experimentID)
+				if err != nil {
+					return err
+				}
+
+				groupTasks, err := experiment.Tasks(ctx)
+				if err != nil {
+					return err
+				}
+				tasks = append(tasks, groupTasks...)
+			}
+			return printTasks(tasks)
 		},
 	}
 }
