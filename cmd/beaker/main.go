@@ -7,8 +7,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
+	"path"
 	"strings"
 	"text/tabwriter"
 
@@ -167,6 +169,47 @@ func withSignal(parent context.Context) (context.Context, context.CancelFunc) {
 		signal.Stop(sigChan)
 		cancel()
 	}
+}
+
+// login prompts the user for an authentication token, validates it,
+// and writes it to the configuration file.
+func login() error {
+	loginURL, err := url.Parse(beakerConfig.BeakerAddress)
+	if err != nil {
+		return err
+	}
+	loginURL.Path = path.Join(loginURL.Path, "user")
+
+	fmt.Println(
+		"You are not logged in. To log in, find your user token here:",
+		color.BlueString(loginURL.String()),
+	)
+	fmt.Print("Enter your user token: ")
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			return err
+		}
+		beakerConfig.UserToken = strings.TrimSpace(input)
+
+		beaker, err = client.NewClient(
+			beakerConfig.BeakerAddress,
+			beakerConfig.UserToken,
+		)
+		if err != nil {
+			return err
+		}
+		user, err := beaker.WhoAmI(ctx)
+		if err != nil {
+			fmt.Print("Invalid user token, please try again: ")
+			continue
+		}
+
+		fmt.Printf("Successfully logged in as %q\n\n", user.Name)
+		break
+	}
+	return config.WriteConfig(beakerConfig, config.GetFilePath())
 }
 
 // confirm prompts the user for a yes/no answer and defaults to no.
