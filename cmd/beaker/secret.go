@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/beaker/client/api"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +14,6 @@ func newSecretCommand() *cobra.Command {
 		Short: "Manage secrets",
 	}
 	cmd.AddCommand(newSecretDeleteCommand())
-	cmd.AddCommand(newSecretInspectCommand())
 	cmd.AddCommand(newSecretListCommand())
 	cmd.AddCommand(newSecretReadCommand())
 	cmd.AddCommand(newSecretWriteCommand())
@@ -34,30 +32,6 @@ func newSecretDeleteCommand() *cobra.Command {
 			}
 
 			return workspace.DeleteSecret(ctx, args[1])
-		},
-	}
-}
-
-func newSecretInspectCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "inspect <workspace> <secret...>",
-		Short: "Display detailed information about one or more secrets",
-		Args:  cobra.MinimumNArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			workspace, err := beaker.Workspace(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
-			var secrets []api.Secret
-			for _, name := range args[1:] {
-				secret, err := workspace.GetSecret(ctx, name)
-				if err != nil {
-					return err
-				}
-				secrets = append(secrets, *secret)
-			}
-			return printSecrets(secrets)
 		},
 	}
 }
