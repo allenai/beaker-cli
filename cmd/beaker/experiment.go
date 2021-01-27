@@ -288,7 +288,7 @@ func newExperimentSpecCommand() *cobra.Command {
 	}
 
 	var version string
-	cmd.Flags().StringVar(&version, "version", "v2", "Spec version: v1 or v2")
+	cmd.Flags().StringVar(&version, "version", "v2-alpha", "Spec version: v1 or v2-alpha")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		experiment, err := beaker.Experiment(ctx, args[0])
