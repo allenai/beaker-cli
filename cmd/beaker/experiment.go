@@ -25,10 +25,14 @@ func newExperimentCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newExperimentCreateCommand())
 	cmd.AddCommand(newExperimentDeleteCommand())
+	cmd.AddCommand(newExperimentExecutionsCommand())
+	cmd.AddCommand(newExperimentGroupsCommand())
 	cmd.AddCommand(newExperimentInspectCommand())
 	cmd.AddCommand(newExperimentRenameCommand())
 	cmd.AddCommand(newExperimentResumeCommand())
+	cmd.AddCommand(newExperimentSpecCommand())
 	cmd.AddCommand(newExperimentStopCommand())
+	cmd.AddCommand(newExperimentTasksCommand())
 	return cmd
 }
 
@@ -139,6 +143,65 @@ func newExperimentDeleteCommand() *cobra.Command {
 	}
 }
 
+func newExperimentExecutionsCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "executions <experiment>",
+		Short: "List the executions in an experiment",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			experiment, err := beaker.Experiment(ctx, args[0])
+			if err != nil {
+				return err
+			}
+
+			info, err := experiment.Get(ctx)
+			if err != nil {
+				return err
+			}
+
+			var executions []api.Execution
+			for _, execution := range info.Executions {
+				executions = append(executions, *execution)
+			}
+			return printExecutions(executions)
+		},
+	}
+}
+
+func newExperimentGroupsCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "groups <experiment>",
+		Short: "List the groups that the experiments belongs to",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			experiment, err := beaker.Experiment(ctx, args[0])
+			if err != nil {
+				return err
+			}
+
+			groupIDs, err := experiment.Groups(ctx)
+			if err != nil {
+				return err
+			}
+
+			var groups []api.Group
+			for _, id := range groupIDs {
+				group, err := beaker.Group(ctx, id)
+				if err != nil {
+					return err
+				}
+
+				info, err := group.Get(ctx)
+				if err != nil {
+					return err
+				}
+				groups = append(groups, *info)
+			}
+			return printGroups(groups)
+		},
+	}
+}
+
 func newExperimentInspectCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "inspect <experiment...>",
@@ -217,6 +280,34 @@ func newExperimentResumeCommand() *cobra.Command {
 	return cmd
 }
 
+func newExperimentSpecCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "spec <experiment>",
+		Short: "Get the spec of an experiment as YAML",
+		Args:  cobra.ExactArgs(1),
+	}
+
+	var version string
+	cmd.Flags().StringVar(&version, "version", "v2-alpha", "Spec version: v1 or v2-alpha")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		experiment, err := beaker.Experiment(ctx, args[0])
+		if err != nil {
+			return err
+		}
+
+		spec, err := experiment.Spec(ctx, version, format == formatJSON)
+		if err != nil {
+			return err
+		}
+		defer spec.Close()
+
+		_, err = io.Copy(os.Stdout, spec)
+		return err
+	}
+	return cmd
+}
+
 func newExperimentStopCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "stop <experiment...>",
@@ -238,6 +329,26 @@ func newExperimentStopCommand() *cobra.Command {
 				fmt.Println(experiment.ID())
 			}
 			return nil
+		},
+	}
+}
+
+func newExperimentTasksCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "tasks <experiment>",
+		Short: "List the tasks in an experiment",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			experiment, err := beaker.Experiment(ctx, args[0])
+			if err != nil {
+				return err
+			}
+
+			tasks, err := experiment.Tasks(ctx)
+			if err != nil {
+				return err
+			}
+			return printTasks(tasks)
 		},
 	}
 }

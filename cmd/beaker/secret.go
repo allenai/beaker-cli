@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -52,20 +51,7 @@ func newSecretListCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			if err := printTableRow("NAME", "CREATED", "UPDATED"); err != nil {
-				return err
-			}
-			for _, secret := range secrets {
-				if err := printTableRow(
-					secret.Name,
-					secret.Created.Format(time.RFC3339),
-					secret.Updated.Format(time.RFC3339),
-				); err != nil {
-					return err
-				}
-			}
-			return nil
+			return printSecrets(secrets)
 		},
 	}
 }
@@ -93,7 +79,7 @@ func newSecretReadCommand() *cobra.Command {
 
 func newSecretWriteCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "write <workspace> <secret> <value?>",
+		Use:   "write <workspace> <secret> [value]",
 		Short: "Write a new secret or update an existing secret",
 		Args:  cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {

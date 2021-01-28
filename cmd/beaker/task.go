@@ -11,9 +11,26 @@ func newTaskCommand() *cobra.Command {
 		Use:   "task <command>",
 		Short: "Manage tasks",
 	}
+	cmd.AddCommand(newTaskExecutionsCommand())
 	cmd.AddCommand(newTaskInspectCommand())
 	cmd.AddCommand(newTaskLogsCommand())
+	cmd.AddCommand(newTaskPreemptCommand())
 	return cmd
+}
+
+func newTaskExecutionsCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "executions <task>",
+		Short: "List the executions in a task",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			task, err := beaker.Task(args[0]).Get(ctx)
+			if err != nil {
+				return err
+			}
+			return printExecutions(task.Executions)
+		},
+	}
 }
 
 func newTaskInspectCommand() *cobra.Command {
@@ -22,16 +39,16 @@ func newTaskInspectCommand() *cobra.Command {
 		Short: "Display detailed information about one or more tasks",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var tasks []*api.Task
+			var tasks []api.Task
 			for _, id := range args {
 				info, err := beaker.Task(id).Get(ctx)
 				if err != nil {
 					return err
 				}
 
-				tasks = append(tasks, info)
+				tasks = append(tasks, *info)
 			}
-			return printJSON(tasks)
+			return printTasks(tasks)
 		},
 	}
 }
@@ -53,6 +70,17 @@ func newTaskLogsCommand() *cobra.Command {
 
 			// Most recent execution is last.
 			return printExecutionLogs(task.Executions[len(task.Executions)-1].ID)
+		},
+	}
+}
+
+func newTaskPreemptCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "preempt <task>",
+		Short: "Stop a task and schedule it to run again",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return beaker.Task(args[0]).Preempt(ctx)
 		},
 	}
 }

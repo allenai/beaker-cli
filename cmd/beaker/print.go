@@ -176,12 +176,16 @@ func printExperiments(experiments []api.Experiment) error {
 			if experiment.Archived {
 				archived = "archived"
 			}
+			var executions []api.Execution
+			for _, execution := range experiment.Executions {
+				executions = append(executions, *execution)
+			}
 			if err := printTableRow(
 				name,
 				experiment.Workspace.Name,
 				experiment.Author.Name,
 				experiment.Created,
-				experimentStatus(experiment),
+				executionsStatus(executions),
 				archived,
 			); err != nil {
 				return err
@@ -296,6 +300,56 @@ func printNodes(nodes []api.Node) error {
 	}
 }
 
+func printSecrets(secrets []api.Secret) error {
+	switch format {
+	case formatJSON:
+		return printJSON(secrets)
+	default:
+		if err := printTableRow("NAME", "CREATED", "UPDATED"); err != nil {
+			return err
+		}
+		for _, secret := range secrets {
+			if err := printTableRow(
+				secret.Name,
+				secret.Created,
+				secret.Updated,
+			); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+func printTasks(tasks []api.Task) error {
+	switch format {
+	case formatJSON:
+		return printJSON(tasks)
+	default:
+		if err := printTableRow(
+			"ID",
+			"EXPERIMENT",
+			"NAME",
+			"AUTHOR",
+			"STATUS",
+		); err != nil {
+			return err
+		}
+		for _, task := range tasks {
+			if err := printTableRow(
+				task.ID,
+				task.ExperimentID,
+				task.Name,
+				task.Author.Name,
+				executionsStatus(task.Executions),
+			); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
 func printWorkspaces(workspaces []api.Workspace) error {
 	switch format {
 	case formatJSON:
@@ -379,9 +433,9 @@ func executionStatus(state api.ExecutionState) string {
 	}
 }
 
-func experimentStatus(experiment api.Experiment) string {
+func executionsStatus(executions []api.Execution) string {
 	counts := make(map[string]int)
-	for _, execution := range experiment.Executions {
+	for _, execution := range executions {
 		status := executionStatus(execution.State)
 		count, ok := counts[status]
 		if ok {
