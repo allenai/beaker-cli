@@ -16,6 +16,8 @@ github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d h1:licZJFw2RwpH
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d/go.mod h1:asat636LX7Bqt5lYEZ27JNDcqxfjdBQuJ/MM4CN/Lzo=
 github.com/beaker/client v0.0.0-20210122235831-9ac089f7b23e h1:6hq80XPB7EnkvYnTGo6K7cr6VNipTNS6WlaEU/nUaX0=
 github.com/beaker/client v0.0.0-20210122235831-9ac089f7b23e/go.mod h1:D0s5YdnSsRWWTegUjTasZ/nusfTfaZZffpUvZPZ30BI=
+github.com/beaker/client v0.0.0-20210201205000-a0f124a133ca h1:QgwEB6YGmJNxblJv8apYsmvnR5Mgn7Xsf926zMhKJAA=
+github.com/beaker/client v0.0.0-20210201205000-a0f124a133ca/go.mod h1:D0s5YdnSsRWWTegUjTasZ/nusfTfaZZffpUvZPZ30BI=
 github.com/beaker/fileheap v0.0.0-20200106234808-5c201f881591 h1:BKRHEopDd5dTFHRGB0dP1Xpon6z3LJciIyDuSf63+w4=
 github.com/beaker/fileheap v0.0.0-20200106234808-5c201f881591/go.mod h1:6LpIYqPQ8c/lIzNI0LtQGFJceTbx15gdbFBCP7u5LMQ=
 github.com/cpuguy83/go-md2man/v2 v2.0.0/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsrgA7czyZG/E6dU=
