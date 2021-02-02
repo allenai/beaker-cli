@@ -59,17 +59,21 @@ func newClusterCreateCommand() *cobra.Command {
 		}
 
 		account, clusterName := parts[0], parts[1]
+		var nodeSpec *api.NodeResources
+		if cpuCount != 0 || gpuCount != 0 || gpuType != "" || memory != "" {
+			nodeSpec = &api.NodeResources{
+				CPUCount: cpuCount,
+				GPUCount: gpuCount,
+				GPUType:  gpuType,
+				Memory:   memory,
+			}
+		}
 		spec := api.ClusterSpec{
 			Name:        clusterName,
 			Capacity:    maxSize,
 			Preemptible: preemptible,
 			Protected:   protected,
-			Spec: api.NodeResources{
-				CPUCount: cpuCount,
-				GPUCount: gpuCount,
-				GPUType:  gpuType,
-				Memory:   memory,
-			},
+			Spec:        nodeSpec,
 		}
 
 		cluster, err := beaker.CreateCluster(ctx, account, spec)
