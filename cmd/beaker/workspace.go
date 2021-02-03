@@ -19,9 +19,9 @@ func newWorkspaceCommand() *cobra.Command {
 	cmd.AddCommand(newWorkspaceCreateCommand())
 	cmd.AddCommand(newWorkspaceDatasetsCommand())
 	cmd.AddCommand(newWorkspaceExperimentsCommand())
+	cmd.AddCommand(newWorkspaceGetCommand())
 	cmd.AddCommand(newWorkspaceGroupsCommand())
 	cmd.AddCommand(newWorkspaceImagesCommand())
-	cmd.AddCommand(newWorkspaceInspectCommand())
 	cmd.AddCommand(newWorkspaceListCommand())
 	cmd.AddCommand(newWorkspaceMoveCommand())
 	cmd.AddCommand(newWorkspacePermissionsCommand())
@@ -273,11 +273,12 @@ func newWorkspaceImagesCommand() *cobra.Command {
 	return cmd
 }
 
-func newWorkspaceInspectCommand() *cobra.Command {
+func newWorkspaceGetCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "inspect <workspace...>",
-		Short: "Display detailed information about one or more workspaces",
-		Args:  cobra.MinimumNArgs(1),
+		Use:     "get <workspace...>",
+		Aliases: []string{"inspect"},
+		Short:   "Display detailed information about one or more workspaces",
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var workspaces []api.Workspace
 			for _, name := range args {
@@ -340,7 +341,7 @@ func newWorkspacePermissionsCommand() *cobra.Command {
 		Short: "Manage workspace permissions",
 	}
 	cmd.AddCommand(newWorkspacePermissionsGrantCommand())
-	cmd.AddCommand(newWorkspacePermissionsInspectCommand())
+	cmd.AddCommand(newWorkspacePermissionsGetCommand())
 	cmd.AddCommand(newWorkspacePermissionsRevokeCommand())
 	cmd.AddCommand(newWorkspacePermissionsSetVisibilityCommand())
 	return cmd
@@ -389,11 +390,12 @@ func newWorkspacePermissionsGrantCommand() *cobra.Command {
 	}
 }
 
-func newWorkspacePermissionsInspectCommand() *cobra.Command {
+func newWorkspacePermissionsGetCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "inspect <workspace>",
-		Short: "Inspect workspace permissions",
-		Args:  cobra.ExactArgs(1),
+		Use:     "get <workspace>",
+		Aliases: []string{"inspect"},
+		Short:   "Get workspace permissions",
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			workspace, err := beaker.Workspace(ctx, args[0])
 			if err != nil {

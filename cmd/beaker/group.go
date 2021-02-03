@@ -19,7 +19,7 @@ func newGroupCommand() *cobra.Command {
 	cmd.AddCommand(newGroupDeleteCommand())
 	cmd.AddCommand(newGroupExecutionsCommand())
 	cmd.AddCommand(newGroupExperimentsCommand())
-	cmd.AddCommand(newGroupInspectCommand())
+	cmd.AddCommand(newGroupGetCommand())
 	cmd.AddCommand(newGroupRemoveCommand())
 	cmd.AddCommand(newGroupRenameCommand())
 	cmd.AddCommand(newGroupTasksCommand())
@@ -186,11 +186,12 @@ func newGroupExperimentsCommand() *cobra.Command {
 	}
 }
 
-func newGroupInspectCommand() *cobra.Command {
+func newGroupGetCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "inspect <group...>",
-		Short: "Display detailed information about one or more groups",
-		Args:  cobra.MinimumNArgs(1),
+		Use:     "get <group...>",
+		Aliases: []string{"inspect"},
+		Short:   "Display detailed information about one or more groups",
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var groups []api.Group
 			for _, name := range args {

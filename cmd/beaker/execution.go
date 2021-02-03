@@ -13,17 +13,18 @@ func newExecutionCommand() *cobra.Command {
 		Use:   "execution <command>",
 		Short: "Manage executions",
 	}
-	cmd.AddCommand(newExecutionInspectCommand())
+	cmd.AddCommand(newExecutionGetCommand())
 	cmd.AddCommand(newExecutionLogsCommand())
 	cmd.AddCommand(newExecutionResultsCommand())
 	return cmd
 }
 
-func newExecutionInspectCommand() *cobra.Command {
+func newExecutionGetCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "inspect <execution...>",
-		Short: "Display detailed information about one or more executions",
-		Args:  cobra.MinimumNArgs(1),
+		Use:     "get <execution...>",
+		Aliases: []string{"inspect"},
+		Short:   "Display detailed information about one or more executions",
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var executions []api.Execution
 			for _, id := range args {
