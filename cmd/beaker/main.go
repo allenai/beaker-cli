@@ -216,12 +216,9 @@ func login() error {
 // Returns true, nil if the user enters yes.
 func confirm(prompt string) (bool, error) {
 	fmt.Print(prompt, " [y/N]: ")
-	reader := bufio.NewReader(os.Stdin)
-	for {
-		input, err := reader.ReadString('\n')
-		if err != nil {
-			return false, err
-		}
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		input := scanner.Text()
 		input = strings.TrimSpace(input)
 		input = strings.ToLower(input)
 		switch input {
@@ -233,4 +230,5 @@ func confirm(prompt string) (bool, error) {
 			fmt.Print("Please type 'yes' or 'no': ")
 		}
 	}
+	return false, scanner.Err()
 }
