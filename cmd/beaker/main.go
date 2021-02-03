@@ -79,6 +79,7 @@ func main() {
 	root.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Quiet mode")
 	root.PersistentFlags().StringVar(&format, "format", "", "Output format")
 
+	root.AddCommand(newAccountCommand())
 	root.AddCommand(newClusterCommand())
 	root.AddCommand(newConfigCommand())
 	root.AddCommand(newDatasetCommand())
@@ -87,6 +88,7 @@ func main() {
 	root.AddCommand(newGroupCommand())
 	root.AddCommand(newImageCommand())
 	root.AddCommand(newNodeCommand())
+	root.AddCommand(newOrganizationCommand())
 	root.AddCommand(newSecretCommand())
 	root.AddCommand(newTaskCommand())
 	root.AddCommand(newWorkspaceCommand())
@@ -208,4 +210,25 @@ func login() error {
 		break
 	}
 	return config.WriteConfig(beakerConfig, config.GetFilePath())
+}
+
+// confirm prompts the user for a yes/no answer and defaults to no.
+// Returns true, nil if the user enters yes.
+func confirm(prompt string) (bool, error) {
+	fmt.Print(prompt, " [y/N]: ")
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		input := scanner.Text()
+		input = strings.TrimSpace(input)
+		input = strings.ToLower(input)
+		switch input {
+		case "y", "yes":
+			return true, nil
+		case "", "n", "no":
+			return false, nil
+		default:
+			fmt.Print("Please type 'yes' or 'no': ")
+		}
+	}
+	return false, scanner.Err()
 }

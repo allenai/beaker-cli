@@ -23,12 +23,36 @@ func newImageCommand() *cobra.Command {
 		Use:   "image <command>",
 		Short: "Manage images",
 	}
+	cmd.AddCommand(newImageCommitCommand())
 	cmd.AddCommand(newImageCreateCommand())
 	cmd.AddCommand(newImageDeleteCommand())
 	cmd.AddCommand(newImageInspectCommand())
 	cmd.AddCommand(newImagePullCommand())
 	cmd.AddCommand(newImageRenameCommand())
 	return cmd
+}
+
+func newImageCommitCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "commit <image>",
+		Short: "Commit an image",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			image, err := beaker.Image(ctx, args[0])
+			if err != nil {
+				return err
+			}
+
+			if err := image.Commit(ctx); err != nil {
+				return err
+			}
+
+			if !quiet {
+				fmt.Printf("Committed %s\n", color.BlueString(args[0]))
+			}
+			return nil
+		},
+	}
 }
 
 func newImageCreateCommand() *cobra.Command {
@@ -153,7 +177,9 @@ func newImageDeleteCommand() *cobra.Command {
 				return err
 			}
 
-			fmt.Printf("Deleted %s\n", color.BlueString(args[0]))
+			if !quiet {
+				fmt.Printf("Deleted %s\n", color.BlueString(args[0]))
+			}
 			return nil
 		},
 	}

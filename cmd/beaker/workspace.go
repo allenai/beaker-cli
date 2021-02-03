@@ -23,8 +23,8 @@ func newWorkspaceCommand() *cobra.Command {
 	cmd.AddCommand(newWorkspaceImagesCommand())
 	cmd.AddCommand(newWorkspaceInspectCommand())
 	cmd.AddCommand(newWorkspaceListCommand())
-	cmd.AddCommand(newWorkspacePermissionsCommand())
 	cmd.AddCommand(newWorkspaceMoveCommand())
+	cmd.AddCommand(newWorkspacePermissionsCommand())
 	cmd.AddCommand(newWorkspaceRenameCommand())
 	cmd.AddCommand(newWorkspaceUnarchiveCommand())
 	return cmd

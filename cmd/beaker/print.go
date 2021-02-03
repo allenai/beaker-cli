@@ -263,6 +263,33 @@ func printImages(images []api.Image) error {
 	}
 }
 
+func printMembers(members []api.OrgMembership) error {
+	switch format {
+	case formatJSON:
+		return printJSON(members)
+	default:
+		if err := printTableRow(
+			"ID",
+			"NAME",
+			"DISPLAY NAME",
+			"ROLE",
+		); err != nil {
+			return err
+		}
+		for _, member := range members {
+			if err := printTableRow(
+				member.User.ID,
+				member.User.Name,
+				member.User.DisplayName,
+				member.Role,
+			); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
 func printNodes(nodes []api.Node) error {
 	switch format {
 	case formatJSON:
@@ -292,6 +319,31 @@ func printNodes(nodes []api.Node) error {
 				node.Limits.GPUType,
 				node.Limits.Memory,
 				status,
+			); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+func printOrganizations(orgs []api.Organization) error {
+	switch format {
+	case formatJSON:
+		return printJSON(orgs)
+	default:
+		if err := printTableRow(
+			"ID",
+			"NAME",
+			"DISPLAY NAME",
+		); err != nil {
+			return err
+		}
+		for _, org := range orgs {
+			if err := printTableRow(
+				org.ID,
+				org.Name,
+				org.DisplayName,
 			); err != nil {
 				return err
 			}
@@ -342,6 +394,33 @@ func printTasks(tasks []api.Task) error {
 				task.Name,
 				task.Author.Name,
 				executionsStatus(task.Executions),
+			); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+func printUsers(users []api.UserDetail) error {
+	switch format {
+	case formatJSON:
+		return printJSON(users)
+	default:
+		if err := printTableRow(
+			"ID",
+			"NAME",
+			"DISPLAY NAME",
+			"ROLE",
+		); err != nil {
+			return err
+		}
+		for _, user := range users {
+			if err := printTableRow(
+				user.ID,
+				user.Name,
+				user.DisplayName,
+				user.Role,
 			); err != nil {
 				return err
 			}
