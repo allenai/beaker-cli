@@ -222,7 +222,7 @@ func confirm(prompt string) (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		input = strings.TrimSuffix(input, "\n")
+		input = strings.TrimSpace(input)
 		input = strings.ToLower(input)
 		switch input {
 		case "y", "yes":
