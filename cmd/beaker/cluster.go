@@ -24,7 +24,6 @@ func newClusterCommand() *cobra.Command {
 	cmd.AddCommand(newClusterInspectCommand())
 	cmd.AddCommand(newClusterListCommand())
 	cmd.AddCommand(newClusterNodesCommand())
-	cmd.AddCommand(newClusterSetPriorityCommand())
 	cmd.AddCommand(newClusterTerminateCommand())
 	cmd.AddCommand(newClusterUpdateCommand())
 	return cmd
@@ -233,33 +232,6 @@ func newClusterNodesCommand() *cobra.Command {
 				return err
 			}
 			return printNodes(nodes)
-		},
-	}
-}
-
-func newClusterSetPriorityCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "set-priority <cluster> <execution> <low|normal|high|urgent>",
-		Short: "Set the priority of an execution within the cluster",
-		Args:  cobra.ExactArgs(3),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			var priority api.Priority
-			switch args[2] {
-			case "low":
-				priority = api.LowPriority
-			case "normal":
-				priority = api.NormalPriority
-			case "high":
-				priority = api.HighPriority
-			case "urgent":
-				priority = api.UrgentPriority
-			default:
-				return fmt.Errorf("invalid priority: %q; must be low, normal, high, or urgent", args[2])
-			}
-
-			return beaker.Cluster(args[0]).PatchExecution(ctx, args[1], api.ExecutionPatchSpec{
-				Priority: priority,
-			})
 		},
 	}
 }
