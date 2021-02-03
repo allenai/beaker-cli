@@ -30,7 +30,6 @@ func newExperimentCommand() *cobra.Command {
 	cmd.AddCommand(newExperimentInspectCommand())
 	cmd.AddCommand(newExperimentRenameCommand())
 	cmd.AddCommand(newExperimentResumeCommand())
-	cmd.AddCommand(newExperimentSetDescriptionCommand())
 	cmd.AddCommand(newExperimentSpecCommand())
 	cmd.AddCommand(newExperimentStopCommand())
 	cmd.AddCommand(newExperimentTasksCommand())
@@ -279,21 +278,6 @@ func newExperimentResumeCommand() *cobra.Command {
 		return nil
 	}
 	return cmd
-}
-
-func newExperimentSetDescriptionCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "set-description <experiment> <description>",
-		Short: "Set the description of an experiment",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			experiment, err := beaker.Experiment(ctx, args[0])
-			if err != nil {
-				return err
-			}
-			return experiment.SetDescription(ctx, args[1])
-		},
-	}
 }
 
 func newExperimentSpecCommand() *cobra.Command {

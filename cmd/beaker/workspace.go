@@ -26,7 +26,6 @@ func newWorkspaceCommand() *cobra.Command {
 	cmd.AddCommand(newWorkspaceMoveCommand())
 	cmd.AddCommand(newWorkspacePermissionsCommand())
 	cmd.AddCommand(newWorkspaceRenameCommand())
-	cmd.AddCommand(newWorkspaceSetDescriptionCommand())
 	cmd.AddCommand(newWorkspaceUnarchiveCommand())
 	return cmd
 }
@@ -528,21 +527,6 @@ func newWorkspaceRenameCommand() *cobra.Command {
 				fmt.Printf("Renamed %s to %s\n", color.BlueString(args[0]), args[1])
 			}
 			return nil
-		},
-	}
-}
-
-func newWorkspaceSetDescriptionCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "set-description <workspace> <description>",
-		Short: "Set the description of an workspace",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			workspace, err := beaker.Workspace(ctx, args[0])
-			if err != nil {
-				return err
-			}
-			return workspace.SetDescription(ctx, args[1])
 		},
 	}
 }

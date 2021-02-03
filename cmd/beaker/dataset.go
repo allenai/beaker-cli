@@ -26,7 +26,6 @@ func newDatasetCommand() *cobra.Command {
 	cmd.AddCommand(newDatasetInspectCommand())
 	cmd.AddCommand(newDatasetLsCommand())
 	cmd.AddCommand(newDatasetRenameCommand())
-	cmd.AddCommand(newDatasetSetDescriptionCommand())
 	cmd.AddCommand(newDatasetSizeCommand())
 	cmd.AddCommand(newDatasetStreamFileCommand())
 	return cmd
@@ -309,21 +308,6 @@ func newDatasetRenameCommand() *cobra.Command {
 				fmt.Printf("Renamed %s to %s\n", color.BlueString(info.ID), info.DisplayID())
 			}
 			return nil
-		},
-	}
-}
-
-func newDatasetSetDescriptionCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "set-description <dataset> <description>",
-		Short: "Set the description of an dataset",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			dataset, err := beaker.Dataset(ctx, args[0])
-			if err != nil {
-				return err
-			}
-			return dataset.SetDescription(ctx, args[1])
 		},
 	}
 }
