@@ -12,7 +12,7 @@ func newTaskCommand() *cobra.Command {
 		Short: "Manage tasks",
 	}
 	cmd.AddCommand(newTaskExecutionsCommand())
-	cmd.AddCommand(newTaskInspectCommand())
+	cmd.AddCommand(newTaskGetCommand())
 	cmd.AddCommand(newTaskLogsCommand())
 	cmd.AddCommand(newTaskPreemptCommand())
 	return cmd
@@ -33,11 +33,12 @@ func newTaskExecutionsCommand() *cobra.Command {
 	}
 }
 
-func newTaskInspectCommand() *cobra.Command {
+func newTaskGetCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "inspect <task...>",
-		Short: "Display detailed information about one or more tasks",
-		Args:  cobra.MinimumNArgs(1),
+		Use:     "get <task...>",
+		Aliases: []string{"inspect"},
+		Short:   "Display detailed information about one or more tasks",
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var tasks []api.Task
 			for _, id := range args {

@@ -13,7 +13,7 @@ func newNodeCommand() *cobra.Command {
 	cmd.AddCommand(newNodeCordonCommand())
 	cmd.AddCommand(newNodeDeleteCommand())
 	cmd.AddCommand(newNodeExecutionsCommand())
-	cmd.AddCommand(newNodeInspectCommand())
+	cmd.AddCommand(newNodeGetCommand())
 	cmd.AddCommand(newNodeUncordonCommand())
 	return cmd
 }
@@ -58,11 +58,12 @@ func newNodeExecutionsCommand() *cobra.Command {
 	}
 }
 
-func newNodeInspectCommand() *cobra.Command {
+func newNodeGetCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "inspect <node...>",
-		Short: "Display detailed information about one or more nodes",
-		Args:  cobra.MinimumNArgs(1),
+		Use:     "get <node...>",
+		Aliases: []string{"inspect"},
+		Short:   "Display detailed information about one or more nodes",
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var nodes []api.Node
 			for _, id := range args {

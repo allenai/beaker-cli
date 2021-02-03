@@ -23,7 +23,7 @@ func newDatasetCommand() *cobra.Command {
 	cmd.AddCommand(newDatasetCreateCommand())
 	cmd.AddCommand(newDatasetDeleteCommand())
 	cmd.AddCommand(newDatasetFetchCommand())
-	cmd.AddCommand(newDatasetInspectCommand())
+	cmd.AddCommand(newDatasetGetCommand())
 	cmd.AddCommand(newDatasetLsCommand())
 	cmd.AddCommand(newDatasetRenameCommand())
 	cmd.AddCommand(newDatasetSizeCommand())
@@ -199,11 +199,12 @@ func newDatasetFetchCommand() *cobra.Command {
 	return cmd
 }
 
-func newDatasetInspectCommand() *cobra.Command {
+func newDatasetGetCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "inspect <dataset...>",
-		Short: "Display detailed information about one or more datasets",
-		Args:  cobra.MinimumNArgs(1),
+		Use:     "get <dataset...>",
+		Aliases: []string{"inspect"},
+		Short:   "Display detailed information about one or more datasets",
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var datasets []api.Dataset
 			for _, name := range args {

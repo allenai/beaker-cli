@@ -26,7 +26,7 @@ func newImageCommand() *cobra.Command {
 	cmd.AddCommand(newImageCommitCommand())
 	cmd.AddCommand(newImageCreateCommand())
 	cmd.AddCommand(newImageDeleteCommand())
-	cmd.AddCommand(newImageInspectCommand())
+	cmd.AddCommand(newImageGetCommand())
 	cmd.AddCommand(newImagePullCommand())
 	cmd.AddCommand(newImageRenameCommand())
 	return cmd
@@ -185,11 +185,12 @@ func newImageDeleteCommand() *cobra.Command {
 	}
 }
 
-func newImageInspectCommand() *cobra.Command {
+func newImageGetCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "inspect <image...>",
-		Short: "Display detailed information about one or more images",
-		Args:  cobra.MinimumNArgs(1),
+		Use:     "get <image...>",
+		Aliases: []string{"inspect"},
+		Short:   "Display detailed information about one or more images",
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var images []api.Image
 			for _, name := range args {

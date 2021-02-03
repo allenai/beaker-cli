@@ -27,7 +27,7 @@ func newExperimentCommand() *cobra.Command {
 	cmd.AddCommand(newExperimentDeleteCommand())
 	cmd.AddCommand(newExperimentExecutionsCommand())
 	cmd.AddCommand(newExperimentGroupsCommand())
-	cmd.AddCommand(newExperimentInspectCommand())
+	cmd.AddCommand(newExperimentGetCommand())
 	cmd.AddCommand(newExperimentRenameCommand())
 	cmd.AddCommand(newExperimentResumeCommand())
 	cmd.AddCommand(newExperimentSpecCommand())
@@ -202,11 +202,12 @@ func newExperimentGroupsCommand() *cobra.Command {
 	}
 }
 
-func newExperimentInspectCommand() *cobra.Command {
+func newExperimentGetCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "inspect <experiment...>",
-		Short: "Display detailed information about one or more experiments",
-		Args:  cobra.MinimumNArgs(1),
+		Use:     "get <experiment...>",
+		Aliases: []string{"inspect"},
+		Short:   "Display detailed information about one or more experiments",
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var experiments []api.Experiment
 			for _, name := range args {

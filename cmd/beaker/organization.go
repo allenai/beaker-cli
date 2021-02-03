@@ -11,7 +11,7 @@ func newOrganizationCommand() *cobra.Command {
 		Short: "Manage organizations",
 	}
 	cmd.AddCommand(newOrganizationCreateCommand())
-	cmd.AddCommand(newOrganizationInspectCommand())
+	cmd.AddCommand(newOrganizationGetCommand())
 	cmd.AddCommand(newOrganizationListCommand())
 	cmd.AddCommand(newOrganizationMembersCommand())
 	return cmd
@@ -52,11 +52,12 @@ func newOrganizationCreateCommand() *cobra.Command {
 	return cmd
 }
 
-func newOrganizationInspectCommand() *cobra.Command {
+func newOrganizationGetCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "inspect <organization...>",
-		Short: "Display detailed information about one or more organizations",
-		Args:  cobra.MinimumNArgs(1),
+		Use:     "get <organization...>",
+		Aliases: []string{"inspect"},
+		Short:   "Display detailed information about one or more organizations",
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var orgs []api.Organization
 			for _, name := range args {
@@ -103,7 +104,7 @@ func newOrganizationMembersCommand() *cobra.Command {
 		Short: "Manage organization membership",
 	}
 	cmd.AddCommand(newOrganizationMemberAddCommand())
-	cmd.AddCommand(newOrganizationMemberInspectCommand())
+	cmd.AddCommand(newOrganizationMemberGetCommand())
 	cmd.AddCommand(newOrganizationMemberListCommand())
 	cmd.AddCommand(newOrganizationMemberRemoveCommand())
 	return cmd
@@ -125,11 +126,12 @@ func newOrganizationMemberAddCommand() *cobra.Command {
 	return cmd
 }
 
-func newOrganizationMemberInspectCommand() *cobra.Command {
+func newOrganizationMemberGetCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "inspect <organization> <member...>",
-		Short: "Display detailed information about one or more organization members",
-		Args:  cobra.MinimumNArgs(2),
+		Use:     "get <organization> <member...>",
+		Aliases: []string{"inspect"},
+		Short:   "Display detailed information about one or more organization members",
+		Args:    cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var members []api.OrgMembership
 			for _, name := range args[1:] {

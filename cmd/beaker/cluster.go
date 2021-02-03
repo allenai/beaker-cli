@@ -21,7 +21,7 @@ func newClusterCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newClusterCreateCommand())
 	cmd.AddCommand(newClusterExecutionsCommand())
-	cmd.AddCommand(newClusterInspectCommand())
+	cmd.AddCommand(newClusterGetCommand())
 	cmd.AddCommand(newClusterListCommand())
 	cmd.AddCommand(newClusterNodesCommand())
 	cmd.AddCommand(newClusterTerminateCommand())
@@ -153,11 +153,12 @@ func newClusterExecutionsCommand() *cobra.Command {
 	}
 }
 
-func newClusterInspectCommand() *cobra.Command {
+func newClusterGetCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "inspect <cluster...>",
-		Short: "Display detailed information about one or more clusters",
-		Args:  cobra.MinimumNArgs(1),
+		Use:     "get <cluster...>",
+		Aliases: []string{"inspect"},
+		Short:   "Display detailed information about one or more clusters",
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var clusters []api.Cluster
 			for _, id := range args {
