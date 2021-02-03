@@ -33,9 +33,8 @@ func newAccountGenerateTokenCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&noUpdateConfig, "no-update-config", false, "Don't update config with the new token.")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		fmt.Println("Generating a new token will invalidate your old token.")
-		fmt.Print("Are you sure want to generate a new token (yes/[no])? ")
-		confirmed, err := confirm()
+		confirmed, err := confirm(`Generating a new token will invalidate your old token.
+Are you sure want to generate a new token?`)
 		if err != nil {
 			return err
 		}

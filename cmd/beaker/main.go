@@ -214,7 +214,8 @@ func login() error {
 
 // confirm prompts the user for a yes/no answer and defaults to no.
 // Returns true, nil if the user enters yes.
-func confirm() (bool, error) {
+func confirm(prompt string) (bool, error) {
+	fmt.Print(prompt, " [y/N]: ")
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		input, err := reader.ReadString('\n')
