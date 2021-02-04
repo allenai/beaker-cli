@@ -14,6 +14,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const defaultConcurrency = 8
+
 func newDatasetCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "dataset <command>",
@@ -68,7 +70,11 @@ func newDatasetCreateCommand() *cobra.Command {
 	cmd.Flags().StringVar(&description, "desc", "", "Assign a description to the dataset")
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the dataset")
 	cmd.Flags().StringVarP(&workspace, "workspace", "w", "", "Workspace where the dataset will be placed")
-	cmd.Flags().IntVar(&concurrency, "concurrency", 1, "Number of files to upload at a time")
+	cmd.Flags().IntVar(
+		&concurrency,
+		"concurrency",
+		defaultConcurrency,
+		"Number of files to upload at a time")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		source := args[0]
@@ -176,7 +182,11 @@ func newDatasetFetchCommand() *cobra.Command {
 	var outputPath string
 	var concurrency int
 	cmd.Flags().StringVarP(&outputPath, "output", "o", "", "Target path for fetched data")
-	cmd.Flags().IntVar(&concurrency, "concurrency", 1, "Number of files to download at a time")
+	cmd.Flags().IntVar(
+		&concurrency,
+		"concurrency",
+		defaultConcurrency,
+		"Number of files to download at a time")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		dataset, err := beaker.Dataset(ctx, args[0])
