@@ -14,6 +14,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const defaultConcurrency = 8
+
 func newDatasetCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "dataset <command>",
@@ -64,9 +66,15 @@ func newDatasetCreateCommand() *cobra.Command {
 	var description string
 	var name string
 	var workspace string
+	var concurrency int
 	cmd.Flags().StringVar(&description, "desc", "", "Assign a description to the dataset")
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the dataset")
 	cmd.Flags().StringVarP(&workspace, "workspace", "w", "", "Workspace where the dataset will be placed")
+	cmd.Flags().IntVar(
+		&concurrency,
+		"concurrency",
+		defaultConcurrency,
+		"Number of files to upload at a time")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		source := args[0]
@@ -112,7 +120,7 @@ func newDatasetCreateCommand() *cobra.Command {
 				}
 				tracker = cli.BoundedTracker(ctx, files, bytes)
 			}
-			if err := cli.Upload(ctx, source, dataset.Storage, "", tracker, 32); err != nil {
+			if err := cli.Upload(ctx, source, dataset.Storage, "", tracker, concurrency); err != nil {
 				return err
 			}
 		} else {
@@ -172,7 +180,13 @@ func newDatasetFetchCommand() *cobra.Command {
 	}
 
 	var outputPath string
+	var concurrency int
 	cmd.Flags().StringVarP(&outputPath, "output", "o", "", "Target path for fetched data")
+	cmd.Flags().IntVar(
+		&concurrency,
+		"concurrency",
+		defaultConcurrency,
+		"Number of files to download at a time")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		dataset, err := beaker.Dataset(ctx, args[0])
@@ -194,7 +208,7 @@ func newDatasetFetchCommand() *cobra.Command {
 		} else {
 			tracker = cli.UnboundedTracker(ctx)
 		}
-		return cli.Download(ctx, dataset.Storage, "", outputPath, tracker, 32)
+		return cli.Download(ctx, dataset.Storage, "", outputPath, tracker, concurrency)
 	}
 	return cmd
 }
