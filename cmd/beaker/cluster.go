@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/allenai/bytefmt"
 	"github.com/beaker/client/api"
 	"github.com/beaker/client/client"
 	"github.com/fatih/color"
@@ -58,6 +59,14 @@ func newClusterCreateCommand() *cobra.Command {
 			return fmt.Errorf("cluster names must be fully scoped in the form %s", color.GreenString("account/cluster"))
 		}
 
+		var memorySize *bytefmt.Size
+		if memory != "" {
+			var err error
+			if memorySize, err = bytefmt.Parse(memory); err != nil {
+				return err
+			}
+		}
+
 		account, clusterName := parts[0], parts[1]
 		var nodeSpec *api.NodeResources
 		if cpuCount != 0 || gpuCount != 0 || gpuType != "" || memory != "" {
@@ -65,7 +74,7 @@ func newClusterCreateCommand() *cobra.Command {
 				CPUCount: cpuCount,
 				GPUCount: gpuCount,
 				GPUType:  gpuType,
-				Memory:   memory,
+				Memory:   memorySize,
 			}
 		}
 		spec := api.ClusterSpec{

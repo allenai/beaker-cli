@@ -16,6 +16,8 @@ github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d h1:licZJFw2RwpH
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d/go.mod h1:asat636LX7Bqt5lYEZ27JNDcqxfjdBQuJ/MM4CN/Lzo=
 github.com/allenai/bytefmt v0.0.0-20210208214322-ab55ba868eca h1:7WYOGQ/L35dxndHD1lbAHjhjXLqzSM9KrrPzqMaYCG0=
 github.com/allenai/bytefmt v0.0.0-20210208214322-ab55ba868eca/go.mod h1:3hhcDqHXjwM3JBHx4cX79jG5G3V8zKsjeutbhJ3XjI0=
+github.com/allenai/bytefmt v0.1.0 h1:reMpG/nmrFWpKTb5ZV2mFKzEhyOlmKtUdkUyIOpD+sM=
+github.com/allenai/bytefmt v0.1.0/go.mod h1:3hhcDqHXjwM3JBHx4cX79jG5G3V8zKsjeutbhJ3XjI0=
 github.com/beaker/client v0.0.0-20210209054745-7ef23ecedb2e h1:ex5EoBYRUMMFfNIeHa6CQAA7JEAGFyseY/UrHL9genI=
 github.com/beaker/client v0.0.0-20210209054745-7ef23ecedb2e/go.mod h1:LbwtcaxTIHMPW27eVMIuJqOd41EFyDq3cAp2pHJuzno=
 github.com/beaker/fileheap v0.0.0-20200106234808-5c201f881591 h1:BKRHEopDd5dTFHRGB0dP1Xpon6z3LJciIyDuSf63+w4=
