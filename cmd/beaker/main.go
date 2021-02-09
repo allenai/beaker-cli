@@ -84,6 +84,7 @@ func main() {
 	root.AddCommand(newConfigCommand())
 	root.AddCommand(newDatasetCommand())
 	root.AddCommand(newExecutionCommand())
+	root.AddCommand(newExecutorCommand())
 	root.AddCommand(newExperimentCommand())
 	root.AddCommand(newGroupCommand())
 	root.AddCommand(newImageCommand())
