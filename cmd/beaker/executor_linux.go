@@ -79,8 +79,10 @@ func newExecutorCommand() *cobra.Command {
 func newExecutorInstallCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "install <cluster>",
-		Short: "Install the Beaker executor",
-		Args:  cobra.ExactArgs(1),
+		Short: "Install and start the Beaker executor. May require sudo.",
+		Long: `Install the Beaker executor, start it, and configure it to run on boot.
+Requires access to /etc, /var, and /usr/bin. Also requires access to systemd.`,
+		Args: cobra.ExactArgs(1),
 	}
 
 	var configDir string
