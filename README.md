@@ -68,5 +68,45 @@ Beaker can also be installed from source using standard [Go](https://golang.org/
 ```bash
 go get -u github.com/allenai/beaker/...
 ```
+
+## Executor
+
+The Beaker executor runs Beaker jobs.
+If you want to run Beaker jobs on your own machines, you can install the Beaker executor.
+
+### Prerequisites
+
+The Beaker executor is only supported on Linux.
+It requires [Docker](https://docs.docker.com/engine/install/)
+and the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+if using GPUs.
+
+### Installation
+
+Each executor belongs to a cluster.
+A cluster is a grouping of machines used for scheduling tasks.
+If a task is scheduled to a cluster, it may run on any of the machines in that cluster.
+
+You may choose an existing cluster from the existing [on-premise clusters](https://beaker.org/clusters) or create a new one:
+
+```
+beaker cluster create <name>
+```
+
+Next, install the executor:
+
+```
+beaker executor install <cluster>
+```
+
+When creating new experiments, specify the `cluster` property in each task
+and they will run on your machine.
+
+```yaml
+tasks:
+- context:
+    cluster: <cluster>
+```
+
 ## Notices
 [Beaker dependencies and licenses](https://app.fossa.io/attribution/a462337b-67c8-418e-8a05-9b6f67de4626)
