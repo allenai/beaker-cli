@@ -18,8 +18,8 @@ github.com/allenai/bytefmt v0.0.0-20210208214322-ab55ba868eca h1:7WYOGQ/L35dxndH
 github.com/allenai/bytefmt v0.0.0-20210208214322-ab55ba868eca/go.mod h1:3hhcDqHXjwM3JBHx4cX79jG5G3V8zKsjeutbhJ3XjI0=
 github.com/allenai/bytefmt v0.1.0 h1:reMpG/nmrFWpKTb5ZV2mFKzEhyOlmKtUdkUyIOpD+sM=
 github.com/allenai/bytefmt v0.1.0/go.mod h1:3hhcDqHXjwM3JBHx4cX79jG5G3V8zKsjeutbhJ3XjI0=
-github.com/beaker/client v0.0.0-20210209054745-7ef23ecedb2e h1:ex5EoBYRUMMFfNIeHa6CQAA7JEAGFyseY/UrHL9genI=
-github.com/beaker/client v0.0.0-20210209054745-7ef23ecedb2e/go.mod h1:LbwtcaxTIHMPW27eVMIuJqOd41EFyDq3cAp2pHJuzno=
+github.com/beaker/client v0.0.0-20210209230245-b118fbaa33b3 h1:wfMicSgDQfvR3TDkT9zGJz1xF1VJ20mPWs1dHYkk5Rg=
+github.com/beaker/client v0.0.0-20210209230245-b118fbaa33b3/go.mod h1:LbwtcaxTIHMPW27eVMIuJqOd41EFyDq3cAp2pHJuzno=
 github.com/beaker/fileheap v0.0.0-20200106234808-5c201f881591 h1:BKRHEopDd5dTFHRGB0dP1Xpon6z3LJciIyDuSf63+w4=
 github.com/beaker/fileheap v0.0.0-20200106234808-5c201f881591/go.mod h1:6LpIYqPQ8c/lIzNI0LtQGFJceTbx15gdbFBCP7u5LMQ=
 github.com/cpuguy83/go-md2man/v2 v2.0.0/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsrgA7czyZG/E6dU=
