@@ -88,6 +88,8 @@ func newExecutorCommand() *cobra.Command {
 		Short: "Manage the executor",
 	}
 	cmd.AddCommand(newExecutorInstallCommand())
+	cmd.AddCommand(newExecutorRestartCommand())
+	cmd.AddCommand(newExecutorStopCommand())
 	return cmd
 }
 
@@ -152,6 +154,21 @@ Requires access to /etc, /var, and /usr/bin. Also requires access to systemd.`,
 		return startExecutor()
 	}
 	return cmd
+}
+
+func newExecutorRestartCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "restart",
+		Short: "Restart the executor",
+		Args:  cobra.NoArgs,
+		func(cmd *cobra.Command, args []string) error {
+			if err := stopExecutor(); err != nil {
+				return err
+			}
+
+			return startExecutor()
+		}
+	}
 }
 
 func newExecutorStopCommand() *cobra.Command {
