@@ -117,6 +117,11 @@ Requires access to /etc, /var, and /usr/bin. Also requires access to systemd.`,
 		"Writeable directory for storing Beaker datasets")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		if _, err := os.Stat(executorPath); err == nil {
+			return fmt.Errorf(`executor is already installed.
+Run "upgrade" to install the latest version or run "uninstall" before installing.`)
+		}
+
 		if err := os.MkdirAll(executorConfigDir, os.ModePerm); err != nil {
 			return err
 		}
