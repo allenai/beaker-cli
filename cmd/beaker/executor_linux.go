@@ -40,10 +40,10 @@ const (
 
 var (
 	// Path where executor configuration is stored.
-	executorConfigPath = path.Join(executorConfigDir, "config.yml")
+	executorConfigPath = path.Join(executorConfigDir, "executor-config.yml")
 
 	// Path where the Beaker token used by the executor is stored.
-	executorTokenPath = path.Join(executorConfigDir, "token")
+	executorTokenPath = path.Join(executorConfigDir, "executor-token")
 
 	// Path where the Systemd configuration file for the executor is stored.
 	executorSystemdPath = fmt.Sprintf("/etc/systemd/system/%s.service", executorService)
@@ -168,7 +168,14 @@ Run "upgrade" to install the latest version or run "uninstall" before installing
 			return err
 		}
 
-		return startExecutor()
+		if err := startExecutor(); err != nil {
+			return err
+		}
+
+		if !quiet {
+			fmt.Println("Executor installed and started")
+		}
+		return nil
 	}
 	return cmd
 }
@@ -183,7 +190,14 @@ func newExecutorRestartCommand() *cobra.Command {
 				return err
 			}
 
-			return startExecutor()
+			if err := startExecutor(); err != nil {
+				return err
+			}
+
+			if !quiet {
+				fmt.Println("Executor restarted")
+			}
+			return nil
 		},
 	}
 }
@@ -194,7 +208,14 @@ func newExecutorStartCommand() *cobra.Command {
 		Short: "Start the executor",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return startExecutor()
+			if err := startExecutor(); err != nil {
+				return err
+			}
+
+			if !quiet {
+				fmt.Println("Executor started")
+			}
+			return nil
 		},
 	}
 }
@@ -221,7 +242,14 @@ Are you sure you want to stop the executor?`)
 			}
 
 			// The executor cleanup command removes running containers.
-			return runCommand(executorPath, "cleanup")
+			if err := runCommand(executorPath, "cleanup"); err != nil {
+				return err
+			}
+
+			if !quiet {
+				fmt.Println("Executor stopped")
+			}
+			return nil
 		},
 	}
 }
@@ -250,19 +278,17 @@ Are you sure you want to uninstall the executor?`
 			}
 
 			if err := stopExecutor(); err != nil {
-				return err
+				// This may fail if the systemd file has already been deleted.
+				fmt.Fprintf(os.Stderr, "error stopping executor: %v\n", err)
 			}
 
 			// The executor cleanup command removes running containers.
 			if err := runCommand(executorPath, "cleanup"); err != nil {
-				return err
+				// This may fail if the executor binary has already been deleted.
+				fmt.Fprintf(os.Stderr, "error in executor cleanup: %v\n", err)
 			}
 
 			if err := os.RemoveAll(config.StoragePath); err != nil && !os.IsNotExist(err) {
-				return err
-			}
-
-			if err := os.Remove(executorConfigPath); err != nil && !os.IsNotExist(err) {
 				return err
 			}
 
@@ -274,8 +300,16 @@ Are you sure you want to uninstall the executor?`
 				return err
 			}
 
+			if err := os.Remove(executorConfigPath); err != nil && !os.IsNotExist(err) {
+				return err
+			}
+
 			if err := os.Remove(executorPath); err != nil && !os.IsNotExist(err) {
 				return err
+			}
+
+			if !quiet {
+				fmt.Println("Executor uninstalled")
 			}
 			return nil
 		},
@@ -298,7 +332,14 @@ To update executor configuration, run uninstall and then install.`,
 				return err
 			}
 
-			return startExecutor()
+			if err := startExecutor(); err != nil {
+				return err
+			}
+
+			if !quiet {
+				fmt.Println("Executor upgraded")
+			}
+			return nil
 		},
 	}
 }
@@ -379,7 +420,10 @@ func getExecutorConfig() (*executorConfig, error) {
 }
 
 func runCommand(name string, args ...string) error {
-	cmd := exec.CommandContext(ctx, name, args...)
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	out, err := exec.CommandContext(ctx, name, args...).CombinedOutput()
+	if err != nil {
+		fmt.Printf("%s\n", out)
+		return err
+	}
+	return nil
 }
