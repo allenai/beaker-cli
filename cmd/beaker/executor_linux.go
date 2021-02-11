@@ -241,8 +241,7 @@ Are you sure you want to stop the executor?`)
 				return err
 			}
 
-			// The executor cleanup command removes running containers.
-			if err := runCommand(executorPath, "cleanup"); err != nil {
+			if err := cleanupExecutor(); err != nil {
 				return err
 			}
 
@@ -277,15 +276,14 @@ Are you sure you want to uninstall the executor?`
 				return nil
 			}
 
-			if err := stopExecutor(); err != nil {
-				// This may fail if the systemd file has already been deleted.
-				fmt.Fprintf(os.Stderr, "error stopping executor: %v\n", err)
+			// This may fail if the executor binary has already been deleted.
+			if err := cleanupExecutor(); err != nil {
+				fmt.Fprintf(os.Stderr, "error cleaning up executor: %v\n", err)
 			}
 
-			// The executor cleanup command removes running containers.
-			if err := runCommand(executorPath, "cleanup"); err != nil {
-				// This may fail if the executor binary has already been deleted.
-				fmt.Fprintf(os.Stderr, "error in executor cleanup: %v\n", err)
+			// This may fail if the systemd file has already been deleted.
+			if err := stopExecutor(); err != nil {
+				fmt.Fprintf(os.Stderr, "error stopping executor: %v\n", err)
 			}
 
 			if err := os.RemoveAll(config.StoragePath); err != nil && !os.IsNotExist(err) {
@@ -385,23 +383,23 @@ func getLatestVersion() (string, error) {
 }
 
 func startExecutor() error {
-	if err := runCommand("systemctl", "daemon-reload"); err != nil {
+	if err := run("systemctl", "daemon-reload"); err != nil {
 		return err
 	}
 
-	if err := runCommand("systemctl", "enable", executorService); err != nil {
+	if err := run("systemctl", "enable", executorService); err != nil {
 		return err
 	}
 
-	return runCommand("systemctl", "start", executorService)
+	return run("systemctl", "start", executorService)
 }
 
 func stopExecutor() error {
-	if err := runCommand("systemctl", "disable", executorService); err != nil {
+	if err := run("systemctl", "disable", executorService); err != nil {
 		return err
 	}
 
-	return runCommand("systemctl", "stop", executorService)
+	return run("systemctl", "stop", executorService)
 }
 
 // Get the node ID of the executor running on this machine.
@@ -419,11 +417,22 @@ func getExecutorConfig() (*executorConfig, error) {
 	return &config, nil
 }
 
-func runCommand(name string, args ...string) error {
-	out, err := exec.CommandContext(ctx, name, args...).CombinedOutput()
+// The executor cleanup command removes running containers.
+func cleanupExecutor() error {
+	cmd := exec.CommandContext(ctx, executorPath, "cleanup")
+	cmd.Env = []string{strings.Join([]string{"CONFIG_PATH", executorConfigPath}, "=")}
+	return runCmd(cmd)
+}
+
+func runCmd(cmd *exec.Cmd) error {
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Printf("%s\n", out)
+		fmt.Printf("Output from %q:\n%s\n", strings.Join(cmd.Args, " "), out)
 		return err
 	}
 	return nil
+}
+
+func run(path string, args ...string) error {
+	return runCmd(exec.CommandContext(ctx, path, args...))
 }
