@@ -82,6 +82,10 @@ type systemdOpts struct {
 	ConfigPath string
 }
 
+type executorConfig struct {
+	StoragePath string `yaml:"storagePath"`
+}
+
 func newExecutorCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "executor <command>",
@@ -90,6 +94,7 @@ func newExecutorCommand() *cobra.Command {
 	cmd.AddCommand(newExecutorInstallCommand())
 	cmd.AddCommand(newExecutorRestartCommand())
 	cmd.AddCommand(newExecutorStopCommand())
+	cmd.AddCommand(newExecutorUninstallCommand())
 	return cmd
 }
 
@@ -159,15 +164,15 @@ Requires access to /etc, /var, and /usr/bin. Also requires access to systemd.`,
 func newExecutorRestartCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "restart",
-		Short: "Restart the executor",
+		Short: "Restart the executor without stopping running jobs",
 		Args:  cobra.NoArgs,
-		func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := stopExecutor(); err != nil {
 				return err
 			}
 
 			return startExecutor()
-		}
+		},
 	}
 }
 
@@ -176,22 +181,79 @@ func newExecutorStopCommand() *cobra.Command {
 		Use:   "stop",
 		Short: "Stop the executor and kill all running containers",
 		Args:  cobra.NoArgs,
-		func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			confirmed, err := confirm(`Stopping the executor will kill all running tasks.
+Are you sure you want to stop the executor?`)
+			if err != nil {
+				return err
+			}
+			if !confirmed {
+				return nil
+			}
+
 			if err := stopExecutor(); err != nil {
 				return err
 			}
 
-			node, err := getExecutorNode()
+			// The executor cleanup command removes running containers.
+			return exec.CommandContext(ctx, executorPath, "cleanup").Run()
+		},
+	}
+}
+
+func newExecutorUninstallCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "uninstall",
+		Short: "Uninstall the executor",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			config, err := getExecutorConfig()
 			if err != nil {
 				return err
 			}
-			if err := beaker.Node(node).Delete(ctx); err != nil {
+
+			const prompt = `Uninstalling the executor will kill all running tasks
+and delete all data in %q.
+
+Are you sure you want to uninstall the executor?`
+			confirmed, err := confirm(fmt.Sprintf(prompt, config.StoragePath))
+			if err != nil {
+				return err
+			}
+			if !confirmed {
+				return nil
+			}
+
+			if err := stopExecutor(); err != nil {
 				return err
 			}
 
 			// The executor cleanup command removes running containers.
-			return exec.CommandContext(ctx, executorPath, "cleanup")
-		}
+			if err := exec.CommandContext(ctx, executorPath, "cleanup").Run(); err != nil {
+				return err
+			}
+
+			if err := os.RemoveAll(config.StoragePath); err != nil && !os.IsNotExist(err) {
+				return err
+			}
+
+			if err := os.Remove(executorConfigPath); err != nil && !os.IsNotExist(err) {
+				return err
+			}
+
+			if err := os.Remove(executorTokenPath); err != nil && !os.IsNotExist(err) {
+				return err
+			}
+
+			if err := os.Remove(executorSystemdPath); err != nil && !os.IsNotExist(err) {
+				return err
+			}
+
+			if err := os.Remove(executorPath); err != nil && !os.IsNotExist(err) {
+				return err
+			}
+			return nil
+		},
 	}
 }
 
@@ -256,23 +318,16 @@ func stopExecutor() error {
 }
 
 // Get the node ID of the executor running on this machine.
-func getExecutorNode() (string, error) {
+func getExecutorConfig() (*executorConfig, error) {
 	configFile, err := os.Open(executorConfigPath)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer configFile.Close()
 
-	var config struct {
-		StoragePath string `yaml:"storagePath"`
-	}
+	var config executorConfig
 	if err := yaml.NewDecoder(configFile).Decode(&config); err != nil {
-		return "", err
+		return nil, err
 	}
-
-	node, err := ioutil.ReadFile(path.Join(config.StoragePath, executorNodePath))
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(string(node)), nil
+	return &config, nil
 }
