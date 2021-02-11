@@ -93,6 +93,7 @@ func newExecutorCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newExecutorInstallCommand())
 	cmd.AddCommand(newExecutorRestartCommand())
+	cmd.AddCommand(newExecutorStartCommand())
 	cmd.AddCommand(newExecutorStopCommand())
 	cmd.AddCommand(newExecutorUninstallCommand())
 	return cmd
@@ -171,6 +172,17 @@ func newExecutorRestartCommand() *cobra.Command {
 				return err
 			}
 
+			return startExecutor()
+		},
+	}
+}
+
+func newExecutorStartCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "start",
+		Short: "Start the executor",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
 			return startExecutor()
 		},
 	}
