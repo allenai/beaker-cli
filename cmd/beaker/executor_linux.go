@@ -103,7 +103,7 @@ func newExecutorCommand() *cobra.Command {
 func newExecutorInstallCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "install <cluster>",
-		Short: "Install and start the Beaker executor. May require sudo.",
+		Short: "Install and start the Beaker executor",
 		Long: `Install the Beaker executor, start it, and configure it to run on boot.
 Requires access to /etc, /var, and /usr/bin. Also requires access to systemd.`,
 		Args: cobra.ExactArgs(1),
@@ -192,8 +192,10 @@ func newExecutorStartCommand() *cobra.Command {
 func newExecutorStopCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "stop",
-		Short: "Stop the executor and kill all running containers",
-		Args:  cobra.NoArgs,
+		Short: "Stop the executor and all running jobs",
+		Long: `Stop the executor and all running jobs.
+To reload executor config without stopping running jobs, use restart.`,
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			confirmed, err := confirm(`Stopping the executor will kill all running tasks.
 Are you sure you want to stop the executor?`)
@@ -217,7 +219,7 @@ Are you sure you want to stop the executor?`)
 func newExecutorUninstallCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "uninstall",
-		Short: "Uninstall the executor",
+		Short: "Uninstall the executor and delete all executor data",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			config, err := getExecutorConfig()
@@ -242,11 +244,9 @@ Are you sure you want to uninstall the executor?`
 			}
 
 			// The executor cleanup command removes running containers.
-			/*
-				if err := exec.CommandContext(ctx, executorPath, "cleanup").Run(); err != nil {
-					return err
-				}
-			*/
+			if err := exec.CommandContext(ctx, executorPath, "cleanup").Run(); err != nil {
+				return err
+			}
 
 			if err := os.RemoveAll(config.StoragePath); err != nil && !os.IsNotExist(err) {
 				return err
@@ -275,8 +275,10 @@ Are you sure you want to uninstall the executor?`
 func newExecutorUpgradeCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "upgrade",
-		Short: "Upgrade the executor to the latest version",
-		Args:  cobra.NoArgs,
+		Short: "Upgrade the executor binary to the latest version",
+		Long: `Upgrade the executor binary to the latest version.
+To update executor configuration, run uninstall and then install.`,
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := stopExecutor(); err != nil {
 				return err
