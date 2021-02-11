@@ -96,6 +96,7 @@ func newExecutorCommand() *cobra.Command {
 	cmd.AddCommand(newExecutorStartCommand())
 	cmd.AddCommand(newExecutorStopCommand())
 	cmd.AddCommand(newExecutorUninstallCommand())
+	cmd.AddCommand(newExecutorUpgradeCommand())
 	return cmd
 }
 
@@ -241,9 +242,11 @@ Are you sure you want to uninstall the executor?`
 			}
 
 			// The executor cleanup command removes running containers.
-			if err := exec.CommandContext(ctx, executorPath, "cleanup").Run(); err != nil {
-				return err
-			}
+			/*
+				if err := exec.CommandContext(ctx, executorPath, "cleanup").Run(); err != nil {
+					return err
+				}
+			*/
 
 			if err := os.RemoveAll(config.StoragePath); err != nil && !os.IsNotExist(err) {
 				return err
@@ -265,6 +268,25 @@ Are you sure you want to uninstall the executor?`
 				return err
 			}
 			return nil
+		},
+	}
+}
+
+func newExecutorUpgradeCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "upgrade",
+		Short: "Upgrade the executor to the latest version",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := stopExecutor(); err != nil {
+				return err
+			}
+
+			if err := downloadExecutor(); err != nil {
+				return err
+			}
+
+			return startExecutor()
 		},
 	}
 }
