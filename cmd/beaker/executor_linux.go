@@ -122,6 +122,11 @@ Requires access to /etc, /var, and /usr/bin. Also requires access to systemd.`,
 Run "upgrade" to install the latest version or run "uninstall" before installing.`)
 		}
 
+		cluster := args[0]
+		if _, err := beaker.Cluster(args[0]).Get(ctx); err != nil {
+			return err
+		}
+
 		if err := os.MkdirAll(executorConfigDir, os.ModePerm); err != nil {
 			return err
 		}
@@ -142,7 +147,7 @@ Run "upgrade" to install the latest version or run "uninstall" before installing
 		if err := configTemplate.Execute(configFile, configOpts{
 			StoragePath: storageDir,
 			TokenPath:   executorTokenPath,
-			Cluster:     args[0],
+			Cluster:     cluster,
 		}); err != nil {
 			return err
 		}
@@ -216,7 +221,7 @@ Are you sure you want to stop the executor?`)
 			}
 
 			// The executor cleanup command removes running containers.
-			return exec.CommandContext(ctx, executorPath, "cleanup").Run()
+			return runCommand(executorPath, "cleanup")
 		},
 	}
 }
@@ -249,7 +254,7 @@ Are you sure you want to uninstall the executor?`
 			}
 
 			// The executor cleanup command removes running containers.
-			if err := exec.CommandContext(ctx, executorPath, "cleanup").Run(); err != nil {
+			if err := runCommand(executorPath, "cleanup"); err != nil {
 				return err
 			}
 
@@ -339,23 +344,23 @@ func getLatestVersion() (string, error) {
 }
 
 func startExecutor() error {
-	if err := exec.CommandContext(ctx, "systemctl", "daemon-reload").Run(); err != nil {
+	if err := runCommand("systemctl", "daemon-reload"); err != nil {
 		return err
 	}
 
-	if err := exec.CommandContext(ctx, "systemctl", "enable", executorService).Run(); err != nil {
+	if err := runCommand("systemctl", "enable", executorService); err != nil {
 		return err
 	}
 
-	return exec.CommandContext(ctx, "systemctl", "start", executorService).Run()
+	return runCommand("systemctl", "start", executorService)
 }
 
 func stopExecutor() error {
-	if err := exec.CommandContext(ctx, "systemctl", "disable", executorService).Run(); err != nil {
+	if err := runCommand("systemctl", "disable", executorService); err != nil {
 		return err
 	}
 
-	return exec.CommandContext(ctx, "systemctl", "stop", executorService).Run()
+	return runCommand("systemctl", "stop", executorService)
 }
 
 // Get the node ID of the executor running on this machine.
@@ -371,4 +376,10 @@ func getExecutorConfig() (*executorConfig, error) {
 		return nil, err
 	}
 	return &config, nil
+}
+
+func runCommand(name string, args ...string) error {
+	cmd := exec.CommandContext(ctx, name, args...)
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
