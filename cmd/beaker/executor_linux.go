@@ -12,6 +12,7 @@ import (
 	"text/template"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -27,11 +28,25 @@ const (
 	// Name of the executor's systemd service.
 	executorService = "beaker-executor"
 
-	// Default location for storing Beaker configuration.
-	defaultConfigDir = "/etc/beaker"
+	// Location for storing Beaker configuration.
+	executorConfigDir = "/etc/beaker"
 
 	// Default location for storing datasets.
 	defaultStorageDir = "/var/beaker"
+
+	// Path to the node file within the executor's storage directory.
+	executorNodePath = "node"
+)
+
+var (
+	// Path where executor configuration is stored.
+	executorConfigPath = path.Join(executorConfigDir, "executor-config.yml")
+
+	// Path where the Beaker token used by the executor is stored.
+	executorTokenPath = path.Join(executorConfigDir, "executor-token")
+
+	// Path where the Systemd configuration file for the executor is stored.
+	executorSystemdPath = fmt.Sprintf("/etc/systemd/system/%s.service", executorService)
 )
 
 var configTemplate = template.Must(template.New("config").Parse(`
@@ -67,31 +82,34 @@ type systemdOpts struct {
 	ConfigPath string
 }
 
+type executorConfig struct {
+	StoragePath string `yaml:"storagePath"`
+}
+
 func newExecutorCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "executor <command>",
 		Short: "Manage the executor",
 	}
 	cmd.AddCommand(newExecutorInstallCommand())
+	cmd.AddCommand(newExecutorRestartCommand())
+	cmd.AddCommand(newExecutorStartCommand())
+	cmd.AddCommand(newExecutorStopCommand())
+	cmd.AddCommand(newExecutorUninstallCommand())
+	cmd.AddCommand(newExecutorUpgradeCommand())
 	return cmd
 }
 
 func newExecutorInstallCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "install <cluster>",
-		Short: "Install and start the Beaker executor. May require sudo.",
+		Short: "Install and start the Beaker executor",
 		Long: `Install the Beaker executor, start it, and configure it to run on boot.
 Requires access to /etc, /var, and /usr/bin. Also requires access to systemd.`,
 		Args: cobra.ExactArgs(1),
 	}
 
-	var configDir string
 	var storageDir string
-	cmd.Flags().StringVar(
-		&configDir,
-		"config-dir",
-		defaultConfigDir,
-		"Writeable directory for Beaker configuration")
 	cmd.Flags().StringVar(
 		&storageDir,
 		"storage-dir",
@@ -99,42 +117,49 @@ Requires access to /etc, /var, and /usr/bin. Also requires access to systemd.`,
 		"Writeable directory for storing Beaker datasets")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		if err := os.MkdirAll(configDir, os.ModePerm); err != nil {
+		if _, err := os.Stat(executorPath); err == nil {
+			return fmt.Errorf(`executor is already installed.
+Run "upgrade" to install the latest version or run "uninstall" before installing.`)
+		}
+
+		cluster := args[0]
+		if _, err := beaker.Cluster(args[0]).Get(ctx); err != nil {
 			return err
 		}
 
-		tokenPath := path.Join(configDir, "token")
+		if err := os.MkdirAll(executorConfigDir, os.ModePerm); err != nil {
+			return err
+		}
+
 		if err := ioutil.WriteFile(
-			path.Join(configDir, "token"),
+			executorTokenPath,
 			[]byte(beakerConfig.UserToken),
 			0600,
 		); err != nil {
 			return err
 		}
 
-		configPath := path.Join(configDir, "config.yml")
-		configFile, err := os.Create(configPath)
+		configFile, err := os.Create(executorConfigPath)
 		if err != nil {
 			return err
 		}
 		defer configFile.Close()
 		if err := configTemplate.Execute(configFile, configOpts{
 			StoragePath: storageDir,
-			TokenPath:   tokenPath,
-			Cluster:     args[0],
+			TokenPath:   executorTokenPath,
+			Cluster:     cluster,
 		}); err != nil {
 			return err
 		}
 
-		systemdPath := fmt.Sprintf("/etc/systemd/system/%s.service", executorService)
-		systemdFile, err := os.Create(systemdPath)
+		systemdFile, err := os.Create(executorSystemdPath)
 		if err != nil {
 			return err
 		}
 		defer systemdFile.Close()
 		if err := systemdTemplate.Execute(systemdFile, systemdOpts{
 			BinaryPath: executorPath,
-			ConfigPath: configPath,
+			ConfigPath: executorConfigPath,
 		}); err != nil {
 			return err
 		}
@@ -143,9 +168,178 @@ Requires access to /etc, /var, and /usr/bin. Also requires access to systemd.`,
 			return err
 		}
 
-		return startExecutor()
+		if err := startExecutor(); err != nil {
+			return err
+		}
+
+		if !quiet {
+			fmt.Println("Executor installed and started")
+		}
+		return nil
 	}
 	return cmd
+}
+
+func newExecutorRestartCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "restart",
+		Short: "Restart the executor without stopping running jobs",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := stopExecutor(); err != nil {
+				return err
+			}
+
+			if err := startExecutor(); err != nil {
+				return err
+			}
+
+			if !quiet {
+				fmt.Println("Executor restarted")
+			}
+			return nil
+		},
+	}
+}
+
+func newExecutorStartCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "start",
+		Short: "Start the executor",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := startExecutor(); err != nil {
+				return err
+			}
+
+			if !quiet {
+				fmt.Println("Executor started")
+			}
+			return nil
+		},
+	}
+}
+
+func newExecutorStopCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "stop",
+		Short: "Stop the executor and all running jobs",
+		Long: `Stop the executor and all running jobs.
+To reload executor config without stopping running jobs, use restart.`,
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			confirmed, err := confirm(`Stopping the executor will kill all running tasks.
+Are you sure you want to stop the executor?`)
+			if err != nil {
+				return err
+			}
+			if !confirmed {
+				return nil
+			}
+
+			if err := stopExecutor(); err != nil {
+				return err
+			}
+
+			if err := cleanupExecutor(); err != nil {
+				return err
+			}
+
+			if !quiet {
+				fmt.Println("Executor stopped")
+			}
+			return nil
+		},
+	}
+}
+
+func newExecutorUninstallCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "uninstall",
+		Short: "Uninstall the executor and delete all executor data",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			config, err := getExecutorConfig()
+			if err != nil {
+				return err
+			}
+
+			const prompt = `Uninstalling the executor will kill all running tasks
+and delete all data in %q.
+
+Are you sure you want to uninstall the executor?`
+			confirmed, err := confirm(fmt.Sprintf(prompt, config.StoragePath))
+			if err != nil {
+				return err
+			}
+			if !confirmed {
+				return nil
+			}
+
+			// This may fail if the systemd file has already been deleted.
+			if err := stopExecutor(); err != nil {
+				fmt.Fprintf(os.Stderr, "error stopping executor: %v\n", err)
+			}
+
+			// This may fail if the executor binary has already been deleted.
+			if err := cleanupExecutor(); err != nil {
+				fmt.Fprintf(os.Stderr, "error cleaning up executor: %v\n", err)
+			}
+
+			if err := os.RemoveAll(config.StoragePath); err != nil && !os.IsNotExist(err) {
+				return err
+			}
+
+			if err := os.Remove(executorTokenPath); err != nil && !os.IsNotExist(err) {
+				return err
+			}
+
+			if err := os.Remove(executorSystemdPath); err != nil && !os.IsNotExist(err) {
+				return err
+			}
+
+			if err := os.Remove(executorConfigPath); err != nil && !os.IsNotExist(err) {
+				return err
+			}
+
+			if err := os.Remove(executorPath); err != nil && !os.IsNotExist(err) {
+				return err
+			}
+
+			if !quiet {
+				fmt.Println("Executor uninstalled")
+			}
+			return nil
+		},
+	}
+}
+
+func newExecutorUpgradeCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "upgrade",
+		Short: "Upgrade the executor binary to the latest version",
+		Long: `Upgrade the executor binary to the latest version.
+To update executor configuration, run uninstall and then install.`,
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := stopExecutor(); err != nil {
+				return err
+			}
+
+			if err := downloadExecutor(); err != nil {
+				return err
+			}
+
+			if err := startExecutor(); err != nil {
+				return err
+			}
+
+			if !quiet {
+				fmt.Println("Executor upgraded")
+			}
+			return nil
+		},
+	}
 }
 
 func downloadExecutor() error {
@@ -189,13 +383,56 @@ func getLatestVersion() (string, error) {
 }
 
 func startExecutor() error {
-	if err := exec.CommandContext(ctx, "systemctl", "daemon-reload").Run(); err != nil {
+	if err := run("systemctl", "daemon-reload"); err != nil {
 		return err
 	}
 
-	if err := exec.CommandContext(ctx, "systemctl", "enable", executorService).Run(); err != nil {
+	if err := run("systemctl", "enable", executorService); err != nil {
 		return err
 	}
 
-	return exec.CommandContext(ctx, "systemctl", "start", executorService).Run()
+	return run("systemctl", "start", executorService)
+}
+
+func stopExecutor() error {
+	if err := run("systemctl", "disable", executorService); err != nil {
+		return err
+	}
+
+	return run("systemctl", "stop", executorService)
+}
+
+// Get the node ID of the executor running on this machine.
+func getExecutorConfig() (*executorConfig, error) {
+	configFile, err := os.Open(executorConfigPath)
+	if err != nil {
+		return nil, err
+	}
+	defer configFile.Close()
+
+	var config executorConfig
+	if err := yaml.NewDecoder(configFile).Decode(&config); err != nil {
+		return nil, err
+	}
+	return &config, nil
+}
+
+// The executor cleanup command removes running containers.
+func cleanupExecutor() error {
+	cmd := exec.CommandContext(ctx, executorPath, "cleanup")
+	cmd.Env = []string{strings.Join([]string{"CONFIG_PATH", executorConfigPath}, "=")}
+	return runCmd(cmd)
+}
+
+func runCmd(cmd *exec.Cmd) error {
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Printf("Output from %q:\n%s\n", strings.Join(cmd.Args, " "), out)
+		return err
+	}
+	return nil
+}
+
+func run(path string, args ...string) error {
+	return runCmd(exec.CommandContext(ctx, path, args...))
 }
