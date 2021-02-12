@@ -7,7 +7,8 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/Microsoft/go-winio v0.4.12 // indirect
 	github.com/Sirupsen/logrus v1.0.6 // indirect
-	github.com/beaker/client v0.0.0-20210201205000-a0f124a133ca
+	github.com/allenai/bytefmt v0.1.0
+	github.com/beaker/client v0.0.0-20210210232748-d0883e0bb5bc
 	github.com/beaker/fileheap v0.0.0-20200106234808-5c201f881591
 	github.com/docker/distribution v2.7.0+incompatible
 	github.com/docker/docker v1.13.1
@@ -21,6 +22,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.4.0 // indirect
 	github.com/spf13/cobra v1.1.1
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/gemnasium/logrus-airbrake-hook.v2 v2.1.2 // indirect
