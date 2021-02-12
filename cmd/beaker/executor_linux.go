@@ -276,14 +276,14 @@ Are you sure you want to uninstall the executor?`
 				return nil
 			}
 
-			// This may fail if the executor binary has already been deleted.
-			if err := cleanupExecutor(); err != nil {
-				fmt.Fprintf(os.Stderr, "error cleaning up executor: %v\n", err)
-			}
-
 			// This may fail if the systemd file has already been deleted.
 			if err := stopExecutor(); err != nil {
 				fmt.Fprintf(os.Stderr, "error stopping executor: %v\n", err)
+			}
+
+			// This may fail if the executor binary has already been deleted.
+			if err := cleanupExecutor(); err != nil {
+				fmt.Fprintf(os.Stderr, "error cleaning up executor: %v\n", err)
 			}
 
 			if err := os.RemoveAll(config.StoragePath); err != nil && !os.IsNotExist(err) {
