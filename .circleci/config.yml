@@ -48,7 +48,7 @@ workflows:
           # Only run validation on PRs.
           filters:
             branches:
-              ignore: master
+              ignore: main
 
   release:
     jobs:
