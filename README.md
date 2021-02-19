@@ -138,20 +138,20 @@ Next, configure your machine.
 If using a GPU, you must select the "N1" series under "Machine configuration".
 GPUs are not available with other series as of 2/12/2021.
 
-![Machine configuration](images/machine-configuration.png)
+![Machine configuration](../assets/images/machine-configuration.png)
 
 Finally, change the boot disk.
 Google provides images that already have the prerequisites for Beaker installed:
 Docker, CUDA drivers, and the NVIDIA Container Toolkit.
 
-![Boot disk selector](images/boot-disk-selector.png)
+![Boot disk selector](../assets/images/boot-disk-selector.png)
 
 Select the "Deep Learning on Linux" operating system
 and the "Deep Learning Image: Base m63 CUDA11.0" version.
 Other versions with PyTorch and Tensorflow are also available but these are not necessary
 because those libraries are already included in the Beaker images.
 
-![Boot disk selection](images/boot-disk.png)
+![Boot disk selection](../assets/images/boot-disk.png)
 
 Click "Create" and wait for your instance to come up.
 
