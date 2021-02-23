@@ -499,16 +499,19 @@ func printWorkspacePermissions(permissions *api.WorkspacePermissionSummary) erro
 
 func executionStatus(state api.ExecutionState) string {
 	switch {
-	case state.Scheduled == nil:
-		return "pending"
-	case state.Started == nil:
-		return "starting"
-	case state.Ended == nil:
-		return "running"
-	case state.Finalized == nil:
+	case state.Finalized != nil:
+		if state.ExitCode != nil && *state.ExitCode == 0 {
+			return "succeeded"
+		}
+		return "failed"
+	case state.Ended != nil:
 		return "finalizing"
+	case state.Started != nil:
+		return "running"
+	case state.Scheduled != nil:
+		return "starting"
 	default:
-		return "finished"
+		return "pending"
 	}
 }
 
