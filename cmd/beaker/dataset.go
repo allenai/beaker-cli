@@ -5,9 +5,9 @@ import (
 	"io"
 	"os"
 
+	"github.com/allenai/bytefmt"
 	"github.com/beaker/client/api"
 	"github.com/beaker/client/client"
-	"github.com/beaker/fileheap/bytefmt"
 	"github.com/beaker/fileheap/cli"
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
@@ -284,7 +284,7 @@ func newDatasetLsCommand() *cobra.Command {
 				for _, file := range files {
 					if err := printTableRow(
 						file.Path,
-						bytefmt.FormatBytes(file.Size),
+						bytefmt.New(file.Size, bytefmt.Binary),
 						file.Updated,
 					); err != nil {
 						return err
@@ -378,7 +378,7 @@ func newDatasetSizeCommand() *cobra.Command {
 				}
 				return printTableRow(
 					totalFiles,
-					bytefmt.FormatBytes(totalBytes),
+					bytefmt.New(totalBytes, bytefmt.Binary),
 				)
 			}
 		},
