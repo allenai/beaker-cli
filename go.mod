@@ -3,7 +3,6 @@ module github.com/allenai/beaker
 go 1.13
 
 require (
-	code.cloudfoundry.org/bytefmt v0.0.0-20190819182555-854d396b647c
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/Microsoft/go-winio v0.4.12 // indirect
 	github.com/Sirupsen/logrus v1.0.6 // indirect
