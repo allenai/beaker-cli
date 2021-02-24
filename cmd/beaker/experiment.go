@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"code.cloudfoundry.org/bytefmt"
+	"github.com/allenai/bytefmt"
 	"github.com/beaker/client/api"
 	"github.com/beaker/client/client"
 	"github.com/fatih/color"
@@ -401,11 +401,11 @@ func canonicalizeSpecV1(spec *api.ExperimentSpecV1) error {
 		}
 		reqs.MilliCPU = int(reqs.CPU * 1000)
 		if reqs.MemoryHuman != "" {
-			bytes, err := bytefmt.ToBytes(reqs.MemoryHuman)
+			size, err := bytefmt.Parse(reqs.MemoryHuman)
 			if err != nil {
 				return errors.Wrapf(err, "invalid memory value %q", reqs.MemoryHuman)
 			}
-			reqs.Memory = int64(bytes)
+			reqs.Memory = int64(size.Int64())
 		}
 	}
 	return nil
