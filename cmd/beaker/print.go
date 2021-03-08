@@ -373,6 +373,37 @@ func printSecrets(secrets []api.Secret) error {
 	}
 }
 
+func printSessions(sessions []api.Session) error {
+	switch format {
+	case formatJSON:
+		return printJSON(sessions)
+	default:
+		if err := printTableRow(
+			"ID",
+			"NAME",
+			"AUTHOR",
+			"CLUSTER",
+			"NODE",
+			"STATUS",
+		); err != nil {
+			return err
+		}
+		for _, session := range sessions {
+			if err := printTableRow(
+				session.ID,
+				session.Name,
+				session.Author.Name,
+				session.Cluster,
+				session.Node,
+				executionStatus(session.State),
+			); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
 func printTasks(tasks []api.Task) error {
 	switch format {
 	case formatJSON:
