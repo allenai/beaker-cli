@@ -14,6 +14,7 @@ func newNodeCommand() *cobra.Command {
 	cmd.AddCommand(newNodeDeleteCommand())
 	cmd.AddCommand(newNodeExecutionsCommand())
 	cmd.AddCommand(newNodeGetCommand())
+	cmd.AddCommand(newNodeSessionsCommand())
 	cmd.AddCommand(newNodeUncordonCommand())
 	return cmd
 }
@@ -74,6 +75,21 @@ func newNodeGetCommand() *cobra.Command {
 				nodes = append(nodes, *node)
 			}
 			return printNodes(nodes)
+		},
+	}
+}
+
+func newNodeSessionsCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "sessions <node>",
+		Short: "List the sessions of a node",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			sessions, err := beaker.Node(args[0]).ListSessions(ctx)
+			if err != nil {
+				return err
+			}
+			return printSessions(sessions)
 		},
 	}
 }

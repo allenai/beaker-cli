@@ -91,6 +91,7 @@ func main() {
 	root.AddCommand(newNodeCommand())
 	root.AddCommand(newOrganizationCommand())
 	root.AddCommand(newSecretCommand())
+	root.AddCommand(newSessionCommand())
 	root.AddCommand(newTaskCommand())
 	root.AddCommand(newWorkspaceCommand())
 
