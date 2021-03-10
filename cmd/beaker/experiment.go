@@ -252,7 +252,7 @@ func newExperimentRenameCommand() *cobra.Command {
 			if quiet {
 				fmt.Println(exp.ID)
 			} else {
-				fmt.Printf("Renamed %s to %s\n", color.BlueString(exp.ID), exp.DisplayID())
+				fmt.Printf("Renamed %s to %s\n", color.BlueString(exp.ID), exp.FullName)
 			}
 			return nil
 		},

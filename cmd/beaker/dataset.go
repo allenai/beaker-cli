@@ -320,7 +320,7 @@ func newDatasetRenameCommand() *cobra.Command {
 			if quiet {
 				fmt.Println(info.ID)
 			} else {
-				fmt.Printf("Renamed %s to %s\n", color.BlueString(info.ID), info.DisplayID())
+				fmt.Printf("Renamed %s to %s\n", color.BlueString(info.ID), info.FullName)
 			}
 			return nil
 		},
