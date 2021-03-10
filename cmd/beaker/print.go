@@ -83,7 +83,6 @@ func printDatasets(datasets []api.Dataset) error {
 			"AUTHOR",
 			"COMMITTED",
 			"SOURCE TASK",
-			"ARCHIVED",
 		); err != nil {
 			return err
 		}
@@ -96,17 +95,12 @@ func printDatasets(datasets []api.Dataset) error {
 			if dataset.SourceTask != nil {
 				source = *dataset.SourceTask
 			}
-			var archived string
-			if dataset.Archived {
-				archived = "archived"
-			}
 			if err := printTableRow(
 				name,
 				dataset.Workspace.Name,
 				dataset.Author.Name,
 				dataset.Committed,
 				source,
-				archived,
 			); err != nil {
 				return err
 			}
@@ -163,7 +157,6 @@ func printExperiments(experiments []api.Experiment) error {
 			"AUTHOR",
 			"CREATED",
 			"STATUS",
-			"ARCHIVED",
 		); err != nil {
 			return err
 		}
@@ -171,10 +164,6 @@ func printExperiments(experiments []api.Experiment) error {
 			name := experiment.ID
 			if experiment.Name != "" {
 				name = experiment.Name
-			}
-			var archived string
-			if experiment.Archived {
-				archived = "archived"
 			}
 			var executions []api.Execution
 			for _, execution := range experiment.Executions {
@@ -186,7 +175,6 @@ func printExperiments(experiments []api.Experiment) error {
 				experiment.Author.Name,
 				experiment.Created,
 				executionsStatus(executions),
-				archived,
 			); err != nil {
 				return err
 			}
@@ -205,7 +193,6 @@ func printGroups(groups []api.Group) error {
 			"WORKSPACE",
 			"AUTHOR",
 			"CREATED",
-			"ARCHIVED",
 		); err != nil {
 			return err
 		}
@@ -214,16 +201,11 @@ func printGroups(groups []api.Group) error {
 			if group.Name != "" {
 				name = group.Name
 			}
-			var archived string
-			if group.Archived {
-				archived = "archived"
-			}
 			if err := printTableRow(
 				name,
 				group.Workspace.Name,
 				group.Author.Name,
 				group.Created,
-				archived,
 			); err != nil {
 				return err
 			}
