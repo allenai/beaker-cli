@@ -19,6 +19,7 @@ func newSessionCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newSessionCreateCommand())
 	cmd.AddCommand(newSessionGetCommand())
+	cmd.AddCommand(newSessionListCommand())
 	return cmd
 }
 
@@ -74,6 +75,35 @@ func newSessionGetCommand() *cobra.Command {
 			return printSessions(sessions)
 		},
 	}
+}
+
+func newSessionListCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "List sessions on a node",
+		Args:  cobra.NoArgs,
+	}
+
+	var node string
+	cmd.Flags().StringVar(&node, "node", "", "Node that the session will run on")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		if node == "" {
+			var err error
+			node, err = getCurrentNode()
+			if err != nil {
+				return fmt.Errorf("failed to detect node; use --node flag: %w", err)
+			}
+			fmt.Printf("Detected node: %q\n", node)
+		}
+
+		sessions, err := beaker.Node(node).ListSessions(ctx)
+		if err != nil {
+			return err
+		}
+		return printSessions(sessions)
+	}
+	return cmd
 }
 
 type executorConfig struct {
