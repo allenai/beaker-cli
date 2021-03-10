@@ -14,8 +14,8 @@ github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d h1:licZJFw2RwpH
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d/go.mod h1:asat636LX7Bqt5lYEZ27JNDcqxfjdBQuJ/MM4CN/Lzo=
 github.com/allenai/bytefmt v0.1.0 h1:reMpG/nmrFWpKTb5ZV2mFKzEhyOlmKtUdkUyIOpD+sM=
 github.com/allenai/bytefmt v0.1.0/go.mod h1:3hhcDqHXjwM3JBHx4cX79jG5G3V8zKsjeutbhJ3XjI0=
-github.com/beaker/client v0.0.0-20210308214111-46728a21bcbd h1:FtfvLd0yfiB+q2mpssaATByLZG91Y+voqUUPOzzc6rY=
-github.com/beaker/client v0.0.0-20210308214111-46728a21bcbd/go.mod h1:dO9RCYfNRAnzuoOfPjxtkP9M6PF7MmFgq9UQqz4V0/0=
+github.com/beaker/client v0.0.0-20210309231211-1360b368a6d1 h1:2s/VagD3eQ9ox8zOZsWpVrXKC8sp4GBgcYhPkJBYxL0=
+github.com/beaker/client v0.0.0-20210309231211-1360b368a6d1/go.mod h1:dO9RCYfNRAnzuoOfPjxtkP9M6PF7MmFgq9UQqz4V0/0=
 github.com/beaker/fileheap v0.0.0-20210213001550-3d3932012952 h1:HlBD6WoDTH+Z42AbK0r+zzjY8dhPbGfQie0gpfyoTnI=
 github.com/beaker/fileheap v0.0.0-20210213001550-3d3932012952/go.mod h1:ylYuVpNx+kB9UxLYmSvrygMIHD/GbU+LzlEqfBrf+Rg=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
