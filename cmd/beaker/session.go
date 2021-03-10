@@ -1,8 +1,15 @@
 package main
 
 import (
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
+	"strings"
+
 	"github.com/beaker/client/api"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 func newSessionCommand() *cobra.Command {
@@ -17,18 +24,29 @@ func newSessionCommand() *cobra.Command {
 
 func newSessionCreateCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create <node>",
+		Use:   "create",
 		Short: "Create a new interactive session on a node",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.NoArgs,
 	}
 
 	var name string
+	var node string
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the session")
+	cmd.Flags().StringVar(&node, "node", "", "Node that the session will run on")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		if node == "" {
+			var err error
+			node, err = getCurrentNode()
+			if err != nil {
+				return fmt.Errorf("failed to detect node; use --node flag: %w", err)
+			}
+			fmt.Printf("Detected node: %q\n", node)
+		}
+
 		session, err := beaker.CreateSession(ctx, api.SessionSpec{
-			Node: args[0],
 			Name: name,
+			Node: node,
 		})
 		if err != nil {
 			return err
@@ -56,4 +74,28 @@ func newSessionGetCommand() *cobra.Command {
 			return printSessions(sessions)
 		},
 	}
+}
+
+type executorConfig struct {
+	StoragePath string `yaml:"storagePath"`
+}
+
+// Get the node ID of the executor running on this machine, if there is one.
+func getCurrentNode() (string, error) {
+	configFile, err := ioutil.ReadFile("/etc/beaker/config.yml")
+	if err != nil {
+		return "", err
+	}
+	expanded := strings.NewReader(os.ExpandEnv(string(configFile)))
+
+	var config executorConfig
+	if err := yaml.NewDecoder(expanded).Decode(&config); err != nil {
+		return "", err
+	}
+
+	node, err := ioutil.ReadFile(path.Join(config.StoragePath, "node"))
+	if err != nil {
+		return "", err
+	}
+	return string(node), nil
 }
