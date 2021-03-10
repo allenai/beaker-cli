@@ -48,7 +48,7 @@ func newSessionCreateCommand() *cobra.Command {
 	var name string
 	var node string
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the session")
-	cmd.Flags().StringVar(&node, "node", "", "Node that the session will run on")
+	cmd.Flags().StringVar(&node, "node", "", "Node that the session will run on. Defaults to current node.")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		if node == "" {
@@ -105,7 +105,7 @@ func newSessionListCommand() *cobra.Command {
 	}
 
 	var node string
-	cmd.Flags().StringVar(&node, "node", "", "Node that the session will run on")
+	cmd.Flags().StringVar(&node, "node", "", "Node to list sessions. Defaults to current node.")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		if node == "" {
