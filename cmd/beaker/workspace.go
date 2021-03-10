@@ -93,12 +93,10 @@ func newWorkspaceDatasetsCommand() *cobra.Command {
 	}
 
 	var all bool
-	var archived bool
 	var result bool
 	var text string
 	var uncommitted bool
-	cmd.Flags().BoolVar(&all, "all", false, "Show all datasets including archived, result, and uncommitted datasets")
-	cmd.Flags().BoolVar(&archived, "archived", false, "Show only archived datasets")
+	cmd.Flags().BoolVar(&all, "all", false, "Show all datasets including result, and uncommitted datasets")
 	cmd.Flags().BoolVar(&result, "result", false, "Show only result datasets")
 	cmd.Flags().StringVar(&text, "text", "", "Only show datasets matching the text")
 	cmd.Flags().BoolVar(&uncommitted, "uncommitted", false, "Show only uncommitted datasets")
@@ -117,7 +115,6 @@ func newWorkspaceDatasetsCommand() *cobra.Command {
 				Text:   text,
 			}
 			if !all {
-				opts.Archived = &archived
 				opts.ResultsOnly = &result
 				committed := !uncommitted
 				opts.CommittedOnly = &committed
@@ -146,11 +143,7 @@ func newWorkspaceExperimentsCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 	}
 
-	var all bool
-	var archived bool
 	var text string
-	cmd.Flags().BoolVar(&all, "all", false, "Show all experiments including archived experiments")
-	cmd.Flags().BoolVar(&archived, "archived", false, "Show only archived experiments")
 	cmd.Flags().StringVar(&text, "text", "", "Only show experiments matching the text")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
@@ -162,18 +155,12 @@ func newWorkspaceExperimentsCommand() *cobra.Command {
 		var experiments []api.Experiment
 		var cursor string
 		for {
-			opts := &client.ListExperimentOptions{
-				Cursor: cursor,
-				Text:   text,
-			}
-			if !all {
-				opts.Archived = &archived
-			}
-
 			var page []api.Experiment
 			var err error
-			page, cursor, err = workspace.Experiments(ctx, opts)
-			if err != nil {
+			if page, cursor, err = workspace.Experiments(ctx, &client.ListExperimentOptions{
+				Cursor: cursor,
+				Text:   text,
+			}); err != nil {
 				return err
 			}
 			experiments = append(experiments, page...)
@@ -193,11 +180,7 @@ func newWorkspaceGroupsCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 	}
 
-	var all bool
-	var archived bool
 	var text string
-	cmd.Flags().BoolVar(&all, "all", false, "Show all groups including archived groups")
-	cmd.Flags().BoolVar(&archived, "archived", false, "Show only archived groups")
 	cmd.Flags().StringVar(&text, "text", "", "Only show groups matching the text")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
@@ -209,18 +192,12 @@ func newWorkspaceGroupsCommand() *cobra.Command {
 		var groups []api.Group
 		var cursor string
 		for {
-			opts := &client.ListGroupOptions{
-				Cursor: cursor,
-				Text:   text,
-			}
-			if !all {
-				opts.Archived = &archived
-			}
-
 			var page []api.Group
 			var err error
-			page, cursor, err = workspace.Groups(ctx, opts)
-			if err != nil {
+			if page, cursor, err = workspace.Groups(ctx, &client.ListGroupOptions{
+				Cursor: cursor,
+				Text:   text,
+			}); err != nil {
 				return err
 			}
 			groups = append(groups, page...)

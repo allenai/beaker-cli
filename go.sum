@@ -61,8 +61,8 @@ github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d/go.mod h1:asat6
 github.com/allenai/bytefmt v0.1.0 h1:reMpG/nmrFWpKTb5ZV2mFKzEhyOlmKtUdkUyIOpD+sM=
 github.com/allenai/bytefmt v0.1.0/go.mod h1:3hhcDqHXjwM3JBHx4cX79jG5G3V8zKsjeutbhJ3XjI0=
 github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a/go.mod h1:lB+ZfQJz7igIIfQNfa7Ml4HSf2uFQQRzpGGRXenZAgY=
-github.com/beaker/client v0.0.0-20210309231211-1360b368a6d1 h1:2s/VagD3eQ9ox8zOZsWpVrXKC8sp4GBgcYhPkJBYxL0=
-github.com/beaker/client v0.0.0-20210309231211-1360b368a6d1/go.mod h1:dO9RCYfNRAnzuoOfPjxtkP9M6PF7MmFgq9UQqz4V0/0=
+github.com/beaker/client v0.0.0-20210310201917-fc511c55d7c0 h1:EV/sMFcH0LG/69umHKiOrgezZ9YD8opYnHz6fS9G2i8=
+github.com/beaker/client v0.0.0-20210310201917-fc511c55d7c0/go.mod h1:dO9RCYfNRAnzuoOfPjxtkP9M6PF7MmFgq9UQqz4V0/0=
 github.com/beaker/fileheap v0.0.0-20210213001550-3d3932012952 h1:HlBD6WoDTH+Z42AbK0r+zzjY8dhPbGfQie0gpfyoTnI=
 github.com/beaker/fileheap v0.0.0-20210213001550-3d3932012952/go.mod h1:ylYuVpNx+kB9UxLYmSvrygMIHD/GbU+LzlEqfBrf+Rg=
 github.com/beaker/runtime v0.0.0-20210310154247-35d9f5d4ca58 h1:ZlcR9X71qEYCT1fheMGmWF2VKMP5SE+9833Ugbpjy4U=
