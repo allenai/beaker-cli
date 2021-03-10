@@ -31,11 +31,26 @@ func newSessionCommand() *cobra.Command {
 		Use:   "session <command>",
 		Short: "Manage sessions",
 	}
+	cmd.AddCommand(newSessionAttachCommand())
 	cmd.AddCommand(newSessionCreateCommand())
 	cmd.AddCommand(newSessionGetCommand())
 	cmd.AddCommand(newSessionListCommand())
 	cmd.AddCommand(newSessionUpdateCommand())
 	return cmd
+}
+
+func newSessionAttachCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "attach <session>",
+		Short: "Attach to a session",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := awaitSessionStart(args[0]); err != nil {
+				return err
+			}
+			return attachSession(args[0])
+		},
+	}
 }
 
 func newSessionCreateCommand() *cobra.Command {
