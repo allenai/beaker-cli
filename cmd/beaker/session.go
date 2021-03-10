@@ -245,10 +245,6 @@ func attachSession(session string) error {
 		return fmt.Errorf("container not found")
 	}
 
-	if err := container.Start(ctx); err != nil {
-		return fmt.Errorf("couldn't start container: %w", err)
-	}
-
 	if err := container.(*docker.Container).Attach(ctx); err != nil {
 		return fmt.Errorf("couldn't attach to container: %w", err)
 	}
