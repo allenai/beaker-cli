@@ -7,6 +7,8 @@ import (
 	"path"
 	"strings"
 
+	"github.com/allenai/beaker-service/runtime"
+	"github.com/allenai/beaker-service/runtime/docker"
 	"github.com/beaker/client/api"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -17,9 +19,57 @@ func newSessionCommand() *cobra.Command {
 		Use:   "session <command>",
 		Short: "Manage sessions",
 	}
+	cmd.AddCommand(newSessionAttachCommand())
 	cmd.AddCommand(newSessionCreateCommand())
 	cmd.AddCommand(newSessionGetCommand())
 	cmd.AddCommand(newSessionListCommand())
+	return cmd
+}
+
+func newSessionAttachCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "attach <session>",
+		Short: "Attach to an interactive session",
+		Args:  cobra.ExactArgs(1),
+	}
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		rt, err := docker.NewRuntime()
+		if err != nil {
+			return err
+		}
+
+		containers, err := rt.ListContainers(ctx)
+		if err != nil {
+			return err
+		}
+
+		var container runtime.Container
+		for _, c := range containers {
+			info, err := c.Info(ctx)
+			if err != nil {
+				return err
+			}
+
+			if args[0] == info.Labels["beaker.org/session"] {
+				c := c
+				container = c
+				break
+			}
+		}
+		if container == nil {
+			return fmt.Errorf("container not found")
+		}
+
+		if err := container.Start(ctx); err != nil {
+			return fmt.Errorf("couldn't start container: %w", err)
+		}
+
+		if err := container.(*docker.Container).Attach(ctx); err != nil {
+			return fmt.Errorf("couldn't attach to container: %w", err)
+		}
+		return nil
+	}
 	return cmd
 }
 
