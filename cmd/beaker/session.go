@@ -236,7 +236,6 @@ func attachSession(session string) error {
 		}
 
 		if session == info.Labels[sessionContainerLabel] {
-			c := c
 			container = c
 			break
 		}
