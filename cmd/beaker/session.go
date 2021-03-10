@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/allenai/beaker-service/runtime"
 	"github.com/allenai/beaker-service/runtime/docker"
@@ -14,62 +15,26 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const (
+	// Label containing the session ID on session containers.
+	sessionContainerLabel = "beaker.org/session"
+
+	// Path where executor config is located.
+	executorConfigPath = "/etc/beaker/config.yml"
+
+	// Path to the file containing the executor's node in the storage path.
+	executorNodeFile = "node"
+)
+
 func newSessionCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "session <command>",
 		Short: "Manage sessions",
 	}
-	cmd.AddCommand(newSessionAttachCommand())
 	cmd.AddCommand(newSessionCreateCommand())
 	cmd.AddCommand(newSessionGetCommand())
 	cmd.AddCommand(newSessionListCommand())
-	return cmd
-}
-
-func newSessionAttachCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "attach <session>",
-		Short: "Attach to an interactive session",
-		Args:  cobra.ExactArgs(1),
-	}
-
-	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		rt, err := docker.NewRuntime()
-		if err != nil {
-			return err
-		}
-
-		containers, err := rt.ListContainers(ctx)
-		if err != nil {
-			return err
-		}
-
-		var container runtime.Container
-		for _, c := range containers {
-			info, err := c.Info(ctx)
-			if err != nil {
-				return err
-			}
-
-			if args[0] == info.Labels["beaker.org/session"] {
-				c := c
-				container = c
-				break
-			}
-		}
-		if container == nil {
-			return fmt.Errorf("container not found")
-		}
-
-		if err := container.Start(ctx); err != nil {
-			return fmt.Errorf("couldn't start container: %w", err)
-		}
-
-		if err := container.(*docker.Container).Attach(ctx); err != nil {
-			return fmt.Errorf("couldn't attach to container: %w", err)
-		}
-		return nil
-	}
+	cmd.AddCommand(newSessionUpdateCommand())
 	return cmd
 }
 
@@ -102,7 +67,12 @@ func newSessionCreateCommand() *cobra.Command {
 		if err != nil {
 			return err
 		}
-		return printSessions([]api.Session{*session})
+
+		if err := awaitSessionStart(session.ID); err != nil {
+			return err
+		}
+
+		return attachSession(session.ID)
 	}
 	return cmd
 }
@@ -156,13 +126,41 @@ func newSessionListCommand() *cobra.Command {
 	return cmd
 }
 
+func newSessionUpdateCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update",
+		Short: "Update a session",
+		Args:  cobra.ExactArgs(1),
+	}
+
+	var cancel bool
+	cmd.Flags().BoolVar(&cancel, "cancel", false, "Cancel a session")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		patch := api.SessionPatch{
+			State: &api.ExecutionState{},
+		}
+		if cancel {
+			now := time.Now()
+			patch.State.Canceled = &now
+		}
+
+		session, err := beaker.Session(args[0]).Patch(ctx, patch)
+		if err != nil {
+			return err
+		}
+		return printSessions([]api.Session{*session})
+	}
+	return cmd
+}
+
 type executorConfig struct {
 	StoragePath string `yaml:"storagePath"`
 }
 
 // Get the node ID of the executor running on this machine, if there is one.
 func getCurrentNode() (string, error) {
-	configFile, err := ioutil.ReadFile("/etc/beaker/config.yml")
+	configFile, err := ioutil.ReadFile(executorConfigPath)
 	if err != nil {
 		return "", err
 	}
@@ -173,9 +171,71 @@ func getCurrentNode() (string, error) {
 		return "", err
 	}
 
-	node, err := ioutil.ReadFile(path.Join(config.StoragePath, "node"))
+	node, err := ioutil.ReadFile(path.Join(config.StoragePath, executorNodeFile))
 	if err != nil {
 		return "", err
 	}
 	return string(node), nil
+}
+
+func awaitSessionStart(session string) error {
+	fmt.Printf("Awaiting session start")
+	delay := time.NewTimer(0) // No delay on first attempt.
+	for attempt := 0; ; attempt++ {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+
+		case <-delay.C:
+			info, err := beaker.Session(session).Get(ctx)
+			if err != nil {
+				return err
+			}
+
+			if info.State.Started != nil {
+				fmt.Println()
+				return nil
+			}
+			fmt.Print(".")
+			delay.Reset(time.Second)
+		}
+	}
+}
+
+func attachSession(session string) error {
+	rt, err := docker.NewRuntime()
+	if err != nil {
+		return err
+	}
+
+	containers, err := rt.ListContainers(ctx)
+	if err != nil {
+		return err
+	}
+
+	var container runtime.Container
+	for _, c := range containers {
+		info, err := c.Info(ctx)
+		if err != nil {
+			return err
+		}
+
+		if session == info.Labels[sessionContainerLabel] {
+			c := c
+			container = c
+			break
+		}
+	}
+	if container == nil {
+		return fmt.Errorf("container not found")
+	}
+
+	if err := container.Start(ctx); err != nil {
+		return fmt.Errorf("couldn't start container: %w", err)
+	}
+
+	if err := container.(*docker.Container).Attach(ctx); err != nil {
+		return fmt.Errorf("couldn't attach to container: %w", err)
+	}
+	return nil
 }
