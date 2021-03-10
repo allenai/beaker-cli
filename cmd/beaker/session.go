@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/allenai/beaker-service/runtime"
-	"github.com/allenai/beaker-service/runtime/docker"
 	"github.com/beaker/client/api"
+	"github.com/beaker/runtime"
+	"github.com/beaker/runtime/docker"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
