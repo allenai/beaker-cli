@@ -2,28 +2,17 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path"
-	"strings"
 	"time"
 
 	"github.com/beaker/client/api"
 	"github.com/beaker/runtime"
 	"github.com/beaker/runtime/docker"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 )
 
 const (
 	// Label containing the session ID on session containers.
 	sessionContainerLabel = "beaker.org/session"
-
-	// Path where executor config is located.
-	executorConfigPath = "/etc/beaker/config.yml"
-
-	// Path to the file containing the executor's node in the storage path.
-	executorNodeFile = "node"
 )
 
 func newSessionCommand() *cobra.Command {
@@ -167,30 +156,6 @@ func newSessionUpdateCommand() *cobra.Command {
 		return printSessions([]api.Session{*session})
 	}
 	return cmd
-}
-
-type executorConfig struct {
-	StoragePath string `yaml:"storagePath"`
-}
-
-// Get the node ID of the executor running on this machine, if there is one.
-func getCurrentNode() (string, error) {
-	configFile, err := ioutil.ReadFile(executorConfigPath)
-	if err != nil {
-		return "", err
-	}
-	expanded := strings.NewReader(os.ExpandEnv(string(configFile)))
-
-	var config executorConfig
-	if err := yaml.NewDecoder(expanded).Decode(&config); err != nil {
-		return "", err
-	}
-
-	node, err := ioutil.ReadFile(path.Join(config.StoragePath, executorNodeFile))
-	if err != nil {
-		return "", err
-	}
-	return string(node), nil
 }
 
 func awaitSessionStart(session string) error {
