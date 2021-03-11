@@ -12,7 +12,6 @@ import (
 	"text/template"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -28,20 +27,11 @@ const (
 	// Name of the executor's systemd service.
 	executorService = "beaker-executor"
 
-	// Location for storing Beaker configuration.
-	executorConfigDir = "/etc/beaker"
-
 	// Default location for storing datasets.
 	defaultStorageDir = "/var/beaker"
-
-	// Path to the node file within the executor's storage directory.
-	executorNodePath = "node"
 )
 
 var (
-	// Path where executor configuration is stored.
-	executorConfigPath = path.Join(executorConfigDir, "executor-config.yml")
-
 	// Path where the Beaker token used by the executor is stored.
 	executorTokenPath = path.Join(executorConfigDir, "executor-token")
 
@@ -80,10 +70,6 @@ WantedBy=multi-user.target`))
 type systemdOpts struct {
 	BinaryPath string
 	ConfigPath string
-}
-
-type executorConfig struct {
-	StoragePath string `yaml:"storagePath"`
 }
 
 func newExecutorCommand() *cobra.Command {
@@ -400,21 +386,6 @@ func stopExecutor() error {
 	}
 
 	return run("systemctl", "stop", executorService)
-}
-
-// Get the node ID of the executor running on this machine.
-func getExecutorConfig() (*executorConfig, error) {
-	configFile, err := os.Open(executorConfigPath)
-	if err != nil {
-		return nil, err
-	}
-	defer configFile.Close()
-
-	var config executorConfig
-	if err := yaml.NewDecoder(configFile).Decode(&config); err != nil {
-		return nil, err
-	}
-	return &config, nil
 }
 
 // The executor cleanup command removes running containers.

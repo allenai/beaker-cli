@@ -1,8 +1,18 @@
 package main
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/beaker/client/api"
+	"github.com/beaker/runtime"
+	"github.com/beaker/runtime/docker"
 	"github.com/spf13/cobra"
+)
+
+const (
+	// Label containing the session ID on session containers.
+	sessionContainerLabel = "beaker.org/session"
 )
 
 func newSessionCommand() *cobra.Command {
@@ -10,30 +20,63 @@ func newSessionCommand() *cobra.Command {
 		Use:   "session <command>",
 		Short: "Manage sessions",
 	}
+	cmd.AddCommand(newSessionAttachCommand())
 	cmd.AddCommand(newSessionCreateCommand())
 	cmd.AddCommand(newSessionGetCommand())
+	cmd.AddCommand(newSessionListCommand())
+	cmd.AddCommand(newSessionUpdateCommand())
 	return cmd
+}
+
+func newSessionAttachCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "attach <session>",
+		Short: "Attach to a session",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := awaitSessionStart(args[0]); err != nil {
+				return err
+			}
+			return attachSession(args[0])
+		},
+	}
 }
 
 func newSessionCreateCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create <node>",
+		Use:   "create",
 		Short: "Create a new interactive session on a node",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.NoArgs,
 	}
 
 	var name string
+	var node string
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the session")
+	cmd.Flags().StringVar(&node, "node", "", "Node that the session will run on. Defaults to current node.")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		if node == "" {
+			var err error
+			node, err = getCurrentNode()
+			if err != nil {
+				return fmt.Errorf("failed to detect node; use --node flag: %w", err)
+			}
+			fmt.Printf("Detected node: %q\n", node)
+		}
+
 		session, err := beaker.CreateSession(ctx, api.SessionSpec{
-			Node: args[0],
 			Name: name,
+			Node: node,
 		})
 		if err != nil {
 			return err
 		}
-		return printSessions([]api.Session{*session})
+
+		if err := awaitSessionStart(session.ID); err != nil {
+			return err
+		}
+
+		return attachSession(session.ID)
 	}
 	return cmd
 }
@@ -56,4 +99,118 @@ func newSessionGetCommand() *cobra.Command {
 			return printSessions(sessions)
 		},
 	}
+}
+
+func newSessionListCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "List sessions on a node",
+		Args:  cobra.NoArgs,
+	}
+
+	var node string
+	cmd.Flags().StringVar(&node, "node", "", "Node to list sessions. Defaults to current node.")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		if node == "" {
+			var err error
+			node, err = getCurrentNode()
+			if err != nil {
+				return fmt.Errorf("failed to detect node; use --node flag: %w", err)
+			}
+			fmt.Printf("Detected node: %q\n", node)
+		}
+
+		sessions, err := beaker.Node(node).ListSessions(ctx)
+		if err != nil {
+			return err
+		}
+		return printSessions(sessions)
+	}
+	return cmd
+}
+
+func newSessionUpdateCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update",
+		Short: "Update a session",
+		Args:  cobra.ExactArgs(1),
+	}
+
+	var cancel bool
+	cmd.Flags().BoolVar(&cancel, "cancel", false, "Cancel a session")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		patch := api.SessionPatch{
+			State: &api.ExecutionState{},
+		}
+		if cancel {
+			now := time.Now()
+			patch.State.Canceled = &now
+		}
+
+		session, err := beaker.Session(args[0]).Patch(ctx, patch)
+		if err != nil {
+			return err
+		}
+		return printSessions([]api.Session{*session})
+	}
+	return cmd
+}
+
+func awaitSessionStart(session string) error {
+	fmt.Printf("Awaiting session start")
+	delay := time.NewTimer(0) // No delay on first attempt.
+	for attempt := 0; ; attempt++ {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+
+		case <-delay.C:
+			info, err := beaker.Session(session).Get(ctx)
+			if err != nil {
+				return err
+			}
+
+			if info.State.Started != nil {
+				fmt.Println()
+				return nil
+			}
+			fmt.Print(".")
+			delay.Reset(time.Second)
+		}
+	}
+}
+
+func attachSession(session string) error {
+	rt, err := docker.NewRuntime()
+	if err != nil {
+		return err
+	}
+
+	containers, err := rt.ListContainers(ctx)
+	if err != nil {
+		return err
+	}
+
+	var container runtime.Container
+	for _, c := range containers {
+		info, err := c.Info(ctx)
+		if err != nil {
+			return err
+		}
+
+		if session == info.Labels[sessionContainerLabel] {
+			container = c
+			break
+		}
+	}
+	if container == nil {
+		return fmt.Errorf("container not found")
+	}
+
+	if err := container.(*docker.Container).Attach(ctx); err != nil {
+		return fmt.Errorf("couldn't attach to container: %w", err)
+	}
+	return nil
 }
