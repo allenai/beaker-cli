@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/beaker/client/api"
+	"github.com/beaker/client/client"
 	"github.com/beaker/runtime"
 	"github.com/beaker/runtime/docker"
 	"github.com/spf13/cobra"
@@ -104,24 +105,38 @@ func newSessionGetCommand() *cobra.Command {
 func newSessionListCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "List sessions on a node",
+		Short: "List sessions",
 		Args:  cobra.NoArgs,
 	}
 
+	var cluster string
 	var node string
+	var finalized bool
+	cmd.Flags().StringVar(&cluster, "cluster", "", "Cluster to list sessions.")
 	cmd.Flags().StringVar(&node, "node", "", "Node to list sessions. Defaults to current node.")
+	cmd.Flags().BoolVar(&finalized, "finalized", false, "Show only finalized sessions")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		if node == "" {
+		opts := client.ListSessionOpts{
+			Finalized: &finalized,
+		}
+
+		if cluster != "" {
+			opts.Cluster = &cluster
+		}
+
+		if !cmd.Flag("node").Changed && cluster == "" {
 			var err error
 			node, err = getCurrentNode()
 			if err != nil {
 				return fmt.Errorf("failed to detect node; use --node flag: %w", err)
 			}
-			fmt.Printf("Detected node: %q\n", node)
+		}
+		if node != "" {
+			opts.Node = &node
 		}
 
-		sessions, err := beaker.Node(node).ListSessions(ctx)
+		sessions, err := beaker.ListSessions(ctx, &opts)
 		if err != nil {
 			return err
 		}
