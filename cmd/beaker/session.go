@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os/user"
+	"strings"
 	"time"
 
 	"github.com/beaker/client/api"
@@ -14,6 +16,9 @@ import (
 const (
 	// Label containing the session ID on session containers.
 	sessionContainerLabel = "beaker.org/session"
+
+	// Label containing a list of the GPUs assigned to the container e.g. "1,2".
+	sessionGPULabel = "beaker.org/gpus"
 )
 
 func newSessionCommand() *cobra.Command {
@@ -35,9 +40,8 @@ func newSessionAttachCommand() *cobra.Command {
 		Short: "Attach to a session",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := awaitSessionStart(args[0]); err != nil {
-				return err
-			}
+			// TODO What if the session is created but not started?
+			// How can we recover in that case?
 			return attachSession(args[0])
 		},
 	}
@@ -73,11 +77,12 @@ func newSessionCreateCommand() *cobra.Command {
 			return err
 		}
 
-		if err := awaitSessionStart(session.ID); err != nil {
+		info, err := awaitSessionSchedule(session.ID)
+		if err != nil {
 			return err
 		}
 
-		return attachSession(session.ID)
+		return startSession(info)
 	}
 	return cmd
 }
@@ -173,28 +178,95 @@ func newSessionUpdateCommand() *cobra.Command {
 	return cmd
 }
 
-func awaitSessionStart(session string) error {
-	fmt.Printf("Awaiting session start")
+func awaitSessionSchedule(session string) (*api.Session, error) {
+	fmt.Printf("Waiting for session to be scheduled")
 	delay := time.NewTimer(0) // No delay on first attempt.
 	for attempt := 0; ; attempt++ {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return nil, ctx.Err()
 
 		case <-delay.C:
 			info, err := beaker.Session(session).Get(ctx)
 			if err != nil {
-				return err
+				return nil, err
 			}
 
-			if info.State.Started != nil {
+			if info.State.Scheduled != nil {
 				fmt.Println()
-				return nil
+				return info, nil
 			}
 			fmt.Print(".")
 			delay.Reset(time.Second)
 		}
 	}
+}
+
+func startSession(session *api.Session) error {
+	// TODO This image is a placeholder; replace it with the interactive base image.
+	image := &runtime.DockerImage{
+		Tag: "ubuntu:20.04",
+	}
+
+	labels := map[string]string{
+		sessionContainerLabel: session.ID,
+		sessionGPULabel:       strings.Join(session.Limits.GPUs, ","),
+	}
+
+	mounts := []runtime.Mount{
+		// All of these mounts are for LDAP.
+		{
+			HostPath:      "/etc/group",
+			ContainerPath: "/etc/group",
+			ReadOnly:      true,
+		},
+		{
+			HostPath:      "/etc/passwd",
+			ContainerPath: "/etc/passwd",
+			ReadOnly:      true,
+		},
+		{
+			HostPath:      "/etc/shadow",
+			ContainerPath: "/etc/shadow",
+			ReadOnly:      true,
+		},
+	}
+
+	u, err := user.Current()
+	if err != nil {
+		return err
+	}
+	if u.HomeDir != "" {
+		mounts = append(mounts, runtime.Mount{
+			HostPath:      u.HomeDir,
+			ContainerPath: u.HomeDir,
+		})
+	}
+
+	opts := &runtime.ContainerOpts{
+		Name:        strings.ToLower("session-" + session.ID),
+		Image:       image,
+		Command:     []string{"bash"},
+		Labels:      labels,
+		CPUCount:    session.Limits.CPUCount,
+		GPUs:        session.Limits.GPUs,
+		Memory:      session.Limits.Memory.Int64(),
+		Interactive: true,
+		User:        u.Uid + ":" + u.Gid,
+		WorkingDir:  u.HomeDir,
+	}
+
+	rt, err := docker.NewRuntime()
+	if err != nil {
+		return err
+	}
+
+	container, err := rt.CreateContainer(ctx, opts)
+	if err != nil {
+		return err
+	}
+
+	return container.(*docker.Container).Attach(ctx)
 }
 
 func attachSession(session string) error {
