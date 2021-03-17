@@ -68,7 +68,18 @@ func newSessionCreateCommand() *cobra.Command {
 			return err
 		}
 
-		return startSession(info)
+		if err := startSession(info); err != nil {
+			// If we fail to create and attach to the container, send the executor
+			// a cancellation signal so that it can immediately clean up after the session
+			// and reclaim the resources allocated to it.
+			_, _ = beaker.Session(session.ID).Patch(ctx, api.SessionPatch{
+				State: &api.ExecutionState{
+					Canceled: now(),
+				},
+			})
+			return err
+		}
+		return nil
 	}
 	return cmd
 }
@@ -151,8 +162,7 @@ func newSessionUpdateCommand() *cobra.Command {
 			State: &api.ExecutionState{},
 		}
 		if cancel {
-			now := time.Now()
-			patch.State.Canceled = &now
+			patch.State.Canceled = now()
 		}
 
 		session, err := beaker.Session(args[0]).Patch(ctx, patch)
@@ -191,7 +201,7 @@ func awaitSessionSchedule(session string) (*api.Session, error) {
 func startSession(session *api.Session) error {
 	// TODO This image is a placeholder; replace it with the interactive base image.
 	image := &runtime.DockerImage{
-		Tag: "ubuntu:20.04",
+		Tag: "5066eecc0281",
 	}
 
 	labels := map[string]string{
@@ -252,5 +262,17 @@ func startSession(session *api.Session) error {
 		return err
 	}
 
-	return container.(*docker.Container).Attach(ctx)
+	err = container.(*docker.Container).Attach(ctx)
+	if err != nil && strings.HasPrefix(err.Error(), "exited with code ") {
+		// Ignore errors coming from the container.
+		// If the user exits using Ctrl-C, attach will return an error like:
+		// "exited with code 130".
+		return nil
+	}
+	return err
+}
+
+func now() *time.Time {
+	now := time.Now()
+	return &now
 }
