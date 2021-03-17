@@ -65,8 +65,6 @@ github.com/beaker/client v0.0.0-20210317191810-d5fbbe07c52d h1:Aa6w7VqLcm6aUzjSO
 github.com/beaker/client v0.0.0-20210317191810-d5fbbe07c52d/go.mod h1:dO9RCYfNRAnzuoOfPjxtkP9M6PF7MmFgq9UQqz4V0/0=
 github.com/beaker/fileheap v0.0.0-20210213001550-3d3932012952 h1:HlBD6WoDTH+Z42AbK0r+zzjY8dhPbGfQie0gpfyoTnI=
 github.com/beaker/fileheap v0.0.0-20210213001550-3d3932012952/go.mod h1:ylYuVpNx+kB9UxLYmSvrygMIHD/GbU+LzlEqfBrf+Rg=
-github.com/beaker/runtime v0.0.0-20210310154247-35d9f5d4ca58 h1:ZlcR9X71qEYCT1fheMGmWF2VKMP5SE+9833Ugbpjy4U=
-github.com/beaker/runtime v0.0.0-20210310154247-35d9f5d4ca58/go.mod h1:z5txyKI5WlNaiua+Gz5ASiKC5taknjYrQQuE219uWhc=
 github.com/beaker/runtime v0.0.0-20210317193142-2a4a68c12993 h1:OPddEJy3eaqY9mLcdaTg2oHok6B2H+LyKl5exgpsxR8=
 github.com/beaker/runtime v0.0.0-20210317193142-2a4a68c12993/go.mod h1:z5txyKI5WlNaiua+Gz5ASiKC5taknjYrQQuE219uWhc=
 github.com/beaker/unique v0.0.0-20190717213810-0c2d114f43d0 h1:lEhZP+VysiO6zFO4QVKZDp4qG/qTKmfIulocXrkYizo=
