@@ -201,7 +201,7 @@ func awaitSessionSchedule(session string) (*api.Session, error) {
 func startSession(session *api.Session) error {
 	// TODO This image is a placeholder; replace it with the interactive base image.
 	image := &runtime.DockerImage{
-		Tag: "5066eecc0281",
+		Tag: "ubuntu:20.04",
 	}
 
 	labels := map[string]string{
