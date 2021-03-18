@@ -243,6 +243,7 @@ func startSession(session *api.Session) error {
 		Image:       image,
 		Command:     []string{"bash"},
 		Labels:      labels,
+		Mounts:      mounts,
 		CPUCount:    session.Limits.CPUCount,
 		GPUs:        session.Limits.GPUs,
 		Memory:      session.Limits.Memory.Int64(),
