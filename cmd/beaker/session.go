@@ -199,9 +199,8 @@ func awaitSessionSchedule(session string) (*api.Session, error) {
 }
 
 func startSession(session *api.Session) error {
-	// TODO This image is a placeholder; replace it with the interactive base image that supports LDAP.
 	image := &runtime.DockerImage{
-		Tag: "ubuntu:20.04",
+		Tag: "allenai/base:cuda11.2-ubuntu20.04",
 	}
 
 	labels := map[string]string{
@@ -244,6 +243,7 @@ func startSession(session *api.Session) error {
 		Image:       image,
 		Command:     []string{"bash"},
 		Labels:      labels,
+		Mounts:      mounts,
 		CPUCount:    session.Limits.CPUCount,
 		GPUs:        session.Limits.GPUs,
 		Memory:      session.Limits.Memory.Int64(),
