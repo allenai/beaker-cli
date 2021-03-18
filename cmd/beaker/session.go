@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os/user"
+	"strings"
 	"time"
 
 	"github.com/beaker/client/api"
@@ -14,6 +16,9 @@ import (
 const (
 	// Label containing the session ID on session containers.
 	sessionContainerLabel = "beaker.org/session"
+
+	// Label containing a list of the GPUs assigned to the container e.g. "1,2".
+	sessionGPULabel = "beaker.org/gpus"
 )
 
 func newSessionCommand() *cobra.Command {
@@ -21,26 +26,11 @@ func newSessionCommand() *cobra.Command {
 		Use:   "session <command>",
 		Short: "Manage sessions",
 	}
-	cmd.AddCommand(newSessionAttachCommand())
 	cmd.AddCommand(newSessionCreateCommand())
 	cmd.AddCommand(newSessionGetCommand())
 	cmd.AddCommand(newSessionListCommand())
 	cmd.AddCommand(newSessionUpdateCommand())
 	return cmd
-}
-
-func newSessionAttachCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "attach <session>",
-		Short: "Attach to a session",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := awaitSessionStart(args[0]); err != nil {
-				return err
-			}
-			return attachSession(args[0])
-		},
-	}
 }
 
 func newSessionCreateCommand() *cobra.Command {
@@ -73,11 +63,23 @@ func newSessionCreateCommand() *cobra.Command {
 			return err
 		}
 
-		if err := awaitSessionStart(session.ID); err != nil {
+		info, err := awaitSessionSchedule(session.ID)
+		if err != nil {
 			return err
 		}
 
-		return attachSession(session.ID)
+		if err := startSession(info); err != nil {
+			// If we fail to create and attach to the container, send the executor
+			// a cancellation signal so that it can immediately clean up after the session
+			// and reclaim the resources allocated to it.
+			_, _ = beaker.Session(session.ID).Patch(ctx, api.SessionPatch{
+				State: &api.ExecutionState{
+					Canceled: now(),
+				},
+			})
+			return err
+		}
+		return nil
 	}
 	return cmd
 }
@@ -160,8 +162,7 @@ func newSessionUpdateCommand() *cobra.Command {
 			State: &api.ExecutionState{},
 		}
 		if cancel {
-			now := time.Now()
-			patch.State.Canceled = &now
+			patch.State.Canceled = now()
 		}
 
 		session, err := beaker.Session(args[0]).Patch(ctx, patch)
@@ -173,23 +174,23 @@ func newSessionUpdateCommand() *cobra.Command {
 	return cmd
 }
 
-func awaitSessionStart(session string) error {
-	fmt.Printf("Awaiting session start")
+func awaitSessionSchedule(session string) (*api.Session, error) {
+	fmt.Printf("Waiting for session to be scheduled")
 	delay := time.NewTimer(0) // No delay on first attempt.
 	for attempt := 0; ; attempt++ {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return nil, ctx.Err()
 
 		case <-delay.C:
 			info, err := beaker.Session(session).Get(ctx)
 			if err != nil {
-				return err
+				return nil, err
 			}
 
-			if info.State.Started != nil {
+			if info.State.Scheduled != nil {
 				fmt.Println()
-				return nil
+				return info, nil
 			}
 			fmt.Print(".")
 			delay.Reset(time.Second)
@@ -197,35 +198,81 @@ func awaitSessionStart(session string) error {
 	}
 }
 
-func attachSession(session string) error {
+func startSession(session *api.Session) error {
+	// TODO This image is a placeholder; replace it with the interactive base image that supports LDAP.
+	image := &runtime.DockerImage{
+		Tag: "ubuntu:20.04",
+	}
+
+	labels := map[string]string{
+		sessionContainerLabel: session.ID,
+		sessionGPULabel:       strings.Join(session.Limits.GPUs, ","),
+	}
+
+	mounts := []runtime.Mount{
+		// These mounts are for system accounts that are not handled by LDAP.
+		{
+			HostPath:      "/etc/group",
+			ContainerPath: "/etc/group",
+			ReadOnly:      true,
+		},
+		{
+			HostPath:      "/etc/passwd",
+			ContainerPath: "/etc/passwd",
+			ReadOnly:      true,
+		},
+		{
+			HostPath:      "/etc/shadow",
+			ContainerPath: "/etc/shadow",
+			ReadOnly:      true,
+		},
+	}
+
+	u, err := user.Current()
+	if err != nil {
+		return err
+	}
+	if u.HomeDir != "" {
+		mounts = append(mounts, runtime.Mount{
+			HostPath:      u.HomeDir,
+			ContainerPath: u.HomeDir,
+		})
+	}
+
+	opts := &runtime.ContainerOpts{
+		Name:        strings.ToLower("session-" + session.ID),
+		Image:       image,
+		Command:     []string{"bash"},
+		Labels:      labels,
+		CPUCount:    session.Limits.CPUCount,
+		GPUs:        session.Limits.GPUs,
+		Memory:      session.Limits.Memory.Int64(),
+		Interactive: true,
+		User:        u.Uid + ":" + u.Gid,
+		WorkingDir:  u.HomeDir,
+	}
+
 	rt, err := docker.NewRuntime()
 	if err != nil {
 		return err
 	}
 
-	containers, err := rt.ListContainers(ctx)
+	container, err := rt.CreateContainer(ctx, opts)
 	if err != nil {
 		return err
 	}
 
-	var container runtime.Container
-	for _, c := range containers {
-		info, err := c.Info(ctx)
-		if err != nil {
-			return err
-		}
+	err = container.(*docker.Container).Attach(ctx)
+	if err != nil && strings.HasPrefix(err.Error(), "exited with code ") {
+		// Ignore errors coming from the container.
+		// If the user exits using Ctrl-C, attach will return an error like:
+		// "exited with code 130".
+		return nil
+	}
+	return err
+}
 
-		if session == info.Labels[sessionContainerLabel] {
-			container = c
-			break
-		}
-	}
-	if container == nil {
-		return fmt.Errorf("container not found")
-	}
-
-	if err := container.(*docker.Container).Attach(ctx); err != nil {
-		return fmt.Errorf("couldn't attach to container: %w", err)
-	}
-	return nil
+func now() *time.Time {
+	now := time.Now()
+	return &now
 }
