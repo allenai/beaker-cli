@@ -6,11 +6,12 @@ require (
 	github.com/allenai/bytefmt v0.1.0
 	github.com/beaker/client v0.0.0-20210317191810-d5fbbe07c52d
 	github.com/beaker/fileheap v0.0.0-20210213001550-3d3932012952
-	github.com/beaker/runtime v0.0.0-20210317193142-2a4a68c12993
+	github.com/beaker/runtime v0.0.0-20210318211459-999f36d9353e
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v20.10.3+incompatible
 	github.com/fatih/color v1.10.0
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang/protobuf v1.5.1 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.1.3
 	golang.org/x/net v0.0.0-20210316092652-d523dce5a7f4 // indirect
