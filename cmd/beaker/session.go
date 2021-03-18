@@ -199,7 +199,7 @@ func awaitSessionSchedule(session string) (*api.Session, error) {
 }
 
 func startSession(session *api.Session) error {
-	// TODO This image is a placeholder; replace it with the interactive base image.
+	// TODO This image is a placeholder; replace it with the interactive base image that supports LDAP.
 	image := &runtime.DockerImage{
 		Tag: "ubuntu:20.04",
 	}
@@ -210,7 +210,7 @@ func startSession(session *api.Session) error {
 	}
 
 	mounts := []runtime.Mount{
-		// All of these mounts are for LDAP.
+		// These mounts are for system accounts that are not handled by LDAP.
 		{
 			HostPath:      "/etc/group",
 			ContainerPath: "/etc/group",
