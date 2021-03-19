@@ -213,8 +213,10 @@ func startSession(session *api.Session) error {
 		return err
 	}
 
+	env := make(map[string]string)
 	var mounts []runtime.Mount
 	if u.HomeDir != "" {
+		env["HOME"] = u.HomeDir
 		mounts = append(mounts, runtime.Mount{
 			HostPath:      u.HomeDir,
 			ContainerPath: u.HomeDir,
@@ -226,6 +228,7 @@ func startSession(session *api.Session) error {
 		Image:       image,
 		Command:     []string{"bash"},
 		Labels:      labels,
+		Env:         env,
 		Mounts:      mounts,
 		CPUCount:    session.Limits.CPUCount,
 		GPUs:        session.Limits.GPUs,
