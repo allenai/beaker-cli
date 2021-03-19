@@ -208,29 +208,12 @@ func startSession(session *api.Session) error {
 		sessionGPULabel:       strings.Join(session.Limits.GPUs, ","),
 	}
 
-	mounts := []runtime.Mount{
-		// These mounts are for system accounts that are not handled by LDAP.
-		{
-			HostPath:      "/etc/group",
-			ContainerPath: "/etc/group",
-			ReadOnly:      true,
-		},
-		{
-			HostPath:      "/etc/passwd",
-			ContainerPath: "/etc/passwd",
-			ReadOnly:      true,
-		},
-		{
-			HostPath:      "/etc/shadow",
-			ContainerPath: "/etc/shadow",
-			ReadOnly:      true,
-		},
-	}
-
 	u, err := user.Current()
 	if err != nil {
 		return err
 	}
+
+	var mounts []runtime.Mount
 	if u.HomeDir != "" {
 		mounts = append(mounts, runtime.Mount{
 			HostPath:      u.HomeDir,
