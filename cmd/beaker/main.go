@@ -62,11 +62,6 @@ func main() {
 			if beakerConfig, err = config.New(); err != nil {
 				return err
 			}
-			if beakerConfig.UserToken == "" {
-				if err := login(); err != nil {
-					return err
-				}
-			}
 
 			beaker, err = client.NewClient(
 				beakerConfig.BeakerAddress,
@@ -96,10 +91,13 @@ func main() {
 	root.AddCommand(newWorkspaceCommand())
 
 	err := root.Execute()
-	if err != nil && err.Error() == "invalid authentication token" {
-		err = login()
-		if err == nil {
-			err = root.Execute()
+	if err != nil {
+		switch err.Error() {
+		case "invalid authentication token", "user authentication required":
+			err = login()
+			if err == nil {
+				err = root.Execute()
+			}
 		}
 	}
 	if err != nil {
