@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/allenai/bytefmt v0.1.0
-	github.com/beaker/client v0.0.0-20210317191810-d5fbbe07c52d
+	github.com/beaker/client v0.0.0-20210319185416-374fa43cfb44
 	github.com/beaker/fileheap v0.0.0-20210213001550-3d3932012952
 	github.com/beaker/runtime v0.0.0-20210318211459-999f36d9353e
 	github.com/docker/distribution v2.7.1+incompatible
