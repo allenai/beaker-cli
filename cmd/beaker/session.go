@@ -40,8 +40,10 @@ func newSessionCreateCommand() *cobra.Command {
 		Args:  cobra.NoArgs,
 	}
 
+	var gpus int
 	var name string
 	var node string
+	cmd.Flags().IntVar(&gpus, "gpus", 0, "Number of GPUs assigned to the session")
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the session")
 	cmd.Flags().StringVar(&node, "node", "", "Node that the session will run on. Defaults to current node.")
 
@@ -58,6 +60,9 @@ func newSessionCreateCommand() *cobra.Command {
 		session, err := beaker.CreateSession(ctx, api.SessionSpec{
 			Name: name,
 			Node: node,
+			Resources: &api.TaskResources{
+				GPUCount: gpus,
+			},
 		})
 		if err != nil {
 			return err
