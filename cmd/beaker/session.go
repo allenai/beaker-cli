@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"os/user"
 	"strings"
 	"time"
@@ -222,6 +223,13 @@ func startSession(session *api.Session) error {
 			ContainerPath: u.HomeDir,
 		})
 	}
+	if _, err := os.Stat("/net"); !os.IsNotExist(err) {
+		// Mount in /net for NFS.
+		mounts = append(mounts, runtime.Mount{
+			HostPath:      "/net",
+			ContainerPath: "/net",
+		})
+	}
 
 	opts := &runtime.ContainerOpts{
 		Name:        strings.ToLower("session-" + session.ID),
@@ -238,7 +246,7 @@ func startSession(session *api.Session) error {
 		WorkingDir:  u.HomeDir,
 	}
 
-	rt, err := docker.NewRuntime()
+	rt, err := docker.NewRuntime(false)
 	if err != nil {
 		return err
 	}
