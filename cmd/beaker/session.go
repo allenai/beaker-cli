@@ -226,7 +226,7 @@ func startSession(session *api.Session) error {
 	opts := &runtime.ContainerOpts{
 		Name:        strings.ToLower("session-" + session.ID),
 		Image:       image,
-		Command:     []string{"bash"},
+		Command:     []string{"bash", "-l"},
 		Labels:      labels,
 		Env:         env,
 		Mounts:      mounts,
