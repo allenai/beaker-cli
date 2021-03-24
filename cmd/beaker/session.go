@@ -36,15 +36,25 @@ func newSessionCommand() *cobra.Command {
 
 func newSessionCreateCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create",
-		Short: "Create a new interactive session on a node",
-		Args:  cobra.NoArgs,
+		Use:   "create <command...>",
+		Short: "Create a new interactive session",
+		Long: `Create a new interactive session backed by a Docker container.
+
+Arguments are passed to the Docker container as a command.
+To pass flags, use "--" e.g. "create -- ls -l"`,
+		Args: cobra.ArbitraryArgs,
 	}
 
 	var gpus int
+	var image string
 	var name string
 	var node string
 	cmd.Flags().IntVar(&gpus, "gpus", 0, "Number of GPUs assigned to the session")
+	cmd.Flags().StringVar(
+		&image,
+		"image",
+		"allenai/base:cuda11.2-ubuntu20.04",
+		"Docker image for the session.")
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the session")
 	cmd.Flags().StringVar(&node, "node", "", "Node that the session will run on. Defaults to current node.")
 
@@ -82,7 +92,7 @@ func newSessionCreateCommand() *cobra.Command {
 				float64(info.Limits.Memory.Int64())/float64(bytefmt.GiB))
 		}
 
-		if err := startSession(info); err != nil {
+		if err := startSession(info, image, args); err != nil {
 			// If we fail to create and attach to the container, send the executor
 			// a cancellation signal so that it can immediately clean up after the session
 			// and reclaim the resources allocated to it.
@@ -218,11 +228,11 @@ func awaitSessionSchedule(session string) (*api.Session, error) {
 	}
 }
 
-func startSession(session *api.Session) error {
-	image := &runtime.DockerImage{
-		Tag: "allenai/base:cuda11.2-ubuntu20.04",
-	}
-
+func startSession(
+	session *api.Session,
+	image string,
+	command []string,
+) error {
 	labels := map[string]string{
 		sessionContainerLabel: session.ID,
 		sessionGPULabel:       strings.Join(session.Limits.GPUs, ","),
@@ -244,9 +254,11 @@ func startSession(session *api.Session) error {
 	}
 
 	opts := &runtime.ContainerOpts{
-		Name:        strings.ToLower("session-" + session.ID),
-		Image:       image,
-		Command:     []string{"bash", "-l"},
+		Name: strings.ToLower("session-" + session.ID),
+		Image: &runtime.DockerImage{
+			Tag: image,
+		},
+		Command:     command,
 		Labels:      labels,
 		Env:         env,
 		Mounts:      mounts,
