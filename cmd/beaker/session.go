@@ -266,7 +266,7 @@ func startSession(session *api.Session) error {
 		WorkingDir:  u.HomeDir,
 	}
 
-	rt, err := docker.NewRuntime(false)
+	rt, err := docker.NewRuntime()
 	if err != nil {
 		return err
 	}
