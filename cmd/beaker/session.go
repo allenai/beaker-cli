@@ -248,6 +248,10 @@ func startSession(session *api.Session) error {
 		return err
 	}
 
+	if err := rt.PullImage(ctx, opts.Image, false); err != nil {
+		return err
+	}
+
 	container, err := rt.CreateContainer(ctx, opts)
 	if err != nil {
 		return err
