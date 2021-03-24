@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/allenai/bytefmt"
 	"github.com/beaker/client/api"
 	"github.com/beaker/client/client"
 	"github.com/beaker/runtime"
@@ -54,7 +55,6 @@ func newSessionCreateCommand() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to detect node; use --node flag: %w", err)
 			}
-			fmt.Printf("Detected node: %q\n", node)
 		}
 
 		session, err := beaker.CreateSession(ctx, api.SessionSpec{
@@ -71,6 +71,15 @@ func newSessionCreateCommand() *cobra.Command {
 		info, err := awaitSessionSchedule(session.ID)
 		if err != nil {
 			return err
+		}
+
+		if !quiet && info.Limits != nil {
+			fmt.Printf(
+				"Session assigned %d GPU, %v CPU, %.1fGiB memory\n",
+				len(info.Limits.GPUs),
+				info.Limits.CPUCount,
+				// TODO Use friendly formatting from bytefmt when available.
+				float64(info.Limits.Memory.Int64())/float64(bytefmt.GiB))
 		}
 
 		if err := startSession(info); err != nil {
@@ -180,7 +189,9 @@ func newSessionUpdateCommand() *cobra.Command {
 }
 
 func awaitSessionSchedule(session string) (*api.Session, error) {
-	fmt.Printf("Waiting for session to be scheduled")
+	if !quiet {
+		fmt.Printf("Waiting for session to be scheduled")
+	}
 	delay := time.NewTimer(0) // No delay on first attempt.
 	for attempt := 0; ; attempt++ {
 		select {
@@ -194,10 +205,14 @@ func awaitSessionSchedule(session string) (*api.Session, error) {
 			}
 
 			if info.State.Scheduled != nil {
-				fmt.Println()
+				if !quiet {
+					fmt.Println()
+				}
 				return info, nil
 			}
-			fmt.Print(".")
+			if !quiet {
+				fmt.Print(".")
+			}
 			delay.Reset(time.Second)
 		}
 	}
@@ -248,7 +263,10 @@ func startSession(session *api.Session) error {
 		return err
 	}
 
-	if err := rt.PullImage(ctx, opts.Image, false); err != nil {
+	if !quiet {
+		fmt.Println("Pulling image...")
+	}
+	if err := rt.PullImage(ctx, opts.Image, quiet); err != nil {
 		return err
 	}
 
