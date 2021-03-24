@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"os/user"
 	"strings"
 	"time"
@@ -240,6 +241,13 @@ func startSession(session *api.Session) error {
 		mounts = append(mounts, runtime.Mount{
 			HostPath:      u.HomeDir,
 			ContainerPath: u.HomeDir,
+		})
+	}
+	if _, err := os.Stat("/net"); !os.IsNotExist(err) {
+		// Mount in /net for NFS.
+		mounts = append(mounts, runtime.Mount{
+			HostPath:      "/net",
+			ContainerPath: "/net",
 		})
 	}
 
