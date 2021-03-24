@@ -4,9 +4,9 @@ go 1.13
 
 require (
 	github.com/allenai/bytefmt v0.1.0
-	github.com/beaker/client v0.0.0-20210319185416-374fa43cfb44
+	github.com/beaker/client v0.0.0-20210324163645-c64fae5a2b9b
 	github.com/beaker/fileheap v0.0.0-20210213001550-3d3932012952
-	github.com/beaker/runtime v0.0.0-20210318211459-999f36d9353e
+	github.com/beaker/runtime v0.0.0-20210324181419-88414e233ef3
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v20.10.3+incompatible
 	github.com/fatih/color v1.10.0
@@ -14,7 +14,7 @@ require (
 	github.com/golang/protobuf v1.5.1 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.1.3
-	golang.org/x/net v0.0.0-20210316092652-d523dce5a7f4 // indirect
+	golang.org/x/net v0.0.0-20210324051636-2c4c8ecb7826 // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	gopkg.in/yaml.v2 v2.4.0
 )
