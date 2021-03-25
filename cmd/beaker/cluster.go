@@ -21,11 +21,11 @@ func newClusterCommand() *cobra.Command {
 		Short: "Manage clusters",
 	}
 	cmd.AddCommand(newClusterCreateCommand())
+	cmd.AddCommand(newClusterDeleteCommand())
 	cmd.AddCommand(newClusterExecutionsCommand())
 	cmd.AddCommand(newClusterGetCommand())
 	cmd.AddCommand(newClusterListCommand())
 	cmd.AddCommand(newClusterNodesCommand())
-	cmd.AddCommand(newClusterTerminateCommand())
 	cmd.AddCommand(newClusterUpdateCommand())
 	return cmd
 }
@@ -147,6 +147,22 @@ func newClusterCreateCommand() *cobra.Command {
 	return cmd
 }
 
+func newClusterDeleteCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "delete <cluster>",
+		Short: "Permanently remove a cluster",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := beaker.Cluster(args[0]).Terminate(ctx); err != nil {
+				return err
+			}
+
+			fmt.Printf("Deleted %s\n", color.BlueString(args[0]))
+			return nil
+		},
+	}
+}
+
 func newClusterExecutionsCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "executions <cluster>",
@@ -199,15 +215,13 @@ func newClusterListCommand() *cobra.Command {
 			return fmt.Errorf("only one of --cloud and --on-prem may be set")
 		}
 
-		terminated := false
 		var clusters []api.Cluster
 		var cursor string
 		for {
 			var page []api.Cluster
 			var err error
 			page, cursor, err = beaker.ListClusters(ctx, args[0], &client.ListClusterOptions{
-				Cursor:     cursor,
-				Terminated: &terminated,
+				Cursor: cursor,
 			})
 			if err != nil {
 				return err
@@ -246,22 +260,6 @@ func newClusterNodesCommand() *cobra.Command {
 				return err
 			}
 			return printNodes(nodes)
-		},
-	}
-}
-
-func newClusterTerminateCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "terminate <cluster>",
-		Short: "Permanently expire a cluster",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := beaker.Cluster(args[0]).Terminate(ctx); err != nil {
-				return err
-			}
-
-			fmt.Printf("Terminated %s\n", color.BlueString(args[0]))
-			return nil
 		},
 	}
 }
