@@ -93,7 +93,12 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 				float64(info.Limits.Memory.Int64())/float64(bytefmt.GiB))
 		}
 
-		if err := startSession(info, image, args); err != nil {
+		// Pass nil instead of empty slice when there are no arguments.
+		var command []string
+		if len(args) > 0 {
+			command = args
+		}
+		if err := startSession(info, image, command); err != nil {
 			// If we fail to create and attach to the container, send the executor
 			// a cancellation signal so that it can immediately clean up after the session
 			// and reclaim the resources allocated to it.
