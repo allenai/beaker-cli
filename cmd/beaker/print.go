@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,10 +19,23 @@ func printTableRow(cells ...interface{}) error {
 		var formatted string
 		if t, ok := cell.(time.Time); ok {
 			if !t.IsZero() {
-				formatted = t.Format(time.RFC3339)
+				formatted = t.Format(time.Stamp)
 			}
+		} else if d, ok := cell.(time.Duration); ok {
+			// Format duration as HH:MM:SS.
+			second := d % time.Minute
+			minute := (d - second) % time.Hour
+			hour := d - minute - second
+			formatted = fmt.Sprintf(
+				"%02d:%02d:%02d",
+				hour/time.Hour,
+				minute/time.Minute,
+				second/time.Second)
 		} else {
 			formatted = fmt.Sprintf("%v", cell)
+		}
+		if formatted == "" {
+			formatted = "N/A"
 		}
 		cellStrings = append(cellStrings, formatted)
 	}
@@ -364,20 +378,41 @@ func printSessions(sessions []api.Session) error {
 			"ID",
 			"NAME",
 			"AUTHOR",
-			"CLUSTER",
-			"NODE",
 			"STATUS",
+			"SCHEDULED",
+			"DURATION",
+			"GPUS",
 		); err != nil {
 			return err
 		}
 		for _, session := range sessions {
+			var duration time.Duration
+			if session.State.Scheduled != nil {
+				end := time.Now()
+				if session.State.Finalized != nil {
+					end = *session.State.Finalized
+				}
+				duration = end.Sub(*session.State.Scheduled)
+			}
+
+			var scheduled time.Time
+			if session.State.Scheduled != nil {
+				scheduled = *session.State.Scheduled
+			}
+
+			var gpus string
+			if session.Limits != nil {
+				gpus = strconv.Itoa(len(session.Limits.GPUs))
+			}
+
 			if err := printTableRow(
 				session.ID,
 				session.Name,
 				session.Author.Name,
-				session.Cluster,
-				session.Node,
 				executionStatus(session.State),
+				scheduled,
+				duration,
+				gpus,
 			); err != nil {
 				return err
 			}

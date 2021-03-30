@@ -192,31 +192,34 @@ func newSessionListCommand() *cobra.Command {
 		Args:  cobra.NoArgs,
 	}
 
+	var all bool
 	var cluster string
 	var node string
 	var finalized bool
+	cmd.Flags().BoolVar(&all, "all", false, "List all sessions.")
 	cmd.Flags().StringVar(&cluster, "cluster", "", "Cluster to list sessions.")
 	cmd.Flags().StringVar(&node, "node", "", "Node to list sessions. Defaults to current node.")
 	cmd.Flags().BoolVar(&finalized, "finalized", false, "Show only finalized sessions")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		opts := client.ListSessionOpts{
-			Finalized: &finalized,
-		}
+		var opts client.ListSessionOpts
+		if !all {
+			opts.Finalized = &finalized
 
-		if cluster != "" {
-			opts.Cluster = &cluster
-		}
-
-		if !cmd.Flag("node").Changed && cluster == "" {
-			var err error
-			node, err = getCurrentNode()
-			if err != nil {
-				return fmt.Errorf("failed to detect node; use --node flag: %w", err)
+			if cluster != "" {
+				opts.Cluster = &cluster
 			}
-		}
-		if node != "" {
-			opts.Node = &node
+
+			if !cmd.Flag("node").Changed && cluster == "" {
+				var err error
+				node, err = getCurrentNode()
+				if err != nil {
+					return fmt.Errorf("failed to detect node; use --node flag: %w", err)
+				}
+			}
+			if node != "" {
+				opts.Node = &node
+			}
 		}
 
 		sessions, err := beaker.ListSessions(ctx, &opts)
