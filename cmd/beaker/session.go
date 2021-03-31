@@ -148,14 +148,10 @@ func newSessionExecCommand() *cobra.Command {
 				command = args[1:]
 			}
 
-			exec, err := container.(*docker.Container).CreateExec(ctx, &docker.ExecOpts{
+			err = container.(*docker.Container).Exec(ctx, &docker.ExecOpts{
 				Command: command,
 			})
-			if err != nil {
-				return err
-			}
-
-			return handleAttachErr(exec.Attach(ctx))
+			return handleAttachErr(err)
 		},
 	}
 }
