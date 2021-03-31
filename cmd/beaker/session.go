@@ -30,6 +30,7 @@ func newSessionCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newSessionAttachCommand())
 	cmd.AddCommand(newSessionCreateCommand())
+	cmd.AddCommand(newSessionExecCommand())
 	cmd.AddCommand(newSessionGetCommand())
 	cmd.AddCommand(newSessionListCommand())
 	cmd.AddCommand(newSessionUpdateCommand())
@@ -42,46 +43,11 @@ func newSessionAttachCommand() *cobra.Command {
 		Short: "Attach to a running session",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			info, err := beaker.Session(args[0]).Get(ctx)
+			container, err := findRunningContainer(args[0])
 			if err != nil {
 				return err
 			}
-			if info.State.Started == nil {
-				return fmt.Errorf("session not started")
-			}
-			if info.State.Ended != nil {
-				return fmt.Errorf("session already ended")
-			}
-			if info.State.Finalized != nil {
-				return fmt.Errorf("session already finalized")
-			}
-
-			rt, err := docker.NewRuntime()
-			if err != nil {
-				return err
-			}
-
-			containers, err := rt.ListContainers(ctx)
-			if err != nil {
-				return err
-			}
-
-			var container runtime.Container
-			for _, c := range containers {
-				info, err := c.Info(ctx)
-				if err != nil {
-					return err
-				}
-
-				if args[0] == info.Labels[sessionContainerLabel] {
-					container = c
-					break
-				}
-			}
-			if container == nil {
-				return fmt.Errorf("container not found")
-			}
-			return attach(container)
+			return handleAttachErr(container.(*docker.Container).Attach(ctx))
 		},
 	}
 }
@@ -163,6 +129,35 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		return nil
 	}
 	return cmd
+}
+
+func newSessionExecCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "exec <session> <command> <args...>",
+		Short: "Execute a command in a session",
+		Args:  cobra.MinimumNArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			container, err := findRunningContainer(args[0])
+			if err != nil {
+				return err
+			}
+
+			// Pass nil instead of empty slice when there are no arguments.
+			var command []string
+			if len(args) > 1 {
+				command = args[1:]
+			}
+
+			exec, err := container.(*docker.Container).CreateExec(ctx, &docker.ExecOpts{
+				Command: command,
+			})
+			if err != nil {
+				return err
+			}
+
+			return handleAttachErr(exec.Attach(ctx))
+		},
+	}
 }
 
 func newSessionGetCommand() *cobra.Command {
@@ -357,11 +352,10 @@ func startSession(
 	if err := container.Start(ctx); err != nil {
 		return err
 	}
-	return attach(container)
+	return handleAttachErr(container.(*docker.Container).Attach(ctx))
 }
 
-func attach(container runtime.Container) error {
-	err := container.(*docker.Container).Attach(ctx)
+func handleAttachErr(err error) error {
 	if err != nil && strings.HasPrefix(err.Error(), "exited with code ") {
 		// Ignore errors coming from the container.
 		// If the user exits using Ctrl-C, attach will return an error like:
@@ -369,6 +363,49 @@ func attach(container runtime.Container) error {
 		return nil
 	}
 	return err
+}
+
+func findRunningContainer(session string) (runtime.Container, error) {
+	info, err := beaker.Session(session).Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if info.State.Started == nil {
+		return nil, fmt.Errorf("session not started")
+	}
+	if info.State.Ended != nil {
+		return nil, fmt.Errorf("session already ended")
+	}
+	if info.State.Finalized != nil {
+		return nil, fmt.Errorf("session already finalized")
+	}
+
+	rt, err := docker.NewRuntime()
+	if err != nil {
+		return nil, err
+	}
+
+	containers, err := rt.ListContainers(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var container runtime.Container
+	for _, c := range containers {
+		info, err := c.Info(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		if session == info.Labels[sessionContainerLabel] {
+			container = c
+			break
+		}
+	}
+	if container == nil {
+		return nil, fmt.Errorf("container not found")
+	}
+	return container, nil
 }
 
 func now() *time.Time {
