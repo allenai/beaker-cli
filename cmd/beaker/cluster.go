@@ -49,8 +49,8 @@ func newClusterCreateCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&preemptible, "preemptible", false, "Enable cheaper but more volatile nodes")
 	cmd.Flags().BoolVar(&protected, "protected", false, "Mark cluster as protected")
 	cmd.Flags().Float64Var(&cpuCount, "cpu-count", 0, "Number of CPUs per node")
-	cmd.Flags().IntVar(&gpuCount, "gpu-count", 0, "Number of GPUs per node")
-	cmd.Flags().StringVar(&gpuType, "gpu-type", "", "Type of GPU, e.g. p100")
+	cmd.Flags().IntVar(&gpuCount, "gpu-count", 0, "Number of GPUs per node: 1, 2, 4, or 8 (k80 or v100 only)")
+	cmd.Flags().StringVar(&gpuType, "gpu-type", "", "Type of GPU: k80, p100, v100, or t4")
 	cmd.Flags().StringVar(&memory, "memory", "", "Memory limit per node, e.g. 6.5GiB")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
