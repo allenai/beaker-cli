@@ -280,7 +280,7 @@ func startSession(
 
 	if !quiet && session.Limits != nil {
 		fmt.Printf(
-			"Session assigned %d GPU, %v CPU, %.1fGiB memory\n",
+			"Reserved %d GPU, %v CPU, %.1fGiB memory\n",
 			len(session.Limits.GPUs),
 			session.Limits.CPUCount,
 			// TODO Use friendly formatting from bytefmt when available.
