@@ -101,7 +101,10 @@ func main() {
 		}
 	}
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s %+v\n", color.RedString("Error:"), err)
+		// Don't print "context canceled" error on Ctrl-C.
+		if !errors.Is(err, context.Canceled) {
+			fmt.Fprintf(os.Stderr, "%s %+v\n", color.RedString("Error:"), err)
+		}
 		os.Exit(1)
 	}
 }
