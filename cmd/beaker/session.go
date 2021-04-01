@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/user"
@@ -96,30 +97,18 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			return err
 		}
 
-		info, err := awaitSessionSchedule(session.ID)
-		if err != nil {
-			return err
-		}
-
-		if !quiet && info.Limits != nil {
-			fmt.Printf(
-				"Session assigned %d GPU, %v CPU, %.1fGiB memory\n",
-				len(info.Limits.GPUs),
-				info.Limits.CPUCount,
-				// TODO Use friendly formatting from bytefmt when available.
-				float64(info.Limits.Memory.Int64())/float64(bytefmt.GiB))
-		}
-
 		// Pass nil instead of empty slice when there are no arguments.
 		var command []string
 		if len(args) > 0 {
 			command = args
 		}
-		if err := startSession(info, image, command); err != nil {
-			// If we fail to create and attach to the container, send the executor
-			// a cancellation signal so that it can immediately clean up after the session
-			// and reclaim the resources allocated to it.
-			_, _ = beaker.Session(session.ID).Patch(ctx, api.SessionPatch{
+
+		if err := startSession(session.ID, image, command); err != nil {
+			// If we fail to start the session, cancel it so that the executor
+			// can immediately reclaim the resources allocated to it.
+			//
+			// Use context.Background() since ctx may already be canceled.
+			_, _ = beaker.Session(session.ID).Patch(context.Background(), api.SessionPatch{
 				State: &api.ExecutionState{
 					Canceled: now(),
 				},
@@ -280,10 +269,24 @@ func awaitSessionSchedule(session string) (*api.Session, error) {
 }
 
 func startSession(
-	session *api.Session,
+	sessionID string,
 	image string,
 	command []string,
 ) error {
+	session, err := awaitSessionSchedule(sessionID)
+	if err != nil {
+		return err
+	}
+
+	if !quiet && session.Limits != nil {
+		fmt.Printf(
+			"Session assigned %d GPU, %v CPU, %.1fGiB memory\n",
+			len(session.Limits.GPUs),
+			session.Limits.CPUCount,
+			// TODO Use friendly formatting from bytefmt when available.
+			float64(session.Limits.Memory.Int64())/float64(bytefmt.GiB))
+	}
+
 	labels := map[string]string{
 		sessionContainerLabel: session.ID,
 		sessionGPULabel:       strings.Join(session.Limits.GPUs, ","),
