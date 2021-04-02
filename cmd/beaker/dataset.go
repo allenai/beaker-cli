@@ -180,8 +180,10 @@ func newDatasetFetchCommand() *cobra.Command {
 	}
 
 	var outputPath string
+	var prefix string
 	var concurrency int
-	cmd.Flags().StringVarP(&outputPath, "output", "o", "", "Target path for fetched data")
+	cmd.Flags().StringVarP(&outputPath, "output", "o", ".", "Target path for fetched data")
+	cmd.Flags().StringVar(&prefix, "prefix", "", "Only download files that start with the given prefix")
 	cmd.Flags().IntVar(
 		&concurrency,
 		"concurrency",
@@ -194,21 +196,22 @@ func newDatasetFetchCommand() *cobra.Command {
 			return err
 		}
 
-		fmt.Printf("Downloading %s to %s\n",
-			color.CyanString(dataset.ID()),
-			color.GreenString(outputPath+"/"))
-
-		var tracker cli.ProgressTracker
 		info, err := dataset.Storage.Info(ctx)
 		if err != nil {
 			return err
 		}
+
+		fmt.Printf("Downloading %s to %s\n",
+			color.CyanString(dataset.ID()),
+			color.GreenString(outputPath))
+
+		var tracker cli.ProgressTracker
 		if info.Size != nil && info.Size.Final {
 			tracker = cli.BoundedTracker(ctx, info.Size.Files, info.Size.Bytes)
 		} else {
 			tracker = cli.UnboundedTracker(ctx)
 		}
-		return cli.Download(ctx, dataset.Storage, "", outputPath, tracker, concurrency)
+		return cli.Download(ctx, dataset.Storage, prefix, outputPath, tracker, concurrency)
 	}
 	return cmd
 }
