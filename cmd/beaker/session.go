@@ -372,7 +372,7 @@ func findRunningContainer(session string) (runtime.Container, error) {
 	if info.State.Started == nil {
 		return nil, fmt.Errorf("session not started")
 	}
-	if info.State.Ended != nil {
+	if info.State.Ended != nil || info.State.Exited != nil || info.State.Failed != nil {
 		return nil, fmt.Errorf("session already ended")
 	}
 	if info.State.Finalized != nil {
