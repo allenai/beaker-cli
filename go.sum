@@ -58,8 +58,9 @@ github.com/VividCortex/ewma v1.1.1 h1:MnEK4VOv6n0RSY4vtRe3h11qjxL3+t0B8yOL8iMXdc
 github.com/VividCortex/ewma v1.1.1/go.mod h1:2Tkkvm3sRDVXaiyucHiACn4cqf7DpdyLvmxzcbUokwA=
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d h1:licZJFw2RwpHMqeKTCYkitsPqHNxTmd4SNR5r94FGM8=
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d/go.mod h1:asat636LX7Bqt5lYEZ27JNDcqxfjdBQuJ/MM4CN/Lzo=
-github.com/allenai/bytefmt v0.1.0 h1:reMpG/nmrFWpKTb5ZV2mFKzEhyOlmKtUdkUyIOpD+sM=
 github.com/allenai/bytefmt v0.1.0/go.mod h1:3hhcDqHXjwM3JBHx4cX79jG5G3V8zKsjeutbhJ3XjI0=
+github.com/allenai/bytefmt v0.1.1 h1:WjaMWCox0x39h40Q6HNLjXS8ourFHeZwsXwlyeierXY=
+github.com/allenai/bytefmt v0.1.1/go.mod h1:3hhcDqHXjwM3JBHx4cX79jG5G3V8zKsjeutbhJ3XjI0=
 github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a/go.mod h1:lB+ZfQJz7igIIfQNfa7Ml4HSf2uFQQRzpGGRXenZAgY=
 github.com/beaker/client v0.0.0-20210414205925-8cf57b3ed1fa h1:V1wFScWN4hf8jp30ActXgSpz8gquQYJfvVi91k8Bk3w=
 github.com/beaker/client v0.0.0-20210414205925-8cf57b3ed1fa/go.mod h1:dO9RCYfNRAnzuoOfPjxtkP9M6PF7MmFgq9UQqz4V0/0=
