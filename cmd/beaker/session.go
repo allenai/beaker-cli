@@ -89,7 +89,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		session, err := beaker.CreateSession(ctx, api.SessionSpec{
 			Name: name,
 			Node: node,
-			Resources: &api.TaskResources{
+			Requests: &api.TaskResources{
 				GPUCount: gpus,
 			},
 		})
@@ -109,9 +109,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			//
 			// Use context.Background() since ctx may already be canceled.
 			_, _ = beaker.Session(session.ID).Patch(context.Background(), api.SessionPatch{
-				State: &api.ExecutionState{
-					Canceled: now(),
-				},
+				State: &api.ExecStatusUpdate{Canceled: true},
 			})
 			return err
 		}
@@ -223,10 +221,7 @@ func newSessionUpdateCommand() *cobra.Command {
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		patch := api.SessionPatch{
-			State: &api.ExecutionState{},
-		}
-		if cancel {
-			patch.State.Canceled = now()
+			State: &api.ExecStatusUpdate{Canceled: cancel},
 		}
 
 		session, err := beaker.Session(args[0]).Patch(ctx, patch)
@@ -372,7 +367,7 @@ func findRunningContainer(session string) (runtime.Container, error) {
 	if info.State.Started == nil {
 		return nil, fmt.Errorf("session not started")
 	}
-	if info.State.Ended != nil || info.State.Exited != nil || info.State.Failed != nil {
+	if info.State.Exited != nil || info.State.Failed != nil {
 		return nil, fmt.Errorf("session already ended")
 	}
 	if info.State.Finalized != nil {
@@ -405,9 +400,4 @@ func findRunningContainer(session string) (runtime.Container, error) {
 		return nil, fmt.Errorf("container not found")
 	}
 	return container, nil
-}
-
-func now() *time.Time {
-	now := time.Now()
-	return &now
 }
