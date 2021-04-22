@@ -15,7 +15,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 )
 
 func newExperimentCommand() *cobra.Command {
@@ -65,57 +64,25 @@ func newExperimentCreateCommand() *cobra.Command {
 			return err
 		}
 
-		var header struct {
-			Version string `yaml:"version,omitempty"`
-		}
-		if err := yaml.Unmarshal(rawSpec, &header); err != nil {
+		ws, err := beaker.Workspace(ctx, workspace)
+		if err != nil {
 			return err
 		}
 
-		// TODO: We should be able to blindly pass the raw spec to the service,
-		// but need to update the API to accept YAML first.
-		var experimentID string
-		switch header.Version {
-		case "v2", "v2-alpha":
-			var spec api.ExperimentSpecV2
-			if err := yaml.UnmarshalStrict(rawSpec, &spec); err != nil {
-				return err
-			}
-
-			ws, err := beaker.Workspace(ctx, workspace)
-			if err != nil {
-				return err
-			}
-			experiment, err := ws.CreateExperiment(ctx, &spec, &client.ExperimentOpts{
-				Name: name,
-			})
-			if err != nil {
-				return err
-			}
-			experimentID = experiment.ID
-
-		case "", "v1":
-			var spec api.ExperimentSpecV1
-			if err := yaml.UnmarshalStrict(rawSpec, &spec); err != nil {
-				return err
-			}
-			if err := canonicalizeSpecV1(&spec); err != nil {
-				return err
-			}
-
-			spec.Workspace = workspace
-			experiment, err := beaker.CreateExperiment(ctx, spec, name, priority)
-			if err != nil {
-				return err
-			}
-			experimentID = experiment.ID()
+		experiment, err := ws.CreateExperimentRaw(
+			ctx,
+			"application/x-yaml",
+			bytes.NewReader(rawSpec),
+			&client.ExperimentOpts{Name: name})
+		if err != nil {
+			return err
 		}
 
 		if quiet {
-			fmt.Println(experimentID)
+			fmt.Println(experiment.ID)
 		} else {
 			fmt.Printf("Experiment %s submitted. See progress at %s/ex/%s\n",
-				color.BlueString(experimentID), beaker.Address(), experimentID)
+				color.BlueString(experiment.ID), beaker.Address(), experiment.ID)
 		}
 		return nil
 	}
