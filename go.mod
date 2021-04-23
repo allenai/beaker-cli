@@ -6,7 +6,7 @@ require (
 	github.com/allenai/bytefmt v0.1.1
 	github.com/beaker/client v0.0.0-20210421233118-5dcaf8303b8d
 	github.com/beaker/fileheap v0.0.0-20210213001550-3d3932012952
-	github.com/beaker/runtime v0.0.0-20210331190750-fe21c229c740
+	github.com/beaker/runtime v0.0.0-20210423161731-bafd51af5b2e
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v20.10.3+incompatible
 	github.com/fatih/color v1.10.0
