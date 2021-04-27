@@ -9,11 +9,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/allenai/bytefmt"
 	"github.com/beaker/client/api"
 	"github.com/beaker/client/client"
 	"github.com/fatih/color"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -356,24 +354,4 @@ func openPath(p string) (io.Reader, error) {
 		return os.Stdin, nil
 	}
 	return os.Open(p)
-}
-
-// canonicalizeSpecV1 fills out JSON fields used by the API from YAML fields parsed from disk.
-func canonicalizeSpecV1(spec *api.ExperimentSpecV1) error {
-	// TODO: This should be unnecessary when the service accepts YAML directly.
-	for i := range spec.Tasks {
-		reqs := &spec.Tasks[i].Spec.Requirements
-		if reqs.CPU < 0 {
-			return errors.Errorf("couldn't parse cpu argument '%.2f' because it was negative", reqs.CPU)
-		}
-		reqs.MilliCPU = int(reqs.CPU * 1000)
-		if reqs.MemoryHuman != "" {
-			size, err := bytefmt.Parse(reqs.MemoryHuman)
-			if err != nil {
-				return errors.Wrapf(err, "invalid memory value %q", reqs.MemoryHuman)
-			}
-			reqs.Memory = int64(size.Int64())
-		}
-	}
-	return nil
 }
