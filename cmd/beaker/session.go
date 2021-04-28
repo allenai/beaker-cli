@@ -98,19 +98,22 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			return err
 		}
 
-		sessionID := session.ID
-		cancel := func() {
+		shouldCancel, sessionID := true, session.ID
+		defer func() {
 			// If we fail to start the session, cancel it so that the executor
 			// can immediately reclaim the resources allocated to it.
 			//
 			// Use context.Background() since ctx may already be canceled.
+			if !shouldCancel {
+				return
+			}
 			_, _ = beaker.Session(sessionID).Patch(context.Background(), api.SessionPatch{
 				State: &api.ExecStatusUpdate{Canceled: true},
 			})
-		}
+		}()
 
 		if !quiet {
-			fmt.Print("Scheduling session")
+			fmt.Printf("Scheduling session %s", session.ID)
 			if req := resourceRequestString(session.Requests); req != "" {
 				fmt.Print(" with at least ", req)
 			}
@@ -118,7 +121,6 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		}
 
 		if session, err = awaitSessionSchedule(*session); err != nil {
-			cancel()
 			return err
 		}
 
@@ -133,9 +135,10 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		}
 
 		if err := startSession(*session, image, command); err != nil {
-			cancel()
 			return err
 		}
+
+		shouldCancel = false
 		return nil
 	}
 	return cmd
@@ -310,10 +313,10 @@ func awaitSessionSchedule(session api.Session) (*api.Session, error) {
 		Scheduled: api.BoolPtr(true),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("couldn't get cluster job queue: %w", err)
+		return nil, fmt.Errorf("couldn't list cluster workloads: %w", err)
 	}
 
-	// Calculate the available capacity of each node in the cluster.
+	// Subtract each running execution from its node's capacity.
 	for _, exec := range execs {
 		node, ok := nodesByID[exec.Node]
 		if !ok || node.Limits == nil {
@@ -324,6 +327,34 @@ func awaitSessionSchedule(session api.Session) (*api.Session, error) {
 		node.Limits.GPUCount -= exec.Limits.GPUCount
 		if node.Limits.Memory != nil && exec.Limits.Memory != nil {
 			node.Limits.Memory.Sub(*exec.Limits.Memory)
+		}
+	}
+
+	sessions, err := beaker.ListSessions(ctx, &client.ListSessionOpts{
+		Cluster:   api.StringPtr(session.Cluster),
+		Finalized: api.BoolPtr(false),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("couldn't list cluster sessions: %w", err)
+	}
+
+	// Subtract each running session from its node's capacity.
+	// TODO: This is duplicative of executions above. We should consolidate.
+	for _, sess := range sessions {
+		node, ok := nodesByID[session.Node]
+		if !ok || node.Limits == nil {
+			continue
+		}
+
+		// Ignore sessions which haven't fully scheduled yet, including the one we're starting.
+		if sess.ID == session.ID || sess.Limits == nil {
+			continue
+		}
+
+		node.Limits.CPUCount -= sess.Limits.CPUCount
+		node.Limits.GPUCount -= len(sess.Limits.GPUs)
+		if node.Limits.Memory != nil && sess.Limits.Memory != nil {
+			node.Limits.Memory.Sub(*sess.Limits.Memory)
 		}
 	}
 
