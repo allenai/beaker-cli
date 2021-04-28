@@ -385,7 +385,7 @@ func awaitSessionSchedule(session api.Session) (*api.Session, error) {
 func checkNodeCapacity(node *api.Node, request *api.TaskResources) error {
 	switch {
 	case node.Limits == nil:
-		// Node has unbounded capacity.
+		// Node has unknown capacity. Treat it as unbounded.
 		return nil
 
 	case node.Cordoned != nil:
