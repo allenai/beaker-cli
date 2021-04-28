@@ -339,7 +339,7 @@ func awaitSessionSchedule(session api.Session) (*api.Session, error) {
 	}
 
 	// Subtract each running session from its node's capacity.
-	// TODO: This is duplicative of executions above. We should consolidate.
+	// TODO allenai/beaker-service#1426: This is duplicative of executions above.
 	for _, sess := range sessions {
 		node, ok := nodesByID[session.Node]
 		if !ok || node.Limits == nil {
