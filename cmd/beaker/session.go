@@ -293,7 +293,7 @@ func newSessionUpdateCommand() *cobra.Command {
 
 func awaitSessionSchedule(session api.Session) (*api.Session, error) {
 	s := beaker.Session(session.ID)
-	cl := beaker.Cluster("ai2/" + session.Cluster)
+	cl := beaker.Cluster(session.Cluster)
 
 	nodes, err := cl.ListClusterNodes(ctx)
 	if err != nil {
