@@ -98,12 +98,13 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			return err
 		}
 
+		sessionID := session.ID
 		cancel := func() {
 			// If we fail to start the session, cancel it so that the executor
 			// can immediately reclaim the resources allocated to it.
 			//
 			// Use context.Background() since ctx may already be canceled.
-			_, _ = beaker.Session(session.ID).Patch(context.Background(), api.SessionPatch{
+			_, _ = beaker.Session(sessionID).Patch(context.Background(), api.SessionPatch{
 				State: &api.ExecStatusUpdate{Canceled: true},
 			})
 		}
@@ -111,7 +112,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		if !quiet {
 			fmt.Print("Scheduling session")
 			if req := resourceRequestString(session.Requests); req != "" {
-				fmt.Print(" with at least", req)
+				fmt.Print(" with at least ", req)
 			}
 			fmt.Println("... (Press Ctrl+C to cancel)")
 		}
@@ -292,7 +293,7 @@ func newSessionUpdateCommand() *cobra.Command {
 
 func awaitSessionSchedule(session api.Session) (*api.Session, error) {
 	s := beaker.Session(session.ID)
-	cl := beaker.Cluster(session.Cluster)
+	cl := beaker.Cluster("ai2/" + session.Cluster)
 
 	nodes, err := cl.ListClusterNodes(ctx)
 	if err != nil {
@@ -351,8 +352,13 @@ func awaitSessionSchedule(session api.Session) (*api.Session, error) {
 		}
 
 		fmt.Printf("This session is unlikely to to start because %s.\n", capacityErr)
-		fmt.Println("You may continue waiting or launch a new session on one of the following hosts:")
-		fmt.Println("    " + strings.Join(hosts, "\n    "))
+		fmt.Println("You may continue waiting to hold your place in the queue.")
+		if len(hosts) == 0 {
+			fmt.Println("There are no other nodes on this cluster with sufficient capacity.")
+		} else {
+			fmt.Println("You could also try one of the following available nodes:")
+			fmt.Println("    " + strings.Join(hosts, "\n    "))
+		}
 	}
 
 	delay := time.NewTimer(0) // When to poll session status.
