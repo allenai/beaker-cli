@@ -36,7 +36,7 @@ func newSessionCommand() *cobra.Command {
 	cmd.AddCommand(newSessionExecCommand())
 	cmd.AddCommand(newSessionGetCommand())
 	cmd.AddCommand(newSessionListCommand())
-	cmd.AddCommand(newSessionUpdateCommand())
+	cmd.AddCommand(newSessionStopCommand())
 	return cmd
 }
 
@@ -270,19 +270,16 @@ func newSessionListCommand() *cobra.Command {
 	return cmd
 }
 
-func newSessionUpdateCommand() *cobra.Command {
+func newSessionStopCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "update",
-		Short: "Update a session",
+		Use:   "stop",
+		Short: "Stop a pending or running session",
 		Args:  cobra.ExactArgs(1),
 	}
 
-	var cancel bool
-	cmd.Flags().BoolVar(&cancel, "cancel", false, "Cancel a session")
-
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		patch := api.SessionPatch{
-			State: &api.ExecStatusUpdate{Canceled: cancel},
+			State: &api.ExecStatusUpdate{Canceled: true},
 		}
 
 		session, err := beaker.Session(args[0]).Patch(ctx, patch)
