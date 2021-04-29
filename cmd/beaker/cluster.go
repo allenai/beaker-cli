@@ -48,10 +48,16 @@ func newClusterCreateCommand() *cobra.Command {
 	cmd.Flags().IntVar(&maxSize, "max-size", 0, "Maximum number of nodes")
 	cmd.Flags().BoolVar(&preemptible, "preemptible", false, "Enable cheaper but more volatile nodes")
 	cmd.Flags().BoolVar(&protected, "protected", false, "Mark cluster as protected")
-	cmd.Flags().Float64Var(&cpuCount, "cpu-count", 0, "Number of CPUs per node")
-	cmd.Flags().IntVar(&gpuCount, "gpu-count", 0, "Number of GPUs per node: 1, 2, 4, or 8")
+	cmd.Flags().Float64Var(&cpuCount, "cpus", 0, "Minimum CPU cores per node, e.g. 7.5")
+	cmd.Flags().IntVar(&gpuCount, "gpus", 0, "Number of GPUs per node: 1, 2, 4, or 8")
 	cmd.Flags().StringVar(&gpuType, "gpu-type", "", "Type of GPU: k80, p100, v100, or t4")
-	cmd.Flags().StringVar(&memory, "memory", "", "Memory limit per node, e.g. 6.5GiB")
+	cmd.Flags().StringVar(&memory, "memory", "", "Minimum memory per node, e.g. 6.5GiB")
+
+	// Deprecated flags are replaced by the above.
+	cmd.Flags().Float64Var(&cpuCount, "cpu-count", 0, "")
+	cmd.Flags().MarkDeprecated("cpu-count", "please use --cpus instead")
+	cmd.Flags().IntVar(&gpuCount, "gpu-count", 0, "")
+	cmd.Flags().MarkDeprecated("gpu-count", "please use --gpus instead")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		parts := strings.Split(args[0], "/")
