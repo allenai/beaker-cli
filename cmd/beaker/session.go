@@ -66,11 +66,15 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		Args: cobra.ArbitraryArgs,
 	}
 
+	var cpus float64
 	var gpus int
+	var memory string
 	var image string
 	var name string
 	var node string
-	cmd.Flags().IntVar(&gpus, "gpus", 0, "Number of GPUs assigned to the session")
+	cmd.Flags().Float64Var(&cpus, "cpus", 0, "Minimum CPU cores to reserve, e.g. 7.5")
+	cmd.Flags().IntVar(&gpus, "gpus", 0, "Minimum number of GPUs to reserve")
+	cmd.Flags().StringVar(&memory, "memory", "", "Minimum memory to reserve, e.g. 6.5GiB")
 	cmd.Flags().StringVar(
 		&image,
 		"image",
@@ -80,10 +84,17 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 	cmd.Flags().StringVar(&node, "node", "", "Node that the session will run on. Defaults to current node.")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		var err error
 		if node == "" {
-			var err error
 			if node, err = getCurrentNode(); err != nil {
 				return fmt.Errorf("failed to detect node; use --node flag: %w", err)
+			}
+		}
+
+		var memSize *bytefmt.Size
+		if memory != "" {
+			if memSize, err = bytefmt.Parse(memory); err != nil {
+				return fmt.Errorf("invalid value for --memory: %w", err)
 			}
 		}
 
@@ -91,7 +102,9 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			Name: name,
 			Node: node,
 			Requests: &api.TaskResources{
+				CPUCount: cpus,
 				GPUCount: gpus,
+				Memory:   memSize,
 			},
 		})
 		if err != nil {
