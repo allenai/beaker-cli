@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -66,15 +67,11 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		Args: cobra.ArbitraryArgs,
 	}
 
-	var cpus float64
-	var gpus int
-	var memory string
+	var altHome bool
 	var image string
 	var name string
 	var node string
-	cmd.Flags().Float64Var(&cpus, "cpus", 0, "Minimum CPU cores to reserve, e.g. 7.5")
-	cmd.Flags().IntVar(&gpus, "gpus", 0, "Minimum number of GPUs to reserve")
-	cmd.Flags().StringVar(&memory, "memory", "", "Minimum memory to reserve, e.g. 6.5GiB")
+	cmd.Flags().BoolVar(&altHome, "alt-home", false, "Mount alternate home directory managed by Beaker (experimental)")
 	cmd.Flags().StringVar(
 		&image,
 		"image",
@@ -82,6 +79,13 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		"Docker image for the session.")
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the session")
 	cmd.Flags().StringVar(&node, "node", "", "Node that the session will run on. Defaults to current node.")
+
+	var cpus float64
+	var gpus int
+	var memory string
+	cmd.Flags().Float64Var(&cpus, "cpus", 0, "Minimum CPU cores to reserve, e.g. 7.5")
+	cmd.Flags().IntVar(&gpus, "gpus", 0, "Minimum number of GPUs to reserve")
+	cmd.Flags().StringVar(&memory, "memory", "", "Minimum memory to reserve, e.g. 6.5GiB")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		var err error
@@ -95,6 +99,27 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		if memory != "" {
 			if memSize, err = bytefmt.Parse(memory); err != nil {
 				return fmt.Errorf("invalid value for --memory: %w", err)
+			}
+		}
+
+		u, err := user.Current()
+		if err != nil {
+			return err
+		}
+
+		userGroup := u.Uid + ":" + u.Gid
+		home := runtime.Mount{HostPath: u.HomeDir, ContainerPath: u.HomeDir}
+		if altHome {
+			config, err := getExecutorConfig()
+			if err != nil {
+				return fmt.Errorf("couldn't load Beaker config: %w", err)
+			}
+
+			// The "home" directory should already exist with r/w permissions for all users.
+			// The child directory is restricted to the user's account in case they store secrets.
+			home.HostPath = filepath.Join(config.StoragePath, "home", u.Name)
+			if err := os.MkdirAll(home.HostPath, 0700); err != nil {
+				return fmt.Errorf("couldn't create alternate home directory: %w", err)
 			}
 		}
 
@@ -147,7 +172,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			command = args
 		}
 
-		if err := startSession(*session, image, command); err != nil {
+		if err := startSession(*session, userGroup, home, image, command); err != nil {
 			return err
 		}
 
@@ -451,25 +476,23 @@ func checkNodeCapacity(node *api.Node, request *api.TaskResources) error {
 	}
 }
 
-func startSession(session api.Session, image string, command []string) error {
+func startSession(
+	session api.Session,
+	user string,
+	home runtime.Mount,
+	image string,
+	command []string,
+) error {
 	labels := map[string]string{
 		sessionContainerLabel: session.ID,
 		sessionGPULabel:       strings.Join(session.Limits.GPUs, ","),
 	}
 
-	u, err := user.Current()
-	if err != nil {
-		return err
-	}
-
 	env := make(map[string]string)
 	var mounts []runtime.Mount
-	if u.HomeDir != "" {
-		env["HOME"] = u.HomeDir
-		mounts = append(mounts, runtime.Mount{
-			HostPath:      u.HomeDir,
-			ContainerPath: u.HomeDir,
-		})
+	if home.ContainerPath != "" {
+		env["HOME"] = home.ContainerPath
+		mounts = append(mounts, home)
 	}
 	if _, err := os.Stat("/net"); !os.IsNotExist(err) {
 		// Mount in /net for NFS.
@@ -492,8 +515,8 @@ func startSession(session api.Session, image string, command []string) error {
 		GPUs:        session.Limits.GPUs,
 		Memory:      session.Limits.Memory.Int64(),
 		Interactive: true,
-		User:        u.Uid + ":" + u.Gid,
-		WorkingDir:  u.HomeDir,
+		User:        user,
+		WorkingDir:  home.ContainerPath,
 	}
 
 	rt, err := docker.NewRuntime()
