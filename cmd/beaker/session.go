@@ -167,12 +167,68 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		}
 
 		// Pass nil instead of empty slice when there are no arguments.
-		var command []string
-		if len(args) > 0 {
-			command = args
+		command := args
+		if len(command) == 0 {
+			command = nil
 		}
 
-		if err := startSession(*session, userGroup, home, image, command); err != nil {
+		labels := map[string]string{
+			sessionContainerLabel: session.ID,
+			sessionGPULabel:       strings.Join(session.Limits.GPUs, ","),
+		}
+
+		env := make(map[string]string, 1)
+		var mounts []runtime.Mount
+		if home.ContainerPath != "" {
+			env["HOME"] = home.ContainerPath
+			mounts = append(mounts, home)
+		}
+		if _, err := os.Stat("/net"); !os.IsNotExist(err) {
+			// Mount in /net for NFS.
+			mounts = append(mounts, runtime.Mount{
+				HostPath:      "/net",
+				ContainerPath: "/net",
+			})
+		}
+
+		opts := &runtime.ContainerOpts{
+			Name: strings.ToLower("session-" + session.ID),
+			Image: &runtime.DockerImage{
+				Tag: image,
+			},
+			Command:     command,
+			Labels:      labels,
+			Env:         env,
+			Mounts:      mounts,
+			CPUCount:    session.Limits.CPUCount,
+			GPUs:        session.Limits.GPUs,
+			Memory:      session.Limits.Memory.Int64(),
+			Interactive: true,
+			User:        userGroup,
+			WorkingDir:  home.ContainerPath,
+		}
+
+		rt, err := docker.NewRuntime()
+		if err != nil {
+			return err
+		}
+
+		if !quiet {
+			fmt.Println("Pulling image...")
+		}
+		if err := rt.PullImage(ctx, opts.Image, quiet); err != nil {
+			return err
+		}
+
+		container, err := rt.CreateContainer(ctx, opts)
+		if err != nil {
+			return err
+		}
+
+		if err := container.Start(ctx); err != nil {
+			return err
+		}
+		if err := handleAttachErr(container.(*docker.Container).Attach(ctx)); err != nil {
 			return err
 		}
 
@@ -474,72 +530,6 @@ func checkNodeCapacity(node *api.Node, request *api.TaskResources) error {
 	default:
 		return nil // All checks passed.
 	}
-}
-
-func startSession(
-	session api.Session,
-	user string,
-	home runtime.Mount,
-	image string,
-	command []string,
-) error {
-	labels := map[string]string{
-		sessionContainerLabel: session.ID,
-		sessionGPULabel:       strings.Join(session.Limits.GPUs, ","),
-	}
-
-	env := make(map[string]string)
-	var mounts []runtime.Mount
-	if home.ContainerPath != "" {
-		env["HOME"] = home.ContainerPath
-		mounts = append(mounts, home)
-	}
-	if _, err := os.Stat("/net"); !os.IsNotExist(err) {
-		// Mount in /net for NFS.
-		mounts = append(mounts, runtime.Mount{
-			HostPath:      "/net",
-			ContainerPath: "/net",
-		})
-	}
-
-	opts := &runtime.ContainerOpts{
-		Name: strings.ToLower("session-" + session.ID),
-		Image: &runtime.DockerImage{
-			Tag: image,
-		},
-		Command:     command,
-		Labels:      labels,
-		Env:         env,
-		Mounts:      mounts,
-		CPUCount:    session.Limits.CPUCount,
-		GPUs:        session.Limits.GPUs,
-		Memory:      session.Limits.Memory.Int64(),
-		Interactive: true,
-		User:        user,
-		WorkingDir:  home.ContainerPath,
-	}
-
-	rt, err := docker.NewRuntime()
-	if err != nil {
-		return err
-	}
-
-	if !quiet {
-		fmt.Println("Pulling image...")
-	}
-	if err := rt.PullImage(ctx, opts.Image, quiet); err != nil {
-		return err
-	}
-
-	container, err := rt.CreateContainer(ctx, opts)
-	if err != nil {
-		return err
-	}
-
-	if err := container.Start(ctx); err != nil {
-		return err
-	}
-	return handleAttachErr(container.(*docker.Container).Attach(ctx))
 }
 
 func handleAttachErr(err error) error {
