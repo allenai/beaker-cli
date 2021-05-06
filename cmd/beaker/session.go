@@ -71,14 +71,17 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 	var image string
 	var name string
 	var node string
+	var pull string
 	cmd.Flags().BoolVar(&altHome, "alt-home", false, "Mount alternate home directory managed by Beaker (experimental)")
 	cmd.Flags().StringVar(
 		&image,
 		"image",
-		"allenai/base:cuda11.2-ubuntu20.04",
-		"Docker image for the session.")
+		"docker://allenai/base:cuda11.2-ubuntu20.04",
+		"Base image to run, may be a Beaker or Docker image")
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the session")
 	cmd.Flags().StringVar(&node, "node", "", "Node that the session will run on. Defaults to current node.")
+	cmd.Flags().StringVar(&pull, "pull", string(runtime.PullIfMissing), fmt.Sprintf(
+		"Pull image before running (%s|%s|%s)", runtime.PullAlways, runtime.PullIfMissing, runtime.PullNever))
 
 	var cpus float64
 	var gpus int
@@ -88,7 +91,11 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 	cmd.Flags().StringVar(&memory, "memory", "", "Minimum memory to reserve, e.g. 6.5GiB")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		var err error
+		rt, err := docker.NewRuntime()
+		if err != nil {
+			return fmt.Errorf("couldn't initialize container runtime: %w", err)
+		}
+
 		if node == "" {
 			if node, err = getCurrentNode(); err != nil {
 				return fmt.Errorf("failed to detect node; use --node flag: %w", err)
@@ -123,6 +130,11 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			}
 		}
 
+		rtImage, err := resolveImage(beaker, image)
+		if err != nil {
+			return fmt.Errorf("invalid image: %w", err)
+		}
+
 		session, err := beaker.CreateSession(ctx, api.SessionSpec{
 			Name: name,
 			Node: node,
@@ -151,11 +163,24 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		}()
 
 		if !quiet {
-			fmt.Printf("Scheduling session %s", session.ID)
+			fmt.Printf("Starting session %s", session.ID)
 			if req := resourceRequestString(session.Requests); req != "" {
 				fmt.Print(" with at least ", req)
 			}
 			fmt.Println("... (Press Ctrl+C to cancel)")
+		}
+
+		// Pull the image after creating the session and before waiting to minimize delay.
+		// The policy is validated in rt.PullImage.
+		if !quiet {
+			fmt.Printf("Verifying image (%s)...\n", image)
+		}
+		pullPolicy := runtime.PullPolicy(strings.ToLower(pull))
+		if err := rt.PullImage(ctx, rtImage, pullPolicy, quiet); err != nil {
+			return err
+		}
+		if !quiet {
+			fmt.Println()
 		}
 
 		if session, err = awaitSessionSchedule(*session); err != nil {
@@ -191,7 +216,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			})
 		}
 
-		opts := &runtime.ContainerOpts{
+		container, err := rt.CreateContainer(ctx, &runtime.ContainerOpts{
 			Name: strings.ToLower("session-" + session.ID),
 			Image: &runtime.DockerImage{
 				Tag: image,
@@ -206,21 +231,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			Interactive: true,
 			User:        userGroup,
 			WorkingDir:  home.ContainerPath,
-		}
-
-		rt, err := docker.NewRuntime()
-		if err != nil {
-			return err
-		}
-
-		if !quiet {
-			fmt.Println("Pulling image...")
-		}
-		if err := rt.PullImage(ctx, opts.Image, quiet); err != nil {
-			return err
-		}
-
-		container, err := rt.CreateContainer(ctx, opts)
+		})
 		if err != nil {
 			return err
 		}
@@ -232,7 +243,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			return err
 		}
 
-		shouldCancel = false
+		//shouldCancel = false
 		return nil
 	}
 	return cmd
@@ -272,6 +283,42 @@ func resourceString(gpuCount int, cpuCount float64, memory *bytefmt.Size) string
 	}
 
 	return strings.Join(requests, ", ")
+}
+
+func resolveImage(beaker *client.Client, name string) (*runtime.DockerImage, error) {
+	parts := strings.SplitN(name, "://", 2)
+	if len(parts) < 2 {
+		return nil, fmt.Errorf("image must include scheme such as beaker:// or docker://")
+	}
+	scheme, image := parts[0], parts[1]
+
+	switch strings.ToLower(scheme) {
+	case "beaker":
+		image, err := beaker.Image(ctx, image)
+		if err != nil {
+			return nil, err
+		}
+
+		repo, err := image.Repository(ctx, false)
+		if err != nil {
+			return nil, err
+		}
+
+		return &runtime.DockerImage{
+			Tag: repo.ImageTag,
+			Auth: &runtime.RegistryAuth{
+				ServerAddress: repo.Auth.ServerAddress,
+				Username:      repo.Auth.User,
+				Password:      repo.Auth.Password,
+			},
+		}, nil
+
+	case "docker":
+		return &runtime.DockerImage{Tag: image}, nil
+
+	default:
+		return nil, fmt.Errorf("%q is not a supported image type", scheme)
+	}
 }
 
 func newSessionExecCommand() *cobra.Command {
