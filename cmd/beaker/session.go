@@ -219,7 +219,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		container, err := rt.CreateContainer(ctx, &runtime.ContainerOpts{
 			Name: strings.ToLower("session-" + session.ID),
 			Image: &runtime.DockerImage{
-				Tag: image,
+				Tag: rtImage.Tag,
 			},
 			Command:     command,
 			Labels:      labels,
