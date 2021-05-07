@@ -122,9 +122,13 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 				return fmt.Errorf("couldn't load Beaker config: %w", err)
 			}
 
+			if u.Username == "" {
+				return errors.New("the current user has no name")
+			}
+
 			// The "home" directory should already exist with r/w permissions for all users.
 			// The child directory is restricted to the user's account in case they store secrets.
-			home.HostPath = filepath.Join(config.StoragePath, "home", u.Name)
+			home.HostPath = filepath.Join(config.StoragePath, "home", u.Username)
 			if err := os.MkdirAll(home.HostPath, 0700); err != nil {
 				return fmt.Errorf("couldn't create alternate home directory: %w", err)
 			}
