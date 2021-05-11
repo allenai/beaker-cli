@@ -76,7 +76,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 	cmd.Flags().StringVar(
 		&image,
 		"image",
-		"docker://allenai/base:cuda11.2-ubuntu20.04",
+		"beaker://ai2/cuda11.2-ubuntu20.04",
 		"Base image to run, may be a Beaker or Docker image")
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the session")
 	cmd.Flags().StringVar(&node, "node", "", "Node that the session will run on. Defaults to current node.")
