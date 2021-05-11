@@ -20,10 +20,12 @@ type Config struct {
 }
 
 const (
-	addressKey       = "BEAKER_ADDR"
-	configPathKey    = "BEAKER_CONFIG_FILE"
-	defaultAddress   = "https://beaker.org"
-	beakerConfigFile = "config.yml"
+	addressKey          = "BEAKER_ADDR"
+	configPathKey       = "BEAKER_CONFIG"
+	configPathKeyLegacy = "BEAKER_CONFIG_FILE" // TODO: Remove when we're sure it's unused.
+	tokenKey            = "BEAKER_TOKEN"
+	defaultAddress      = "https://beaker.org"
+	beakerConfigFile    = "config.yml"
 )
 
 var beakerConfigDir = filepath.Join(os.Getenv("HOME"), ".beaker")
@@ -34,9 +36,6 @@ func New() (*Config, error) {
 	config := Config{
 		BeakerAddress: defaultAddress,
 	}
-	if addr, ok := os.LookupEnv(addressKey); ok {
-		config.BeakerAddress = addr
-	}
 
 	r, err := findConfig()
 	if err != nil {
@@ -45,17 +44,29 @@ func New() (*Config, error) {
 	if r != nil {
 		defer r.Close()
 
-		d := yaml.NewDecoder(r)
-		if err := d.Decode(&config); err != nil {
+		if err := yaml.NewDecoder(r).Decode(&config); err != nil {
 			return nil, errors.Wrap(err, "failed to read config")
 		}
 	}
+
+	// Environment variables override config.
+	if env, ok := os.LookupEnv(addressKey); ok {
+		config.BeakerAddress = env
+	}
+	if env, ok := os.LookupEnv(tokenKey); ok {
+		config.UserToken = env
+	}
+
 	return &config, nil
 }
 
 func GetFilePath() string {
-	if override, ok := os.LookupEnv(configPathKey); ok {
-		return override
+	// Check the path override first.
+	if env, ok := os.LookupEnv(configPathKey); ok {
+		return env
+	}
+	if env, ok := os.LookupEnv(configPathKeyLegacy); ok {
+		return env
 	}
 	return filepath.Join(beakerConfigDir, beakerConfigFile)
 }
@@ -91,9 +102,12 @@ func WriteConfig(config *Config, filePath string) error {
 }
 
 func findConfig() (io.ReadCloser, error) {
-	// Check the override first.
-	if override, ok := os.LookupEnv(configPathKey); ok {
-		return os.Open(override)
+	// Check the path override first.
+	if env, ok := os.LookupEnv(configPathKey); ok {
+		return os.Open(env)
+	}
+	if env, ok := os.LookupEnv(configPathKeyLegacy); ok {
+		return os.Open(env)
 	}
 
 	configPaths := []string{
