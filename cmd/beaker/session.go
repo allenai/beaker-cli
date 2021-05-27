@@ -77,7 +77,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		"image",
 		"beaker://ai2/cuda11.2-ubuntu20.04",
 		"Base image to run, may be a Beaker or Docker image")
-	cmd.Flags().BoolVar(&localHome, "local-home", false, "Ignore Beaker configuration and always mount the invoking user's home directory")
+	cmd.Flags().BoolVar(&localHome, "local-home", false, "Mount the invoking user's home directory, ignoring Beaker configuration")
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the session")
 	cmd.Flags().StringVar(&node, "node", "", "Node that the session will run on. Defaults to current node.")
 	cmd.Flags().StringVar(&pull, "pull", string(runtime.PullIfMissing), fmt.Sprintf(
@@ -124,7 +124,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 				// should consider using the stable Beaker user ID instead.
 				home.HostPath = filepath.Join(config.SessionHome, u.Username)
 				if err := os.MkdirAll(home.HostPath, 0700); err != nil {
-					return fmt.Errorf("couldn't create alternate home directory: %w", err)
+					return fmt.Errorf("couldn't create home directory: %w", err)
 				}
 			}
 		}
