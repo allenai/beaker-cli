@@ -27,7 +27,7 @@ type executorConfig struct {
 	StoragePath string `yaml:"storagePath"`
 
 	// (optional) Parent directory of session home directories. This can be set
-	// to an NFS to enable roaming profiles. If unset, sessions mount the
+	// to an NFS mount to enable roaming profiles. If unset, sessions mount the
 	// invoking user's home directory.
 	SessionHome string `yaml:"sessionHome"`
 }
