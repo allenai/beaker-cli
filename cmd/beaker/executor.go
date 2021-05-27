@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -23,7 +24,13 @@ var (
 )
 
 type executorConfig struct {
+	// (optional) Path to the Beaker agent's local storage.
 	StoragePath string `yaml:"storagePath"`
+
+	// (optional) Parent directory of session home directories. This can be set
+	// to an NFS mount to enable roaming profiles. If unset, sessions mount the
+	// invoking user's home directory.
+	SessionHome string `yaml:"sessionHome"`
 }
 
 // Get the config of the executor running on this machine.
@@ -38,6 +45,15 @@ func getExecutorConfig() (*executorConfig, error) {
 	if err := yaml.NewDecoder(expanded).Decode(&config); err != nil {
 		return nil, err
 	}
+
+	if config.SessionHome == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return nil, fmt.Errorf("couldn't find home directory: %w", err)
+		}
+		config.SessionHome = home
+	}
+
 	return &config, nil
 }
 

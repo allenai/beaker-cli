@@ -67,17 +67,17 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		Args: cobra.ArbitraryArgs,
 	}
 
-	var altHome bool
+	var localHome bool
 	var image string
 	var name string
 	var node string
 	var pull string
-	cmd.Flags().BoolVar(&altHome, "alt-home", false, "Mount alternate home directory managed by Beaker (experimental)")
 	cmd.Flags().StringVar(
 		&image,
 		"image",
 		"beaker://ai2/cuda11.2-ubuntu20.04",
 		"Base image to run, may be a Beaker or Docker image")
+	cmd.Flags().BoolVar(&localHome, "local-home", false, "Mount the invoking user's home directory, ignoring Beaker configuration")
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the session")
 	cmd.Flags().StringVar(&node, "node", "", "Node that the session will run on. Defaults to current node.")
 	cmd.Flags().StringVar(&pull, "pull", string(runtime.PullIfMissing), fmt.Sprintf(
@@ -116,21 +116,16 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 
 		userGroup := u.Uid + ":" + u.Gid
 		home := runtime.Mount{HostPath: u.HomeDir, ContainerPath: u.HomeDir}
-		if altHome {
-			config, err := getExecutorConfig()
-			if err != nil {
-				return fmt.Errorf("couldn't load Beaker config: %w", err)
-			}
 
-			if u.Username == "" {
-				return errors.New("the current user has no name")
-			}
-
-			// The "home" directory should already exist with r/w permissions for all users.
-			// The child directory is restricted to the user's account in case they store secrets.
-			home.HostPath = filepath.Join(config.StoragePath, "home", u.Username)
-			if err := os.MkdirAll(home.HostPath, 0700); err != nil {
-				return fmt.Errorf("couldn't create alternate home directory: %w", err)
+		// Mount in a Beaker-managed home directory by default, if there's one configured.
+		if !localHome {
+			if config, err := getExecutorConfig(); err == nil {
+				// TODO: u.Username is highly dependent on host configuration. We
+				// should consider using the stable Beaker user ID instead.
+				home.HostPath = filepath.Join(config.SessionHome, u.Username)
+				if err := os.MkdirAll(home.HostPath, 0700); err != nil {
+					return fmt.Errorf("couldn't create home directory: %w", err)
+				}
 			}
 		}
 
