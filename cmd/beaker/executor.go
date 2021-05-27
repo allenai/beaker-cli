@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -46,8 +47,11 @@ func getExecutorConfig() (*executorConfig, error) {
 	}
 
 	if config.SessionHome == "" {
-		os.UserHomeDir()
-		config.SessionHome = path.Join(config.StoragePath, "home")
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return nil, fmt.Errorf("couldn't find home directory: %w", err)
+		}
+		config.SessionHome = home
 	}
 
 	return &config, nil
