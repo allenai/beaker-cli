@@ -322,9 +322,12 @@ func resolveImage(beaker *client.Client, name string) (*runtime.DockerImage, err
 
 func newSessionExecCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "exec <session> <command> <args...>",
+		Use:   "exec <session> [command...]",
 		Short: "Execute a command in a session",
-		Args:  cobra.MinimumNArgs(2),
+		Long: `Execute a command in a session
+
+If no command is provided, exec will run 'bash -l'`,
+		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			container, err := findRunningContainer(args[0])
 			if err != nil {
@@ -332,7 +335,7 @@ func newSessionExecCommand() *cobra.Command {
 			}
 
 			// Pass nil instead of empty slice when there are no arguments.
-			var command []string
+			command := []string{"bash", "-l"}
 			if len(args) > 1 {
 				command = args[1:]
 			}
