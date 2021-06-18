@@ -244,11 +244,22 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			return err
 		}
 
-		if err := container.Start(ctx); err != nil {
+		startErr := make(chan error)
+		go func() {
+			// Sleep so that start happens after attach. Attach blocks and must be executed
+			// in the main goroutine so start must be in a separate goroutine.
+			time.Sleep(time.Nanosecond)
+			startErr <- container.Start(ctx)
+		}()
+
+		attachErr := handleAttachErr(container.(*docker.Container).Attach(ctx))
+
+		// Errors starting the container take priority over errors attaching to it.
+		if err := <-startErr; err != nil {
 			return err
 		}
-		if err := handleAttachErr(container.(*docker.Container).Attach(ctx)); err != nil {
-			return err
+		if attachErr != nil {
+			return attachErr
 		}
 
 		//shouldCancel = false
