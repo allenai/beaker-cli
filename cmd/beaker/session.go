@@ -52,7 +52,14 @@ func newSessionAttachCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return handleAttachErr(container.(*docker.Container).Attach(ctx))
+
+			resp, err := container.(*docker.Container).Attach(ctx)
+			if err != nil {
+				return err
+			}
+			defer resp.Close()
+
+			return handleAttachErr(container.(*docker.Container).Stream(ctx, resp))
 		},
 	}
 }
@@ -244,15 +251,17 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			return err
 		}
 
+		resp, err := container.(*docker.Container).Attach(ctx)
+		if err != nil {
+			return err
+		}
+		defer resp.Close()
+
 		if err := container.Start(ctx); err != nil {
 			return err
 		}
-		if err := handleAttachErr(container.(*docker.Container).Attach(ctx)); err != nil {
-			return err
-		}
 
-		//shouldCancel = false
-		return nil
+		return handleAttachErr(container.(*docker.Container).Stream(ctx, resp))
 	}
 	return cmd
 }
