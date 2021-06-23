@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -137,15 +136,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 
 		rtImage, err := resolveImage(beaker, image)
 		if err != nil {
-			var apiErr api.Error
-			if errors.As(err, &apiErr) &&
-				(apiErr.Code == http.StatusForbidden || apiErr.Code == http.StatusNotFound) &&
-				beakerConfig.UserToken == "" {
-				// Special case: produce a more useful error when the user hasn't authenticated.
-				return fmt.Errorf("access to %q may be restricted; please log in by following instructions at https://beaker.org/user", image)
-			}
-
-			return fmt.Errorf("invalid image: %w", err)
+			return err
 		}
 
 		session, err := beaker.CreateSession(ctx, api.SessionSpec{
