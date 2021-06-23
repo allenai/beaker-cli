@@ -92,8 +92,8 @@ func main() {
 
 	err := root.Execute()
 	if err != nil {
-		switch err.Error() {
-		case "invalid authentication token", "user authentication required":
+		if strings.HasSuffix(err.Error(), "invalid authentication token") ||
+			strings.HasSuffix(err.Error(), "user authentication required") {
 			err = login()
 			if err == nil {
 				err = root.Execute()
