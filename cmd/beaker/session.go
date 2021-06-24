@@ -125,14 +125,12 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		home := runtime.Mount{HostPath: u.HomeDir, ContainerPath: u.HomeDir}
 
 		// Mount in a Beaker-managed home directory by default, if there's one configured.
-		if !localHome {
-			if config, err := getExecutorConfig(); err == nil {
-				// TODO: u.Username is highly dependent on host configuration. We
-				// should consider using the stable Beaker user ID instead.
-				home.HostPath = filepath.Join(config.SessionHome, u.Username)
-				if err := os.MkdirAll(home.HostPath, 0700); err != nil {
-					return fmt.Errorf("couldn't create home directory: %w", err)
-				}
+		if config, err := getExecutorConfig(); err == nil && config.SessionHome != "" && !localHome {
+			// TODO: u.Username is highly dependent on host configuration. We
+			// should consider using the stable Beaker user ID instead.
+			home.HostPath = filepath.Join(config.SessionHome, u.Username)
+			if err := os.MkdirAll(home.HostPath, 0700); err != nil {
+				return fmt.Errorf("couldn't create home directory: %w", err)
 			}
 		}
 
