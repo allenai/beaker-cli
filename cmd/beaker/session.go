@@ -529,13 +529,15 @@ func awaitSessionSchedule(session api.Session) (*api.Session, error) {
 			hosts = append(hosts, node.Hostname)
 		}
 
-		fmt.Printf("This session is unlikely to to start because %s.\n", capacityErr)
-		fmt.Println("You may continue waiting to hold your place in the queue.")
-		if len(hosts) == 0 {
-			fmt.Println("There are no other nodes on this cluster with sufficient capacity.")
-		} else {
-			fmt.Println("You could also try one of the following available nodes:")
-			fmt.Println("    " + strings.Join(hosts, "\n    "))
+		if !quiet {
+			fmt.Printf("This session is unlikely to to start because %s.\n", capacityErr)
+			fmt.Println("You may continue waiting to hold your place in the queue.")
+			if len(hosts) == 0 {
+				fmt.Println("There are no other nodes on this cluster with sufficient capacity.")
+			} else {
+				fmt.Println("You could also try one of the following available nodes:")
+				fmt.Println("    " + strings.Join(hosts, "\n    "))
+			}
 		}
 	}
 
