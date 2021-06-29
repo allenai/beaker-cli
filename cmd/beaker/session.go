@@ -538,9 +538,13 @@ func awaitSessionSchedule(session api.Session) (*api.Session, error) {
 				fmt.Println("You could also try one of the following available nodes:")
 				fmt.Println("    " + strings.Join(hosts, "\n    "))
 			}
+			fmt.Println()
 		}
 	}
 
+	if !quiet {
+		fmt.Printf("Waiting for session to be scheduled")
+	}
 	delay := time.NewTimer(0) // When to poll session status.
 	for attempt := 0; ; attempt++ {
 		select {
@@ -554,9 +558,15 @@ func awaitSessionSchedule(session api.Session) (*api.Session, error) {
 			}
 
 			if session.State.Scheduled != nil {
+				if !quiet {
+					fmt.Println()
+				}
 				return session, nil
 			}
 
+			if !quiet {
+				fmt.Print(".")
+			}
 			delay.Reset(3 * time.Second)
 		}
 	}
