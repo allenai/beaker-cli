@@ -583,6 +583,11 @@ func checkNodeCapacity(node *api.Node, request *api.TaskResources) error {
 		node.Limits.Memory.Cmp(*request.Memory) < 0:
 		return errors.New("there is not enough available memory")
 
+	case node.Limits.CPUCount == 0 &&
+		node.Limits.GPUCount == 0 &&
+		(node.Limits.Memory == nil || node.Limits.Memory.IsZero()):
+		return errors.New("the node has no space left")
+
 	default:
 		return nil // All checks passed.
 	}
