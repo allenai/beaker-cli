@@ -529,16 +529,22 @@ func awaitSessionSchedule(session api.Session) (*api.Session, error) {
 			hosts = append(hosts, node.Hostname)
 		}
 
-		fmt.Printf("This session is unlikely to to start because %s.\n", capacityErr)
-		fmt.Println("You may continue waiting to hold your place in the queue.")
-		if len(hosts) == 0 {
-			fmt.Println("There are no other nodes on this cluster with sufficient capacity.")
-		} else {
-			fmt.Println("You could also try one of the following available nodes:")
-			fmt.Println("    " + strings.Join(hosts, "\n    "))
+		if !quiet {
+			fmt.Printf("This session is unlikely to to start because %s.\n", capacityErr)
+			fmt.Println("You may continue waiting to hold your place in the queue.")
+			if len(hosts) == 0 {
+				fmt.Println("There are no other nodes on this cluster with sufficient capacity.")
+			} else {
+				fmt.Println("You could also try one of the following available nodes:")
+				fmt.Println("    " + strings.Join(hosts, "\n    "))
+			}
+			fmt.Println()
 		}
 	}
 
+	if !quiet {
+		fmt.Printf("Waiting for session to be scheduled")
+	}
 	delay := time.NewTimer(0) // When to poll session status.
 	for attempt := 0; ; attempt++ {
 		select {
@@ -552,9 +558,15 @@ func awaitSessionSchedule(session api.Session) (*api.Session, error) {
 			}
 
 			if session.State.Scheduled != nil {
+				if !quiet {
+					fmt.Println()
+				}
 				return session, nil
 			}
 
+			if !quiet {
+				fmt.Print(".")
+			}
 			delay.Reset(3 * time.Second)
 		}
 	}
@@ -582,6 +594,11 @@ func checkNodeCapacity(node *api.Node, request *api.TaskResources) error {
 	case node.Limits.Memory != nil && request.Memory != nil &&
 		node.Limits.Memory.Cmp(*request.Memory) < 0:
 		return errors.New("there is not enough available memory")
+
+	case node.Limits.CPUCount == 0 &&
+		node.Limits.GPUCount == 0 &&
+		(node.Limits.Memory == nil || node.Limits.Memory.IsZero()):
+		return errors.New("the node has no space left")
 
 	default:
 		return nil // All checks passed.
