@@ -3,7 +3,7 @@ module github.com/allenai/beaker
 go 1.13
 
 require (
-	github.com/allenai/bytefmt v0.1.1
+	github.com/allenai/bytefmt v0.1.2
 	github.com/beaker/client v0.0.0-20210421233118-5dcaf8303b8d
 	github.com/beaker/fileheap v0.0.0-20210213001550-3d3932012952
 	github.com/beaker/runtime v0.0.0-20210621155543-3cacba5087d2

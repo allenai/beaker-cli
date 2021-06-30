@@ -285,7 +285,7 @@ func resourceString(gpuCount int, cpuCount float64, memory *bytefmt.Size) string
 	}
 
 	if memory != nil {
-		requests = append(requests, memory.String()+" memory")
+		requests = append(requests, fmt.Sprintf("%v memory", memory))
 	}
 
 	return strings.Join(requests, ", ")
