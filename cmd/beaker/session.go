@@ -142,7 +142,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		session, err := beaker.CreateSession(ctx, api.SessionSpec{
 			Name: name,
 			Node: node,
-			Requests: &api.TaskResources{
+			Requests: &api.ResourceRequest{
 				CPUCount: cpus,
 				GPUCount: gpus,
 				Memory:   memSize,
@@ -255,14 +255,14 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 	return cmd
 }
 
-func resourceRequestString(req *api.TaskResources) string {
+func resourceRequestString(req *api.ResourceRequest) string {
 	if req == nil {
 		return ""
 	}
 	return resourceString(req.GPUCount, req.CPUCount, req.Memory)
 }
 
-func resourceLimitString(limits *api.SessionResources) string {
+func resourceLimitString(limits *api.ResourceLimits) string {
 	if limits == nil {
 		return ""
 	}
@@ -300,12 +300,7 @@ func resolveImage(beaker *client.Client, name string) (*runtime.DockerImage, err
 
 	switch strings.ToLower(scheme) {
 	case "beaker":
-		image, err := beaker.Image(ctx, image)
-		if err != nil {
-			return nil, err
-		}
-
-		repo, err := image.Repository(ctx, false)
+		repo, err := beaker.Image(image).Repository(ctx, false)
 		if err != nil {
 			return nil, err
 		}
@@ -572,7 +567,7 @@ func awaitSessionSchedule(session api.Session) (*api.Session, error) {
 	}
 }
 
-func checkNodeCapacity(node *api.Node, request *api.TaskResources) error {
+func checkNodeCapacity(node *api.Node, request *api.ResourceRequest) error {
 	switch {
 	case node.Limits == nil:
 		// Node has unknown capacity. Treat it as unbounded.

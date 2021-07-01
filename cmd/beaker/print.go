@@ -527,12 +527,7 @@ func printWorkspacePermissions(permissions *api.WorkspacePermissionSummary) erro
 			return err
 		}
 		for account, permission := range permissions.Authorizations {
-			user, err := beaker.User(ctx, account)
-			if err != nil {
-				return err
-			}
-
-			accountInfo, err := user.Get(ctx)
+			accountInfo, err := beaker.User(account).Get(ctx)
 			if err != nil {
 				return err
 			}

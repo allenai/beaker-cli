@@ -7,8 +7,9 @@ import (
 
 	"github.com/allenai/bytefmt"
 	"github.com/beaker/client/api"
-	"github.com/beaker/client/client"
+	fileheapAPI "github.com/beaker/fileheap/api"
 	"github.com/beaker/fileheap/cli"
+	fileheap "github.com/beaker/fileheap/client"
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -39,12 +40,7 @@ func newDatasetCommitCommand() *cobra.Command {
 		Short: "Commit a dataset preventing further modification",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			dataset, err := beaker.Dataset(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
-			if err := dataset.Commit(ctx); err != nil {
+			if err := beaker.Dataset(args[0]).Commit(ctx); err != nil {
 				return err
 			}
 
@@ -105,10 +101,15 @@ func newDatasetCreateCommand() *cobra.Command {
 
 		if !quiet {
 			if name == "" {
-				fmt.Printf("Uploading %s to %s\n", color.GreenString(source), color.CyanString(dataset.ID()))
+				fmt.Printf("Uploading %s to %s\n", color.GreenString(source), color.CyanString(dataset.Ref()))
 			} else {
-				fmt.Printf("Uploading %s to %s (%s)\n", color.GreenString(source), color.CyanString(name), dataset.ID())
+				fmt.Printf("Uploading %s to %s (%s)\n", color.GreenString(source), color.CyanString(name), dataset.Ref())
 			}
+		}
+
+		storage, _, err := dataset.Storage(ctx)
+		if err != nil {
+			return err
 		}
 
 		if info.IsDir() {
@@ -120,7 +121,7 @@ func newDatasetCreateCommand() *cobra.Command {
 				}
 				tracker = cli.BoundedTracker(ctx, files, bytes)
 			}
-			if err := cli.Upload(ctx, source, dataset.Storage, "", tracker, concurrency); err != nil {
+			if err := cli.Upload(ctx, source, storage, "", tracker, concurrency); err != nil {
 				return err
 			}
 		} else {
@@ -130,7 +131,7 @@ func newDatasetCreateCommand() *cobra.Command {
 			}
 			defer func() { _ = file.Close() }()
 
-			if err := dataset.Storage.WriteFile(ctx, info.Name(), file, info.Size()); err != nil {
+			if err := storage.WriteFile(ctx, info.Name(), file, info.Size()); err != nil {
 				return err
 			}
 		}
@@ -140,7 +141,7 @@ func newDatasetCreateCommand() *cobra.Command {
 		}
 
 		if quiet {
-			fmt.Println(dataset.ID())
+			fmt.Println(dataset.Ref())
 		} else if !info.IsDir() {
 			fmt.Println("Done.")
 		}
@@ -155,12 +156,7 @@ func newDatasetDeleteCommand() *cobra.Command {
 		Short: "Permanently delete a dataset",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			dataset, err := beaker.Dataset(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
-			if err := dataset.Delete(ctx); err != nil {
+			if err := beaker.Dataset(args[0]).Delete(ctx); err != nil {
 				return err
 			}
 
@@ -191,18 +187,18 @@ func newDatasetFetchCommand() *cobra.Command {
 		"Number of files to download at a time")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		dataset, err := beaker.Dataset(ctx, args[0])
+		storage, _, err := beaker.Dataset(args[0]).Storage(ctx)
 		if err != nil {
 			return err
 		}
 
-		info, err := dataset.Storage.Info(ctx)
+		info, err := storage.Info(ctx)
 		if err != nil {
 			return err
 		}
 
 		fmt.Printf("Downloading %s to %s\n",
-			color.CyanString(dataset.ID()),
+			color.CyanString(args[0]),
 			color.GreenString(outputPath))
 
 		var tracker cli.ProgressTracker
@@ -211,7 +207,7 @@ func newDatasetFetchCommand() *cobra.Command {
 		} else {
 			tracker = cli.UnboundedTracker(ctx)
 		}
-		return cli.Download(ctx, dataset.Storage, prefix, outputPath, tracker, concurrency)
+		return cli.Download(ctx, storage, prefix, outputPath, tracker, concurrency)
 	}
 	return cmd
 }
@@ -225,12 +221,7 @@ func newDatasetGetCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var datasets []api.Dataset
 			for _, name := range args {
-				dataset, err := beaker.Dataset(ctx, name)
-				if err != nil {
-					return err
-				}
-
-				info, err := dataset.Get(ctx)
+				info, err := beaker.Dataset(name).Get(ctx)
 				if err != nil {
 					return err
 				}
@@ -248,23 +239,21 @@ func newDatasetLsCommand() *cobra.Command {
 		Short: "List files in a dataset",
 		Args:  cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			dataset, err := beaker.Dataset(ctx, args[0])
+			storage, _, err := beaker.Dataset(args[0]).Storage(ctx)
 			if err != nil {
 				return err
 			}
 
-			var files []*client.FileInfo
+			var files []*fileheapAPI.FileInfo
 			var prefix string
 			if len(args) > 1 {
 				prefix = args[1]
 			}
-			fileIterator, err := dataset.Files(ctx, prefix)
-			if err != nil {
-				return err
-			}
+
+			iterator := storage.Files(ctx, &fileheap.FileIteratorOptions{Prefix: prefix})
 			for {
-				_, info, err := fileIterator.Next()
-				if err == client.ErrDone {
+				info, err := iterator.Next()
+				if err == fileheap.ErrDone {
 					break
 				}
 				if err != nil {
@@ -305,16 +294,11 @@ func newDatasetRenameCommand() *cobra.Command {
 		Short: "Rename a dataset",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			dataset, err := beaker.Dataset(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
+			dataset := beaker.Dataset(args[0])
 			if err := dataset.SetName(ctx, args[1]); err != nil {
 				return err
 			}
 
-			// TODO: This info should probably be part of the client response instead of a separate get.
 			info, err := dataset.Get(ctx)
 			if err != nil {
 				return err
@@ -336,7 +320,7 @@ func newDatasetSizeCommand() *cobra.Command {
 		Short: "Calculate the size of a dataset",
 		Args:  cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			dataset, err := beaker.Dataset(ctx, args[0])
+			storage, _, err := beaker.Dataset(args[0]).Storage(ctx)
 			if err != nil {
 				return err
 			}
@@ -346,13 +330,11 @@ func newDatasetSizeCommand() *cobra.Command {
 			if len(args) > 1 {
 				prefix = args[1]
 			}
-			fileIterator, err := dataset.Files(ctx, prefix)
-			if err != nil {
-				return err
-			}
+
+			iterator := storage.Files(ctx, &fileheap.FileIteratorOptions{Prefix: prefix})
 			for {
-				_, info, err := fileIterator.Next()
-				if err == client.ErrDone {
+				info, err := iterator.Next()
+				if err == fileheap.ErrDone {
 					break
 				}
 				if err != nil {
@@ -401,23 +383,22 @@ func newDatasetStreamFileCommand() *cobra.Command {
 	cmd.Flags().Int64Var(&length, "length", 0, "Number of bytes to read")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		dataset, err := beaker.Dataset(ctx, args[0])
+		fileName := args[1]
+		storage, _, err := beaker.Dataset(args[0]).Storage(ctx)
 		if err != nil {
 			return err
 		}
-
-		fileRef := dataset.FileRef(args[1])
 
 		var r io.ReadCloser
 		if offset != 0 || length != 0 {
 			if length == 0 {
 				// Length not specified; read the rest of the file.
-				r, err = fileRef.DownloadRange(ctx, offset, -1)
+				r, err = storage.ReadFileRange(ctx, fileName, offset, -1)
 			} else {
-				r, err = fileRef.DownloadRange(ctx, offset, length)
+				r, err = storage.ReadFileRange(ctx, fileName, offset, length)
 			}
 		} else {
-			r, err = fileRef.Download(ctx)
+			r, err = storage.ReadFile(ctx, fileName)
 		}
 		if err != nil {
 			return err

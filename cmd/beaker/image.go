@@ -38,12 +38,7 @@ func newImageCommitCommand() *cobra.Command {
 		Short: "Commit an image",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			image, err := beaker.Image(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
-			if err := image.Commit(ctx); err != nil {
+			if err := beaker.Image(args[0]).Commit(ctx); err != nil {
 				return err
 			}
 
@@ -99,9 +94,9 @@ func newImageCreateCommand() *cobra.Command {
 
 		if !quiet {
 			if name == "" {
-				fmt.Printf("Pushing %s as %s ...\n", imageTag, color.BlueString(image.ID()))
+				fmt.Printf("Pushing %s as %s ...\n", imageTag, color.BlueString(image.Ref()))
 			} else {
-				fmt.Printf("Pushing %s as %s (%s)...\n", imageTag, color.BlueString(name), image.ID())
+				fmt.Printf("Pushing %s as %s (%s)...\n", imageTag, color.BlueString(name), image.Ref())
 			}
 		}
 
@@ -153,7 +148,7 @@ func newImageCreateCommand() *cobra.Command {
 		}
 
 		if quiet {
-			fmt.Println(image.ID())
+			fmt.Println(image.Ref())
 		} else {
 			fmt.Println("Done.")
 		}
@@ -168,12 +163,7 @@ func newImageDeleteCommand() *cobra.Command {
 		Short: "Permanently delete an image",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			image, err := beaker.Image(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
-			if err := image.Delete(ctx); err != nil {
+			if err := beaker.Image(args[0]).Delete(ctx); err != nil {
 				return err
 			}
 
@@ -194,16 +184,11 @@ func newImageGetCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var images []api.Image
 			for _, name := range args {
-				image, err := beaker.Image(ctx, name)
+				image, err := beaker.Image(name).Get(ctx)
 				if err != nil {
 					return err
 				}
-
-				info, err := image.Get(ctx)
-				if err != nil {
-					return err
-				}
-				images = append(images, *info)
+				images = append(images, *image)
 			}
 			return printImages(images)
 		},
@@ -227,12 +212,7 @@ func newImagePullCommand() *cobra.Command {
 				return errors.Wrap(err, "failed to create Docker client")
 			}
 
-			image, err := beaker.Image(ctx, imageRef)
-			if err != nil {
-				return err
-			}
-
-			repo, err := image.Repository(ctx, false)
+			repo, err := beaker.Image(imageRef).Repository(ctx, false)
 			if err != nil {
 				return errors.WithMessage(err, "failed to retrieve credentials for remote repository")
 			}
@@ -306,16 +286,11 @@ func newImageRenameCommand() *cobra.Command {
 		Short: "Rename an image",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			image, err := beaker.Image(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
+			image := beaker.Image(args[0])
 			if err := image.SetName(ctx, args[1]); err != nil {
 				return err
 			}
 
-			// TODO: This info should probably be part of the client response instead of a separate get.
 			exp, err := image.Get(ctx)
 			if err != nil {
 				return err
