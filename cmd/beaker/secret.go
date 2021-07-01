@@ -26,12 +26,7 @@ func newSecretDeleteCommand() *cobra.Command {
 		Short: "Permanently delete a secret",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			workspace, err := beaker.Workspace(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
-			return workspace.DeleteSecret(ctx, args[1])
+			return beaker.Workspace(args[0]).DeleteSecret(ctx, args[1])
 		},
 	}
 }
@@ -42,12 +37,7 @@ func newSecretListCommand() *cobra.Command {
 		Short: "List the metadata of all secrets in a workspace",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			workspace, err := beaker.Workspace(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
-			secrets, err := workspace.ListSecrets(ctx)
+			secrets, err := beaker.Workspace(args[0]).ListSecrets(ctx)
 			if err != nil {
 				return err
 			}
@@ -62,12 +52,7 @@ func newSecretReadCommand() *cobra.Command {
 		Short: "Read the value of a secret",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			workspace, err := beaker.Workspace(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
-			secret, err := workspace.ReadSecret(ctx, args[1])
+			secret, err := beaker.Workspace(args[0]).ReadSecret(ctx, args[1])
 			if err != nil {
 				return err
 			}
@@ -83,13 +68,9 @@ func newSecretWriteCommand() *cobra.Command {
 		Short: "Write a new secret or update an existing secret",
 		Args:  cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			workspace, err := beaker.Workspace(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
 			var value []byte
 			if len(args) == 2 {
+				var err error
 				if value, err = ioutil.ReadAll(os.Stdin); err != nil {
 					return err
 				}
@@ -97,7 +78,7 @@ func newSecretWriteCommand() *cobra.Command {
 				value = []byte(args[2])
 			}
 
-			_, err = workspace.PutSecret(ctx, args[1], value)
+			_, err := beaker.Workspace(args[0]).PutSecret(ctx, args[1], value)
 			return err
 		},
 	}

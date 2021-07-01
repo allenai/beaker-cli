@@ -32,20 +32,15 @@ func newGroupAddCommand() *cobra.Command {
 		Short: "Add experiments to a group",
 		Args:  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			group, err := beaker.Group(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
 			ids := trimAndUnique(args[1:])
-			if err := group.AddExperiments(ctx, ids); err != nil {
+			if err := beaker.Group(args[0]).AddExperiments(ctx, ids); err != nil {
 				return err
 			}
 
 			if quiet {
-				fmt.Println(group.ID())
+				fmt.Println(args[0])
 			} else {
-				fmt.Printf("Added experiments to %s: %s\n", color.BlueString(group.ID()), ids)
+				fmt.Printf("Added experiments to %s: %s\n", color.BlueString(args[0]), ids)
 			}
 			return nil
 		},
@@ -82,9 +77,9 @@ func newGroupCreateCommand() *cobra.Command {
 		}
 
 		if quiet {
-			fmt.Println(group.ID())
+			fmt.Println(group.Ref())
 		} else {
-			fmt.Println("Created group " + color.BlueString(group.ID()))
+			fmt.Println("Created group " + color.BlueString(group.Ref()))
 		}
 		return nil
 	}
@@ -97,19 +92,14 @@ func newGroupDeleteCommand() *cobra.Command {
 		Short: "Permanently delete a group",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			group, err := beaker.Group(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
-			if err := group.Delete(ctx); err != nil {
+			if err := beaker.Group(args[0]).Delete(ctx); err != nil {
 				return err
 			}
 
 			if quiet {
-				fmt.Println(group.ID())
+				fmt.Println(args[0])
 			} else {
-				fmt.Println("Deleted group " + color.BlueString(group.ID()))
+				fmt.Println("Deleted group " + color.BlueString(args[0]))
 			}
 			return nil
 		},
@@ -122,28 +112,19 @@ func newGroupExecutionsCommand() *cobra.Command {
 		Short: "List executions in a group",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			group, err := beaker.Group(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
-			experimentIDs, err := group.Experiments(ctx)
+			experimentIDs, err := beaker.Group(args[0]).Experiments(ctx)
 			if err != nil {
 				return err
 			}
 
 			var executions []api.Execution
 			for _, experimentID := range experimentIDs {
-				experiment, err := beaker.Experiment(ctx, experimentID)
+				experiment, err := beaker.Experiment(experimentID).Get(ctx)
 				if err != nil {
 					return err
 				}
 
-				info, err := experiment.Get(ctx)
-				if err != nil {
-					return err
-				}
-				for _, execution := range info.Executions {
+				for _, execution := range experiment.Executions {
 					executions = append(executions, *execution)
 				}
 			}
@@ -158,28 +139,19 @@ func newGroupExperimentsCommand() *cobra.Command {
 		Short: "List experiments in a group",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			group, err := beaker.Group(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
-			experimentIDs, err := group.Experiments(ctx)
+			experimentIDs, err := beaker.Group(args[0]).Experiments(ctx)
 			if err != nil {
 				return err
 			}
 
 			var experiments []api.Experiment
 			for _, experimentID := range experimentIDs {
-				experiment, err := beaker.Experiment(ctx, experimentID)
+				experiment, err := beaker.Experiment(experimentID).Get(ctx)
 				if err != nil {
 					return err
 				}
 
-				info, err := experiment.Get(ctx)
-				if err != nil {
-					return err
-				}
-				experiments = append(experiments, *info)
+				experiments = append(experiments, *experiment)
 			}
 			return printExperiments(experiments)
 		},
@@ -195,16 +167,11 @@ func newGroupGetCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var groups []api.Group
 			for _, name := range args {
-				group, err := beaker.Group(ctx, name)
+				group, err := beaker.Group(name).Get(ctx)
 				if err != nil {
 					return err
 				}
-
-				info, err := group.Get(ctx)
-				if err != nil {
-					return err
-				}
-				groups = append(groups, *info)
+				groups = append(groups, *group)
 			}
 			return printGroups(groups)
 		},
@@ -217,20 +184,15 @@ func newGroupRemoveCommand() *cobra.Command {
 		Short: "Remove experiments from a group",
 		Args:  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			group, err := beaker.Group(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
 			ids := trimAndUnique(args[1:])
-			if err := group.RemoveExperiments(ctx, ids); err != nil {
+			if err := beaker.Group(args[0]).RemoveExperiments(ctx, ids); err != nil {
 				return err
 			}
 
 			if quiet {
-				fmt.Println(group.ID())
+				fmt.Println(args[0])
 			} else {
-				fmt.Printf("Removed experiments from %s: %s\n", color.BlueString(group.ID()), ids)
+				fmt.Printf("Removed experiments from %s: %s\n", color.BlueString(args[0]), ids)
 			}
 			return nil
 		},
@@ -243,16 +205,11 @@ func newGroupRenameCommand() *cobra.Command {
 		Short: "Rename a group",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			group, err := beaker.Group(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
+			group := beaker.Group(args[0])
 			if err := group.SetName(ctx, args[1]); err != nil {
 				return err
 			}
 
-			// TODO: This info should probably be part of the client response instead of a separate get.
 			info, err := group.Get(ctx)
 			if err != nil {
 				return err
@@ -274,24 +231,14 @@ func newGroupTasksCommand() *cobra.Command {
 		Short: "List tasks in a group",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			group, err := beaker.Group(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
-			experimentIDs, err := group.Experiments(ctx)
+			experimentIDs, err := beaker.Group(args[0]).Experiments(ctx)
 			if err != nil {
 				return err
 			}
 
 			var tasks []api.Task
 			for _, experimentID := range experimentIDs {
-				experiment, err := beaker.Experiment(ctx, experimentID)
-				if err != nil {
-					return err
-				}
-
-				groupTasks, err := experiment.Tasks(ctx)
+				groupTasks, err := beaker.Experiment(experimentID).Tasks(ctx)
 				if err != nil {
 					return err
 				}

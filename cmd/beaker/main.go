@@ -123,7 +123,7 @@ func ensureWorkspace(workspaceRef string) (string, error) {
 	}
 
 	// Create the workspace if it doesn't exist.
-	if _, err := beaker.Workspace(ctx, workspaceRef); err != nil {
+	if _, err := beaker.Workspace(workspaceRef).Get(ctx); err != nil {
 		if apiErr, ok := err.(api.Error); ok && apiErr.Code == http.StatusNotFound {
 			parts := strings.Split(workspaceRef, "/")
 			if len(parts) != 2 {

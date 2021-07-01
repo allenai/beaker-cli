@@ -130,7 +130,7 @@ func newConfigTestCommand() *cobra.Command {
 				fmt.Println("No default workspace set.")
 			} else {
 				fmt.Printf("Verifying default workspace: %q\n\n", cfg.DefaultWorkspace)
-				if _, err := beaker.Workspace(ctx, cfg.DefaultWorkspace); err != nil {
+				if _, err := beaker.Workspace(cfg.DefaultWorkspace).Get(ctx); err != nil {
 					fmt.Println("There was a problem verifying your default workspace.")
 					fmt.Printf("Set the default workspace using the command %s\n", color.BlueString("beaker config set default_workspace <workspace_name>"))
 					return err

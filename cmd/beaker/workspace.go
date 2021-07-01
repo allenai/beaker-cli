@@ -36,12 +36,7 @@ func newWorkspaceArchiveCommand() *cobra.Command {
 		Short: "Archive a workspace, making it read-only",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			workspace, err := beaker.Workspace(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
-			if err := workspace.SetArchived(ctx, true); err != nil {
+			if err := beaker.Workspace(args[0]).SetArchived(ctx, true); err != nil {
 				return err
 			}
 
@@ -76,9 +71,9 @@ func newWorkspaceCreateCommand() *cobra.Command {
 		}
 
 		if quiet {
-			fmt.Println(workspace.ID())
+			fmt.Println(workspace.Ref())
 		} else {
-			fmt.Printf("Workspace %s created (ID %s)\n", color.BlueString(spec.Name), color.BlueString(workspace.ID()))
+			fmt.Printf("Workspace %s created (ID %s)\n", color.BlueString(spec.Name), color.BlueString(workspace.Ref()))
 		}
 		return nil
 	}
@@ -102,10 +97,7 @@ func newWorkspaceDatasetsCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&uncommitted, "uncommitted", false, "Show only uncommitted datasets")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		workspace, err := beaker.Workspace(ctx, args[0])
-		if err != nil {
-			return err
-		}
+		workspace := beaker.Workspace(args[0])
 
 		var datasets []api.Dataset
 		var cursor string
@@ -147,10 +139,7 @@ func newWorkspaceExperimentsCommand() *cobra.Command {
 	cmd.Flags().StringVar(&text, "text", "", "Only show experiments matching the text")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		workspace, err := beaker.Workspace(ctx, args[0])
-		if err != nil {
-			return err
-		}
+		workspace := beaker.Workspace(args[0])
 
 		var experiments []api.Experiment
 		var cursor string
@@ -184,10 +173,7 @@ func newWorkspaceGroupsCommand() *cobra.Command {
 	cmd.Flags().StringVar(&text, "text", "", "Only show groups matching the text")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		workspace, err := beaker.Workspace(ctx, args[0])
-		if err != nil {
-			return err
-		}
+		workspace := beaker.Workspace(args[0])
 
 		var groups []api.Group
 		var cursor string
@@ -221,10 +207,7 @@ func newWorkspaceImagesCommand() *cobra.Command {
 	cmd.Flags().StringVar(&text, "text", "", "Only show images matching the text")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		workspace, err := beaker.Workspace(ctx, args[0])
-		if err != nil {
-			return err
-		}
+		workspace := beaker.Workspace(args[0])
 
 		var images []api.Image
 		var cursor string
@@ -259,17 +242,12 @@ func newWorkspaceGetCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var workspaces []api.Workspace
 			for _, name := range args {
-				workspace, err := beaker.Workspace(ctx, name)
+				workspace, err := beaker.Workspace(name).Get(ctx)
 				if err != nil {
 					return err
 				}
 
-				workspaceInfo, err := workspace.Get(ctx)
-				if err != nil {
-					return err
-				}
-
-				workspaces = append(workspaces, *workspaceInfo)
+				workspaces = append(workspaces, *workspace)
 			}
 			return printWorkspaces(workspaces)
 		},
@@ -330,11 +308,6 @@ func newWorkspacePermissionsGrantCommand() *cobra.Command {
 		Short: "Grant permissions on a workspace to an account",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			workspace, err := beaker.Workspace(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
 			var permission api.Permission
 			switch args[2] {
 			case "read":
@@ -347,6 +320,7 @@ func newWorkspacePermissionsGrantCommand() *cobra.Command {
 				return errors.Errorf(`invalid permission: %q; must be "read", "write", or "all"`, args[2])
 			}
 
+			workspace := beaker.Workspace(args[0])
 			if err := workspace.SetPermissions(ctx, api.WorkspacePermissionPatch{
 				Authorizations: map[string]api.Permission{
 					args[1]: permission,
@@ -374,12 +348,7 @@ func newWorkspacePermissionsGetCommand() *cobra.Command {
 		Short:   "Get workspace permissions",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			workspace, err := beaker.Workspace(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
-			permissions, err := workspace.Permissions(ctx)
+			permissions, err := beaker.Workspace(args[0]).Permissions(ctx)
 			if err != nil {
 				return err
 			}
@@ -394,11 +363,7 @@ func newWorkspacePermissionsRevokeCommand() *cobra.Command {
 		Short: "Revoke permissions on a workspace from an account",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			workspace, err := beaker.Workspace(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
+			workspace := beaker.Workspace(args[0])
 			if err := workspace.SetPermissions(ctx, api.WorkspacePermissionPatch{
 				Authorizations: map[string]api.Permission{
 					args[1]: api.NoPermission,
@@ -425,11 +390,6 @@ func newWorkspacePermissionsSetVisibilityCommand() *cobra.Command {
 		Short: "Set the visibility of a workspace to public or private",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			workspace, err := beaker.Workspace(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
 			var public bool
 			switch args[1] {
 			case "public":
@@ -438,6 +398,8 @@ func newWorkspacePermissionsSetVisibilityCommand() *cobra.Command {
 			default:
 				return fmt.Errorf(`invalid visibility: %q; must be "public" or "private"`, args[1])
 			}
+
+			workspace := beaker.Workspace(args[0])
 			if err := workspace.SetPermissions(ctx, api.WorkspacePermissionPatch{
 				Public: &public,
 			}); err != nil {
@@ -462,17 +424,12 @@ func newWorkspaceMoveCommand() *cobra.Command {
 		Short: "Move items into a workspace",
 		Args:  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			workspace, err := beaker.Workspace(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
-			if err := workspace.Transfer(ctx, args[1:]...); err != nil {
+			if err := beaker.Workspace(args[0]).Transfer(ctx, args[1:]...); err != nil {
 				return err
 			}
 
 			if !quiet {
-				fmt.Printf("Transferred %d items into workspace %s\n", len(args)-1, color.BlueString(workspace.ID()))
+				fmt.Printf("Transferred %d items into workspace %s\n", len(args)-1, color.BlueString(args[0]))
 			}
 			return nil
 		},
@@ -485,16 +442,11 @@ func newWorkspaceRenameCommand() *cobra.Command {
 		Short: "Rename an workspace",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			workspace, err := beaker.Workspace(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
+			workspace := beaker.Workspace(args[0])
 			if err := workspace.SetName(ctx, args[1]); err != nil {
 				return err
 			}
 
-			// TODO: This info should probably be part of the client response instead of a separate get.
 			info, err := workspace.Get(ctx)
 			if err != nil {
 				return err
@@ -516,12 +468,7 @@ func newWorkspaceUnarchiveCommand() *cobra.Command {
 		Short: "Unarchive a workspace",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			workspace, err := beaker.Workspace(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
-			if err := workspace.SetArchived(ctx, false); err != nil {
+			if err := beaker.Workspace(args[0]).SetArchived(ctx, false); err != nil {
 				return err
 			}
 

@@ -62,12 +62,7 @@ func newExperimentCreateCommand() *cobra.Command {
 			return err
 		}
 
-		ws, err := beaker.Workspace(ctx, workspace)
-		if err != nil {
-			return err
-		}
-
-		experiment, err := ws.CreateExperimentRaw(
+		experiment, err := beaker.Workspace(workspace).CreateExperimentRaw(
 			ctx,
 			"application/x-yaml",
 			bytes.NewReader(rawSpec),
@@ -93,12 +88,7 @@ func newExperimentDeleteCommand() *cobra.Command {
 		Short: "Permanently delete an experiment",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			experiment, err := beaker.Experiment(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
-			if err := experiment.Delete(ctx); err != nil {
+			if err := beaker.Experiment(args[0]).Delete(ctx); err != nil {
 				return err
 			}
 
@@ -114,12 +104,7 @@ func newExperimentExecutionsCommand() *cobra.Command {
 		Short: "List the executions in an experiment",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			experiment, err := beaker.Experiment(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
-			info, err := experiment.Get(ctx)
+			info, err := beaker.Experiment(args[0]).Get(ctx)
 			if err != nil {
 				return err
 			}
@@ -139,28 +124,18 @@ func newExperimentGroupsCommand() *cobra.Command {
 		Short: "List the groups that the experiments belongs to",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			experiment, err := beaker.Experiment(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
-			groupIDs, err := experiment.Groups(ctx)
+			groupIDs, err := beaker.Experiment(args[0]).Groups(ctx)
 			if err != nil {
 				return err
 			}
 
 			var groups []api.Group
 			for _, id := range groupIDs {
-				group, err := beaker.Group(ctx, id)
+				group, err := beaker.Group(id).Get(ctx)
 				if err != nil {
 					return err
 				}
-
-				info, err := group.Get(ctx)
-				if err != nil {
-					return err
-				}
-				groups = append(groups, *info)
+				groups = append(groups, *group)
 			}
 			return printGroups(groups)
 		},
@@ -176,12 +151,7 @@ func newExperimentGetCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var experiments []api.Experiment
 			for _, name := range args {
-				experiment, err := beaker.Experiment(ctx, name)
-				if err != nil {
-					return err
-				}
-
-				exp, err := experiment.Get(ctx)
+				exp, err := beaker.Experiment(name).Get(ctx)
 				if err != nil {
 					return err
 				}
@@ -199,16 +169,11 @@ func newExperimentRenameCommand() *cobra.Command {
 		Short: "Rename an experiment",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			experiment, err := beaker.Experiment(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
+			experiment := beaker.Experiment(args[0])
 			if err := experiment.SetName(ctx, args[1]); err != nil {
 				return err
 			}
 
-			// TODO: This info should probably be part of the client response instead of a separate get.
 			exp, err := experiment.Get(ctx)
 			if err != nil {
 				return err
@@ -227,20 +192,15 @@ func newExperimentRenameCommand() *cobra.Command {
 func newExperimentResumeCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "resume <experiment>",
-		Short: "Resume a preempted experiment and return the experiment ID for the new experiment",
+		Short: "Resume a preempted experiment",
 		Args:  cobra.ExactArgs(1),
 	}
 
-	var name string
-	cmd.Flags().StringVarP(&name, "name", "n", "", "Name for the new experiment")
-
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		experiment, err := beaker.ResumeExperiment(ctx, args[0], name)
-		if err != nil {
+		if err := beaker.Experiment(args[0]).Resume(ctx); err != nil {
 			return err
 		}
 
-		fmt.Println(experiment.ID())
 		return nil
 	}
 	return cmd
@@ -257,12 +217,7 @@ func newExperimentSpecCommand() *cobra.Command {
 	cmd.Flags().StringVar(&version, "version", "v2-alpha", "Spec version: v1 or v2-alpha")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		experiment, err := beaker.Experiment(ctx, args[0])
-		if err != nil {
-			return err
-		}
-
-		spec, err := experiment.Spec(ctx, version, format == formatJSON)
+		spec, err := beaker.Experiment(args[0]).Spec(ctx, version, format == formatJSON)
 		if err != nil {
 			return err
 		}
@@ -281,18 +236,13 @@ func newExperimentStopCommand() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, name := range args {
-				experiment, err := beaker.Experiment(ctx, name)
-				if err != nil {
-					return err
-				}
-
-				if err := experiment.Stop(ctx); err != nil {
+				if err := beaker.Experiment(name).Stop(ctx); err != nil {
 					// We want to stop as many of the requested experiments as possible.
 					// Therefore we print to STDERR here instead of returning.
 					fmt.Fprintln(os.Stderr, color.RedString("Error:"), err)
 				}
 
-				fmt.Println(experiment.ID())
+				fmt.Println(name)
 			}
 			return nil
 		},
@@ -305,12 +255,7 @@ func newExperimentTasksCommand() *cobra.Command {
 		Short: "List the tasks in an experiment",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			experiment, err := beaker.Experiment(ctx, args[0])
-			if err != nil {
-				return err
-			}
-
-			tasks, err := experiment.Tasks(ctx)
+			tasks, err := beaker.Experiment(args[0]).Tasks(ctx)
 			if err != nil {
 				return err
 			}
