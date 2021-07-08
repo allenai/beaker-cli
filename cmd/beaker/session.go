@@ -466,7 +466,7 @@ func awaitSessionSchedule(session api.Session) (*api.Session, error) {
 		}
 
 		node.Limits.CPUCount -= exec.Limits.CPUCount
-		node.Limits.GPUCount -= exec.Limits.GPUCount
+		node.Limits.GPUCount -= len(exec.Limits.GPUs)
 		if node.Limits.Memory != nil && exec.Limits.Memory != nil {
 			node.Limits.Memory.Sub(*exec.Limits.Memory)
 		}
