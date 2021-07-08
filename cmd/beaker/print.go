@@ -148,7 +148,7 @@ func printExecutions(executions []api.Execution) error {
 				execution.Spec.Name,
 				execution.Node,
 				execution.Limits.CPUCount,
-				execution.Limits.GPUCount,
+				len(execution.Limits.GPUs),
 				execution.Limits.Memory,
 				execution.Priority,
 				executionStatus(execution.State),
