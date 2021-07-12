@@ -92,8 +92,8 @@ func main() {
 
 	err := root.Execute()
 	if err != nil {
-		if strings.HasSuffix(err.Error(), "invalid authentication token") ||
-			strings.HasSuffix(err.Error(), "user authentication required") {
+		var apiErr api.Error
+		if errors.As(err, &apiErr) && apiErr.Code == http.StatusUnauthorized {
 			err = login()
 			if err == nil {
 				err = root.Execute()
