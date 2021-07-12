@@ -16,6 +16,7 @@ func newExecutionCommand() *cobra.Command {
 	cmd.AddCommand(newExecutionGetCommand())
 	cmd.AddCommand(newExecutionLogsCommand())
 	cmd.AddCommand(newExecutionResultsCommand())
+	cmd.AddCommand(newExecutionStopCommand())
 	return cmd
 }
 
@@ -77,6 +78,22 @@ func newExecutionResultsCommand() *cobra.Command {
 			}
 		},
 	}
+}
+
+func newExecutionStopCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "stop <execution>",
+		Short: "Stop an execution, optionally running it again",
+		Args:  cobra.ExactArgs(1),
+	}
+
+	var requeue bool
+	cmd.Flags().BoolVar(&requeue, "requeue", false, "Run the execution again")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		return beaker.Execution(args[0]).Stop(ctx, requeue)
+	}
+	return cmd
 }
 
 func printExecutionLogs(executionID string) error {
