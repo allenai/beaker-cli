@@ -96,7 +96,7 @@ func printDatasets(datasets []api.Dataset) error {
 			"WORKSPACE",
 			"AUTHOR",
 			"COMMITTED",
-			"SOURCE TASK",
+			"SOURCE EXECUTION",
 		); err != nil {
 			return err
 		}
@@ -105,16 +105,12 @@ func printDatasets(datasets []api.Dataset) error {
 			if dataset.Name != "" {
 				name = dataset.Name
 			}
-			var source string
-			if dataset.SourceTask != nil {
-				source = *dataset.SourceTask
-			}
 			if err := printTableRow(
 				name,
 				dataset.Workspace.Name,
 				dataset.Author.Name,
 				dataset.Committed,
-				source,
+				dataset.SourceExecution,
 			); err != nil {
 				return err
 			}
@@ -130,28 +126,40 @@ func printExecutions(executions []api.Execution) error {
 	default:
 		if err := printTableRow(
 			"ID",
-			"TASK",
 			"NAME",
-			"NODE",
-			"CPU COUNT",
-			"GPU COUNT",
-			"MEMORY",
-			"PRIORITY",
+			"AUTHOR",
 			"STATUS",
+			"SCHEDULED",
+			"DURATION",
+			"GPUS",
+			"NODE",
 		); err != nil {
 			return err
 		}
 		for _, execution := range executions {
+			var duration time.Duration
+			if execution.State.Scheduled != nil {
+				end := time.Now()
+				if execution.State.Finalized != nil {
+					end = *execution.State.Finalized
+				}
+				duration = end.Sub(*execution.State.Scheduled)
+			}
+
+			var scheduled time.Time
+			if execution.State.Scheduled != nil {
+				scheduled = *execution.State.Scheduled
+			}
+
 			if err := printTableRow(
 				execution.ID,
-				execution.Task,
 				execution.Spec.Name,
-				execution.Node,
-				execution.Limits.CPUCount,
-				len(execution.Limits.GPUs),
-				execution.Limits.Memory,
-				execution.Priority,
+				execution.Author.Name,
 				executionStatus(execution.State),
+				scheduled,
+				duration,
+				len(execution.Limits.GPUs),
+				execution.Node,
 			); err != nil {
 				return err
 			}
@@ -382,6 +390,7 @@ func printSessions(sessions []api.Session) error {
 			"SCHEDULED",
 			"DURATION",
 			"GPUS",
+			"NODE",
 		); err != nil {
 			return err
 		}
@@ -413,6 +422,7 @@ func printSessions(sessions []api.Session) error {
 				scheduled,
 				duration,
 				gpus,
+				session.Node,
 			); err != nil {
 				return err
 			}
