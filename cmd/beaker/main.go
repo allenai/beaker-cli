@@ -87,7 +87,6 @@ func main() {
 	root.AddCommand(newOrganizationCommand())
 	root.AddCommand(newSecretCommand())
 	root.AddCommand(newSessionCommand())
-	root.AddCommand(newTaskCommand())
 	root.AddCommand(newWorkspaceCommand())
 
 	err := root.Execute()
