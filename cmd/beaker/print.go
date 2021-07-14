@@ -69,7 +69,9 @@ func printClusters(clusters []api.Cluster) error {
 				gpuType = cluster.NodeShape.GPUType
 				gpuCount = cluster.NodeShape.GPUCount
 				cpuCount = cluster.NodeShape.CPUCount
-				memory = cluster.NodeShape.Memory.String()
+				if cluster.NodeShape.Memory != nil {
+					memory = cluster.NodeShape.Memory.String()
+				}
 			}
 			if err := printTableRow(
 				cluster.Name,
