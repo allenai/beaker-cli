@@ -294,11 +294,14 @@ func newDatasetRenameCommand() *cobra.Command {
 		Short: "Rename a dataset",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			dataset := beaker.Dataset(args[0])
-			if err := dataset.SetName(ctx, args[1]); err != nil {
+			oldName := args[0]
+			newName := args[1]
+			dataset := beaker.Dataset(oldName)
+			if err := dataset.SetName(ctx, newName); err != nil {
 				return err
 			}
 
+			dataset = beaker.Dataset(newName)
 			info, err := dataset.Get(ctx)
 			if err != nil {
 				return err
