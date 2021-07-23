@@ -57,7 +57,7 @@ func newExecutionResultsCommand() *cobra.Command {
 		Short: "Get execution results",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			results, err := beaker.Execution(args[0]).GetResults(ctx)
+			results, err := beaker.Job(args[0]).GetResults(ctx)
 			if err != nil {
 				return err
 			}
@@ -91,13 +91,13 @@ func newExecutionStopCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&requeue, "requeue", false, "Run the execution again")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		return beaker.Execution(args[0]).Stop(ctx, requeue)
+		return beaker.Job(args[0]).Preempt(ctx)
 	}
 	return cmd
 }
 
 func printExecutionLogs(executionID string) error {
-	logs, err := beaker.Execution(executionID).GetLogs(ctx)
+	logs, err := beaker.Job(executionID).GetLogs(ctx)
 	if err != nil {
 		return err
 	}
