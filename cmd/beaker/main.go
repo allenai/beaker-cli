@@ -83,6 +83,7 @@ func main() {
 	root.AddCommand(newExperimentCommand())
 	root.AddCommand(newGroupCommand())
 	root.AddCommand(newImageCommand())
+	root.AddCommand(newJobCommand())
 	root.AddCommand(newNodeCommand())
 	root.AddCommand(newOrganizationCommand())
 	root.AddCommand(newSecretCommand())
