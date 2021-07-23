@@ -12,8 +12,9 @@ import (
 
 func newJobCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "job <command>",
-		Short: "Manage jobs",
+		Use:     "job <command>",
+		Short:   "Manage jobs",
+		Aliases: []string{"execution"},
 	}
 	cmd.AddCommand(newJobGetCommand())
 	cmd.AddCommand(newJobListCommand())
@@ -56,6 +57,7 @@ func newJobListCommand() *cobra.Command {
 	var node string
 	var finalized bool
 	cmd.Flags().BoolVar(&all, "all", false, "List all jobs.")
+	cmd.Flags().StringVar(&kind, "kind", "", "Kind of jobs to list. Either 'execution' or 'session'.")
 	cmd.Flags().StringVar(&cluster, "cluster", "", "Cluster to list jobs.")
 	cmd.Flags().StringVar(&node, "node", "", "Node to list jobs. Defaults to current node.")
 	cmd.Flags().BoolVar(&finalized, "finalized", false, "Show only finalized jobs")
