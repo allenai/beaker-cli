@@ -164,7 +164,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 				return
 			}
 			_, _ = beaker.Job(sessionID).Patch(context.Background(), api.JobPatch{
-				State: &api.JobStatusUpdate{Canceled: true},
+				Status: &api.JobStatusUpdate{Canceled: true},
 			})
 		}()
 
@@ -424,7 +424,7 @@ func newSessionStopCommand() *cobra.Command {
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		job, err := beaker.Job(args[0]).Patch(ctx, api.JobPatch{
-			State: &api.JobStatusUpdate{Canceled: true},
+			Status: &api.JobStatusUpdate{Canceled: true},
 		})
 		if err != nil {
 			return err
@@ -552,7 +552,7 @@ func awaitSessionSchedule(session api.Job) (*api.Job, error) {
 				return nil, err
 			}
 
-			if session.State.Scheduled != nil {
+			if session.Status.Scheduled != nil {
 				if !quiet {
 					fmt.Println()
 				}
@@ -615,13 +615,13 @@ func findRunningContainer(session string) (runtime.Container, error) {
 	if err != nil {
 		return nil, err
 	}
-	if info.State.Started == nil {
+	if info.Status.Started == nil {
 		return nil, fmt.Errorf("session not started")
 	}
-	if info.State.Exited != nil || info.State.Failed != nil {
+	if info.Status.Exited != nil || info.Status.Failed != nil {
 		return nil, fmt.Errorf("session already ended")
 	}
-	if info.State.Finalized != nil {
+	if info.Status.Finalized != nil {
 		return nil, fmt.Errorf("session already finalized")
 	}
 

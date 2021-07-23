@@ -240,17 +240,17 @@ func printJobs(jobs []api.Job) error {
 		}
 		for _, job := range jobs {
 			var duration time.Duration
-			if job.State.Scheduled != nil {
+			if job.Status.Scheduled != nil {
 				end := time.Now()
-				if job.State.Finalized != nil {
-					end = *job.State.Finalized
+				if job.Status.Finalized != nil {
+					end = *job.Status.Finalized
 				}
-				duration = end.Sub(*job.State.Scheduled)
+				duration = end.Sub(*job.Status.Scheduled)
 			}
 
 			var scheduled time.Time
-			if job.State.Scheduled != nil {
-				scheduled = *job.State.Scheduled
+			if job.Status.Scheduled != nil {
+				scheduled = *job.Status.Scheduled
 			}
 
 			var gpus string
@@ -263,7 +263,7 @@ func printJobs(jobs []api.Job) error {
 				job.Kind,
 				job.Name,
 				job.Author.Name,
-				jobStatus(job.State),
+				jobStatus(job.Status),
 				scheduled,
 				duration,
 				gpus,
@@ -505,7 +505,7 @@ func printWorkspacePermissions(permissions *api.WorkspacePermissionSummary) erro
 	}
 }
 
-func jobStatus(state api.ExecutionState) string {
+func jobStatus(state api.JobStatus) string {
 	switch {
 	case state.Failed != nil:
 		return "failed"

@@ -141,7 +141,7 @@ func newJobStopCommand() *cobra.Command {
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		job, err := beaker.Job(args[0]).Patch(ctx, api.JobPatch{
-			State: &api.JobStatusUpdate{Canceled: true},
+			Status: &api.JobStatusUpdate{Canceled: true},
 		})
 		if err != nil {
 			return err
