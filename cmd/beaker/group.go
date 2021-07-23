@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/beaker/client/api"
+	"github.com/beaker/client/client"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -117,18 +118,13 @@ func newGroupExecutionsCommand() *cobra.Command {
 				return err
 			}
 
-			var executions []api.Execution
-			for _, experimentID := range experimentIDs {
-				experiment, err := beaker.Experiment(experimentID).Get(ctx)
-				if err != nil {
-					return err
-				}
-
-				for _, execution := range experiment.Executions {
-					executions = append(executions, *execution)
-				}
+			jobs, err := listJobs(client.ListJobOpts{
+				Experiments: experimentIDs,
+			})
+			if err != nil {
+				return err
 			}
-			return printExecutions(executions)
+			return printJobs(jobs)
 		},
 	}
 }

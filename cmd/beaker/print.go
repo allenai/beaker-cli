@@ -121,55 +121,6 @@ func printDatasets(datasets []api.Dataset) error {
 	}
 }
 
-func printExecutions(executions []api.Execution) error {
-	switch format {
-	case formatJSON:
-		return printJSON(executions)
-	default:
-		if err := printTableRow(
-			"ID",
-			"NAME",
-			"AUTHOR",
-			"STATUS",
-			"SCHEDULED",
-			"DURATION",
-			"GPUS",
-			"NODE",
-		); err != nil {
-			return err
-		}
-		for _, execution := range executions {
-			var duration time.Duration
-			if execution.State.Scheduled != nil {
-				end := time.Now()
-				if execution.State.Finalized != nil {
-					end = *execution.State.Finalized
-				}
-				duration = end.Sub(*execution.State.Scheduled)
-			}
-
-			var scheduled time.Time
-			if execution.State.Scheduled != nil {
-				scheduled = *execution.State.Scheduled
-			}
-
-			if err := printTableRow(
-				execution.ID,
-				execution.Spec.Name,
-				execution.Author.Name,
-				executionStatus(execution.State),
-				scheduled,
-				duration,
-				len(execution.Limits.GPUs),
-				execution.Node,
-			); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-}
-
 func printExperiments(experiments []api.Experiment) error {
 	switch format {
 	case formatJSON:
@@ -261,6 +212,62 @@ func printImages(images []api.Image) error {
 				image.Workspace.Name,
 				image.Author.Name,
 				image.Created,
+			); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+func printJobs(jobs []api.Job) error {
+	switch format {
+	case formatJSON:
+		return printJSON(jobs)
+	default:
+		if err := printTableRow(
+			"ID",
+			"KIND",
+			"NAME",
+			"AUTHOR",
+			"STATUS",
+			"SCHEDULED",
+			"DURATION",
+			"GPUS",
+			"NODE",
+		); err != nil {
+			return err
+		}
+		for _, job := range jobs {
+			var duration time.Duration
+			if job.State.Scheduled != nil {
+				end := time.Now()
+				if job.State.Finalized != nil {
+					end = *job.State.Finalized
+				}
+				duration = end.Sub(*job.State.Scheduled)
+			}
+
+			var scheduled time.Time
+			if job.State.Scheduled != nil {
+				scheduled = *job.State.Scheduled
+			}
+
+			var gpus string
+			if job.Limits != nil {
+				gpus = strconv.Itoa(len(job.Limits.GPUs))
+			}
+
+			if err := printTableRow(
+				job.ID,
+				job.Kind,
+				job.Name,
+				job.Author.Name,
+				jobStatus(job.State),
+				scheduled,
+				duration,
+				gpus,
+				job.Node,
 			); err != nil {
 				return err
 			}
@@ -371,60 +378,6 @@ func printSecrets(secrets []api.Secret) error {
 				secret.Name,
 				secret.Created,
 				secret.Updated,
-			); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-}
-
-func printSessions(sessions []api.Session) error {
-	switch format {
-	case formatJSON:
-		return printJSON(sessions)
-	default:
-		if err := printTableRow(
-			"ID",
-			"NAME",
-			"AUTHOR",
-			"STATUS",
-			"SCHEDULED",
-			"DURATION",
-			"GPUS",
-			"NODE",
-		); err != nil {
-			return err
-		}
-		for _, session := range sessions {
-			var duration time.Duration
-			if session.State.Scheduled != nil {
-				end := time.Now()
-				if session.State.Finalized != nil {
-					end = *session.State.Finalized
-				}
-				duration = end.Sub(*session.State.Scheduled)
-			}
-
-			var scheduled time.Time
-			if session.State.Scheduled != nil {
-				scheduled = *session.State.Scheduled
-			}
-
-			var gpus string
-			if session.Limits != nil {
-				gpus = strconv.Itoa(len(session.Limits.GPUs))
-			}
-
-			if err := printTableRow(
-				session.ID,
-				session.Name,
-				session.Author.Name,
-				executionStatus(session.State),
-				scheduled,
-				duration,
-				gpus,
-				session.Node,
 			); err != nil {
 				return err
 			}
@@ -552,7 +505,7 @@ func printWorkspacePermissions(permissions *api.WorkspacePermissionSummary) erro
 	}
 }
 
-func executionStatus(state api.ExecutionState) string {
+func jobStatus(state api.ExecutionState) string {
 	switch {
 	case state.Failed != nil:
 		return "failed"
@@ -575,7 +528,7 @@ func executionStatus(state api.ExecutionState) string {
 func executionsStatus(executions []api.Execution) string {
 	counts := make(map[string]int)
 	for _, execution := range executions {
-		status := executionStatus(execution.State)
+		status := jobStatus(execution.State)
 		count, ok := counts[status]
 		if ok {
 			counts[status] = count + 1

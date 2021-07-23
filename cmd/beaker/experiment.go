@@ -104,16 +104,13 @@ func newExperimentExecutionsCommand() *cobra.Command {
 		Short: "List the executions in an experiment",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			info, err := beaker.Experiment(args[0]).Get(ctx)
+			jobs, err := listJobs(client.ListJobOpts{
+				Experiments: args,
+			})
 			if err != nil {
 				return err
 			}
-
-			var executions []api.Execution
-			for _, execution := range info.Executions {
-				executions = append(executions, *execution)
-			}
-			return printExecutions(executions)
+			return printJobs(jobs)
 		},
 	}
 }

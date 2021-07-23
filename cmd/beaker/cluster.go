@@ -175,11 +175,15 @@ func newClusterExecutionsCommand() *cobra.Command {
 		Short: "List executions in a cluster",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			executions, err := beaker.Cluster(args[0]).ListExecutions(ctx, nil)
+			kind := api.JobKindExecution
+			jobs, err := listJobs(client.ListJobOpts{
+				Kind:    &kind,
+				Cluster: args[0],
+			})
 			if err != nil {
 				return err
 			}
-			return printExecutions(executions)
+			return printJobs(jobs)
 		},
 	}
 }

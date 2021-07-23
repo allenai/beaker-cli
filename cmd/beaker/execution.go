@@ -27,15 +27,15 @@ func newExecutionGetCommand() *cobra.Command {
 		Short:   "Display detailed information about one or more executions",
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var executions []api.Execution
+			var jobs []api.Job
 			for _, id := range args {
-				info, err := beaker.Execution(id).Get(ctx)
+				info, err := beaker.Job(id).Get(ctx)
 				if err != nil {
 					return err
 				}
-				executions = append(executions, *info)
+				jobs = append(jobs, *info)
 			}
-			return printExecutions(executions)
+			return printJobs(jobs)
 		},
 	}
 }

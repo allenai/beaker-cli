@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/beaker/client/api"
+	"github.com/beaker/client/client"
 	"github.com/spf13/cobra"
 )
 
@@ -49,11 +50,15 @@ func newNodeExecutionsCommand() *cobra.Command {
 		Short: "List the executions of a node",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			executions, err := beaker.Node(args[0]).ListExecutions(ctx)
+			kind := api.JobKindExecution
+			jobs, err := listJobs(client.ListJobOpts{
+				Kind: &kind,
+				Node: &args[0],
+			})
 			if err != nil {
 				return err
 			}
-			return printExecutions(executions.Data)
+			return printJobs(jobs)
 		},
 	}
 }
