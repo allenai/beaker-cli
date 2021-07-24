@@ -205,20 +205,20 @@ func newGroupRenameCommand() *cobra.Command {
 		Short: "Rename a group",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			group := beaker.Group(args[0])
-			if err := group.SetName(ctx, args[1]); err != nil {
-				return err
-			}
+			oldName := args[0]
+			newName := args[1]
 
-			info, err := group.Get(ctx)
+			group, err := beaker.Group(oldName).Patch(
+				ctx, api.GroupPatch{Name: &newName},
+			)
 			if err != nil {
 				return err
 			}
 
 			if quiet {
-				fmt.Println(info.ID)
+				fmt.Println(group.ID)
 			} else {
-				fmt.Printf("Renamed %s to %s\n", color.BlueString(info.ID), info.FullName)
+				fmt.Printf("Renamed %s to %s\n", color.BlueString(oldName), group.FullName)
 			}
 			return nil
 		},

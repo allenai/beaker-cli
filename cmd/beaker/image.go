@@ -286,20 +286,20 @@ func newImageRenameCommand() *cobra.Command {
 		Short: "Rename an image",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			image := beaker.Image(args[0])
-			if err := image.SetName(ctx, args[1]); err != nil {
-				return err
-			}
+			oldName := args[0]
+			newName := args[1]
 
-			exp, err := image.Get(ctx)
+			image, err := beaker.Image(oldName).Patch(
+				ctx, api.ImagePatch{Name: &newName},
+			)
 			if err != nil {
 				return err
 			}
 
 			if quiet {
-				fmt.Println(exp.ID)
+				fmt.Println(image.ID)
 			} else {
-				fmt.Printf("Renamed %s to %s\n", color.BlueString(exp.ID), exp.FullName)
+				fmt.Printf("Renamed %s to %s\n", color.BlueString(oldName), image.FullName)
 			}
 			return nil
 		},
