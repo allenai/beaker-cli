@@ -208,9 +208,9 @@ func newGroupRenameCommand() *cobra.Command {
 			oldName := args[0]
 			newName := args[1]
 
-			group, err := beaker.Group(oldName).Patch(
-				ctx, api.GroupPatch{Name: &newName},
-			)
+			group, err := beaker.Group(oldName).Patch(ctx, api.GroupPatch{
+				Name: &newName,
+			})
 			if err != nil {
 				return err
 			}

@@ -40,7 +40,9 @@ func newDatasetCommitCommand() *cobra.Command {
 		Short: "Commit a dataset preventing further modification",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if _, err := beaker.Dataset(args[0]).Patch(ctx, api.DatasetPatch{Commit: true}); err != nil {
+			if _, err := beaker.Dataset(args[0]).Patch(ctx, api.DatasetPatch{
+				Commit: true,
+			}); err != nil {
 				return err
 			}
 
@@ -136,7 +138,9 @@ func newDatasetCreateCommand() *cobra.Command {
 			}
 		}
 
-		if _, err := dataset.Patch(ctx, api.DatasetPatch{Commit: true}); err != nil {
+		if _, err := dataset.Patch(ctx, api.DatasetPatch{
+			Commit: true,
+		}); err != nil {
 			return errors.WithMessage(err, "failed to commit dataset")
 		}
 
@@ -297,9 +301,9 @@ func newDatasetRenameCommand() *cobra.Command {
 			oldName := args[0]
 			newName := args[1]
 
-			dataset, err := beaker.Dataset(oldName).Patch(
-				ctx, api.DatasetPatch{Name: &newName},
-			)
+			dataset, err := beaker.Dataset(oldName).Patch(ctx, api.DatasetPatch{
+				Name: &newName,
+			})
 			if err != nil {
 				return err
 			}

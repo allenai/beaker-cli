@@ -289,9 +289,9 @@ func newImageRenameCommand() *cobra.Command {
 			oldName := args[0]
 			newName := args[1]
 
-			image, err := beaker.Image(oldName).Patch(
-				ctx, api.ImagePatch{Name: &newName},
-			)
+			image, err := beaker.Image(oldName).Patch(ctx, api.ImagePatch{
+				Name: &newName,
+			})
 			if err != nil {
 				return err
 			}

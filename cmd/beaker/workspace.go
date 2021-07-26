@@ -36,8 +36,9 @@ func newWorkspaceArchiveCommand() *cobra.Command {
 		Short: "Archive a workspace, making it read-only",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			trueVal := true
-			if _, err := beaker.Workspace(args[0]).Patch(ctx, api.WorkspacePatch{Archive: &trueVal}); err != nil {
+			if _, err := beaker.Workspace(args[0]).Patch(ctx, api.WorkspacePatch{
+				Archive: api.BoolPtr(true),
+			}); err != nil {
 				return err
 			}
 
@@ -446,9 +447,9 @@ func newWorkspaceRenameCommand() *cobra.Command {
 			oldName := args[0]
 			newName := args[1]
 
-			workspace, err := beaker.Image(oldName).Patch(
-				ctx, api.ImagePatch{Name: &newName},
-			)
+			workspace, err := beaker.Image(oldName).Patch(ctx, api.ImagePatch{
+				Name: &newName,
+			})
 			if err != nil {
 				return err
 			}
@@ -469,8 +470,9 @@ func newWorkspaceUnarchiveCommand() *cobra.Command {
 		Short: "Unarchive a workspace",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			falseVal := false
-			if _, err := beaker.Workspace(args[0]).Patch(ctx, api.WorkspacePatch{Archive: &falseVal}); err != nil {
+			if _, err := beaker.Workspace(args[0]).Patch(ctx, api.WorkspacePatch{
+				Archive: api.BoolPtr(false),
+			}); err != nil {
 				return err
 			}
 

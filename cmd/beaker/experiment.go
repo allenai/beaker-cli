@@ -171,9 +171,9 @@ func newExperimentRenameCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			oldName := args[0]
 			newName := args[1]
-			experiment, err := beaker.Experiment(oldName).Patch(
-				ctx, api.ExperimentPatch{Name: &newName},
-			)
+			experiment, err := beaker.Experiment(oldName).Patch(ctx, api.ExperimentPatch{
+				Name: &newName,
+			})
 			if err != nil {
 				return err
 			}
