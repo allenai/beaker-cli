@@ -552,7 +552,7 @@ func printWorkspacePermissions(permissions *api.WorkspacePermissionSummary) erro
 	}
 }
 
-func executionStatus(state api.ExecutionState) string {
+func executionStatus(state api.JobStatus) string {
 	switch {
 	case state.Failed != nil:
 		return "failed"
