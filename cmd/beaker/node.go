@@ -12,7 +12,6 @@ func newNodeCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newNodeCordonCommand())
 	cmd.AddCommand(newNodeDeleteCommand())
-	cmd.AddCommand(newNodeExecutionsCommand())
 	cmd.AddCommand(newNodeGetCommand())
 	cmd.AddCommand(newNodeUncordonCommand())
 	return cmd
@@ -39,21 +38,6 @@ func newNodeDeleteCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return beaker.Node(args[0]).Delete(ctx)
-		},
-	}
-}
-
-func newNodeExecutionsCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "executions <node>",
-		Short: "List the executions of a node",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			executions, err := beaker.Node(args[0]).ListExecutions(ctx)
-			if err != nil {
-				return err
-			}
-			return printExecutions(executions.Data)
 		},
 	}
 }

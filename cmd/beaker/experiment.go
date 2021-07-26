@@ -22,7 +22,6 @@ func newExperimentCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newExperimentCreateCommand())
 	cmd.AddCommand(newExperimentDeleteCommand())
-	cmd.AddCommand(newExperimentExecutionsCommand())
 	cmd.AddCommand(newExperimentGroupsCommand())
 	cmd.AddCommand(newExperimentGetCommand())
 	cmd.AddCommand(newExperimentRenameCommand())
@@ -94,26 +93,6 @@ func newExperimentDeleteCommand() *cobra.Command {
 
 			fmt.Printf("Deleted %s\n", color.BlueString(args[0]))
 			return nil
-		},
-	}
-}
-
-func newExperimentExecutionsCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "executions <experiment>",
-		Short: "List the executions in an experiment",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			info, err := beaker.Experiment(args[0]).Get(ctx)
-			if err != nil {
-				return err
-			}
-
-			var executions []api.Execution
-			for _, execution := range info.Executions {
-				executions = append(executions, *execution)
-			}
-			return printExecutions(executions)
 		},
 	}
 }

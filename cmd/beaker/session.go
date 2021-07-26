@@ -139,13 +139,15 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			return err
 		}
 
-		session, err := beaker.CreateSession(ctx, api.SessionSpec{
-			Name: name,
-			Node: node,
-			Requests: &api.ResourceRequest{
-				CPUCount: cpus,
-				GPUCount: gpus,
-				Memory:   memSize,
+		session, err := beaker.CreateJob(ctx, api.JobSpec{
+			Session: &api.SessionJobSpec{
+				Name: name,
+				Node: node,
+				Requests: &api.ResourceRequest{
+					CPUCount: cpus,
+					GPUCount: gpus,
+					Memory:   memSize,
+				},
 			},
 		})
 		if err != nil {
@@ -161,8 +163,8 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			if !shouldCancel {
 				return
 			}
-			_, _ = beaker.Session(sessionID).Patch(context.Background(), api.SessionPatch{
-				State: &api.ExecStatusUpdate{Canceled: true},
+			_, _ = beaker.Job(sessionID).Patch(context.Background(), api.JobPatch{
+				Status: &api.JobStatusUpdate{Canceled: true},
 			})
 		}()
 
@@ -357,15 +359,15 @@ func newSessionGetCommand() *cobra.Command {
 		Short:   "Display detailed information about one or more sessions",
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var sessions []api.Session
+			var jobs []api.Job
 			for _, id := range args {
-				info, err := beaker.Session(id).Get(ctx)
+				info, err := beaker.Job(id).Get(ctx)
 				if err != nil {
 					return err
 				}
-				sessions = append(sessions, *info)
+				jobs = append(jobs, *info)
 			}
-			return printSessions(sessions)
+			return printJobs(jobs)
 		},
 	}
 }
@@ -387,13 +389,11 @@ func newSessionListCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&finalized, "finalized", false, "Show only finalized sessions")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		var opts client.ListSessionOpts
+		kind := api.JobKindSession
+		opts := client.ListJobOpts{Kind: &kind}
 		if !all {
 			opts.Finalized = &finalized
-
-			if cluster != "" {
-				opts.Cluster = &cluster
-			}
+			opts.Cluster = cluster
 
 			if !cmd.Flag("node").Changed && cluster == "" {
 				var err error
@@ -406,11 +406,11 @@ func newSessionListCommand() *cobra.Command {
 			}
 		}
 
-		sessions, err := beaker.ListSessions(ctx, &opts)
+		jobs, err := listJobs(opts)
 		if err != nil {
 			return err
 		}
-		return printSessions(sessions)
+		return printJobs(jobs)
 	}
 	return cmd
 }
@@ -423,21 +423,19 @@ func newSessionStopCommand() *cobra.Command {
 	}
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		patch := api.SessionPatch{
-			State: &api.ExecStatusUpdate{Canceled: true},
-		}
-
-		session, err := beaker.Session(args[0]).Patch(ctx, patch)
+		job, err := beaker.Job(args[0]).Patch(ctx, api.JobPatch{
+			Status: &api.JobStatusUpdate{Canceled: true},
+		})
 		if err != nil {
 			return err
 		}
-		return printSessions([]api.Session{*session})
+		return printJobs([]api.Job{*job})
 	}
 	return cmd
 }
 
-func awaitSessionSchedule(session api.Session) (*api.Session, error) {
-	s := beaker.Session(session.ID)
+func awaitSessionSchedule(session api.Job) (*api.Job, error) {
+	s := beaker.Job(session.ID)
 	cl := beaker.Cluster(session.Cluster)
 
 	nodes, err := cl.ListClusterNodes(ctx)
@@ -451,52 +449,30 @@ func awaitSessionSchedule(session api.Session) (*api.Session, error) {
 		nodesByID[node.ID] = &node
 	}
 
-	execs, err := cl.ListExecutions(ctx, &client.ExecutionFilters{
-		Scheduled: api.BoolPtr(true),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("couldn't list cluster workloads: %w", err)
-	}
-
-	// Subtract each running execution from its node's capacity.
-	for _, exec := range execs {
-		node, ok := nodesByID[exec.Node]
-		if !ok || node.Limits == nil {
-			continue
-		}
-
-		node.Limits.CPUCount -= exec.Limits.CPUCount
-		node.Limits.GPUCount -= len(exec.Limits.GPUs)
-		if node.Limits.Memory != nil && exec.Limits.Memory != nil {
-			node.Limits.Memory.Sub(*exec.Limits.Memory)
-		}
-	}
-
-	sessions, err := beaker.ListSessions(ctx, &client.ListSessionOpts{
-		Cluster:   api.StringPtr(session.Cluster),
+	jobs, err := listJobs(client.ListJobOpts{
+		Cluster:   session.Cluster,
 		Finalized: api.BoolPtr(false),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("couldn't list cluster sessions: %w", err)
+		return nil, fmt.Errorf("couldn't list cluster jobs: %w", err)
 	}
 
-	// Subtract each running session from its node's capacity.
-	// TODO allenai/beaker-service#1426: This is duplicative of executions above.
-	for _, sess := range sessions {
+	// Subtract each running job from its node's capacity.
+	for _, job := range jobs {
 		node, ok := nodesByID[session.Node]
 		if !ok || node.Limits == nil {
 			continue
 		}
 
-		// Ignore sessions which haven't fully scheduled yet, including the one we're starting.
-		if sess.ID == session.ID || sess.Limits == nil {
+		// Ignore jobs which haven't fully scheduled yet, including the one we're starting.
+		if job.ID == session.ID || job.Limits == nil {
 			continue
 		}
 
-		node.Limits.CPUCount -= sess.Limits.CPUCount
-		node.Limits.GPUCount -= len(sess.Limits.GPUs)
-		if node.Limits.Memory != nil && sess.Limits.Memory != nil {
-			node.Limits.Memory.Sub(*sess.Limits.Memory)
+		node.Limits.CPUCount -= job.Limits.CPUCount
+		node.Limits.GPUCount -= len(job.Limits.GPUs)
+		if node.Limits.Memory != nil && job.Limits.Memory != nil {
+			node.Limits.Memory.Sub(*job.Limits.Memory)
 		}
 	}
 
@@ -552,7 +528,7 @@ func awaitSessionSchedule(session api.Session) (*api.Session, error) {
 				return nil, err
 			}
 
-			if session.State.Scheduled != nil {
+			if session.Status.Scheduled != nil {
 				if !quiet {
 					fmt.Println()
 				}
@@ -611,17 +587,17 @@ func handleAttachErr(err error) error {
 }
 
 func findRunningContainer(session string) (runtime.Container, error) {
-	info, err := beaker.Session(session).Get(ctx)
+	info, err := beaker.Job(session).Get(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if info.State.Started == nil {
+	if info.Status.Started == nil {
 		return nil, fmt.Errorf("session not started")
 	}
-	if info.State.Exited != nil || info.State.Failed != nil {
+	if info.Status.Exited != nil || info.Status.Failed != nil {
 		return nil, fmt.Errorf("session already ended")
 	}
-	if info.State.Finalized != nil {
+	if info.Status.Finalized != nil {
 		return nil, fmt.Errorf("session already finalized")
 	}
 
