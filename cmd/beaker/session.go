@@ -449,54 +449,30 @@ func awaitSessionSchedule(session api.Job) (*api.Job, error) {
 		nodesByID[node.ID] = &node
 	}
 
-	execs, err := cl.ListExecutions(ctx, &client.ExecutionFilters{
-		Scheduled: api.BoolPtr(true),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("couldn't list cluster workloads: %w", err)
-	}
-
-	// Subtract each running execution from its node's capacity.
-	for _, exec := range execs {
-		node, ok := nodesByID[exec.Node]
-		if !ok || node.Limits == nil {
-			continue
-		}
-
-		node.Limits.CPUCount -= exec.Limits.CPUCount
-		node.Limits.GPUCount -= len(exec.Limits.GPUs)
-		if node.Limits.Memory != nil && exec.Limits.Memory != nil {
-			node.Limits.Memory.Sub(*exec.Limits.Memory)
-		}
-	}
-
-	kind := api.JobKindSession
-	sessions, err := listJobs(client.ListJobOpts{
-		Kind:      &kind,
+	jobs, err := listJobs(client.ListJobOpts{
 		Cluster:   session.Cluster,
 		Finalized: api.BoolPtr(false),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("couldn't list cluster sessions: %w", err)
+		return nil, fmt.Errorf("couldn't list cluster jobs: %w", err)
 	}
 
-	// Subtract each running session from its node's capacity.
-	// TODO allenai/beaker-service#1426: This is duplicative of executions above.
-	for _, sess := range sessions {
+	// Subtract each running job from its node's capacity.
+	for _, job := range jobs {
 		node, ok := nodesByID[session.Node]
 		if !ok || node.Limits == nil {
 			continue
 		}
 
-		// Ignore sessions which haven't fully scheduled yet, including the one we're starting.
-		if sess.ID == session.ID || sess.Limits == nil {
+		// Ignore jobs which haven't fully scheduled yet, including the one we're starting.
+		if job.ID == session.ID || job.Limits == nil {
 			continue
 		}
 
-		node.Limits.CPUCount -= sess.Limits.CPUCount
-		node.Limits.GPUCount -= len(sess.Limits.GPUs)
-		if node.Limits.Memory != nil && sess.Limits.Memory != nil {
-			node.Limits.Memory.Sub(*sess.Limits.Memory)
+		node.Limits.CPUCount -= job.Limits.CPUCount
+		node.Limits.GPUCount -= len(job.Limits.GPUs)
+		if node.Limits.Memory != nil && job.Limits.Memory != nil {
+			node.Limits.Memory.Sub(*job.Limits.Memory)
 		}
 	}
 
