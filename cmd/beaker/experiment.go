@@ -169,20 +169,19 @@ func newExperimentRenameCommand() *cobra.Command {
 		Short: "Rename an experiment",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			experiment := beaker.Experiment(args[0])
-			if err := experiment.SetName(ctx, args[1]); err != nil {
-				return err
-			}
-
-			exp, err := experiment.Get(ctx)
+			oldName := args[0]
+			newName := args[1]
+			experiment, err := beaker.Experiment(oldName).Patch(ctx, api.ExperimentPatch{
+				Name: &newName,
+			})
 			if err != nil {
 				return err
 			}
 
 			if quiet {
-				fmt.Println(exp.ID)
+				fmt.Println(experiment.ID)
 			} else {
-				fmt.Printf("Renamed %s to %s\n", color.BlueString(exp.ID), exp.FullName)
+				fmt.Printf("Renamed %s to %s\n", color.BlueString(oldName), experiment.FullName)
 			}
 			return nil
 		},
