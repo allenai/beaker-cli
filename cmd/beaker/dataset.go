@@ -40,7 +40,9 @@ func newDatasetCommitCommand() *cobra.Command {
 		Short: "Commit a dataset preventing further modification",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := beaker.Dataset(args[0]).Commit(ctx); err != nil {
+			if _, err := beaker.Dataset(args[0]).Patch(ctx, api.DatasetPatch{
+				Commit: true,
+			}); err != nil {
 				return err
 			}
 
@@ -136,7 +138,9 @@ func newDatasetCreateCommand() *cobra.Command {
 			}
 		}
 
-		if err := dataset.Commit(ctx); err != nil {
+		if _, err := dataset.Patch(ctx, api.DatasetPatch{
+			Commit: true,
+		}); err != nil {
 			return errors.WithMessage(err, "failed to commit dataset")
 		}
 
@@ -294,15 +298,20 @@ func newDatasetRenameCommand() *cobra.Command {
 		Short: "Rename a dataset",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			info, err := beaker.Dataset(args[0]).Patch(ctx, api.DatasetPatch{Name: &args[1]})
+			oldName := args[0]
+			newName := args[1]
+
+			dataset, err := beaker.Dataset(oldName).Patch(ctx, api.DatasetPatch{
+				Name: &newName,
+			})
 			if err != nil {
 				return err
 			}
 
 			if quiet {
-				fmt.Println(info.ID)
+				fmt.Println(dataset.ID)
 			} else {
-				fmt.Printf("Renamed %s to %s\n", color.BlueString(info.ID), info.FullName)
+				fmt.Printf("Renamed %s to %s\n", color.BlueString(oldName), dataset.FullName)
 			}
 			return nil
 		},
