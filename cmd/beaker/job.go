@@ -47,40 +47,40 @@ func newJobGetCommand() *cobra.Command {
 func newJobListCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "List jobs",
+		Short: "List jobs. Defaults to listing running jobs on the current node.",
 		Args:  cobra.NoArgs,
 	}
 
-	var all bool
-	var kind string
 	var cluster string
-	var node string
+	var experiments []string
 	var finalized bool
-	cmd.Flags().BoolVar(&all, "all", false, "List all jobs.")
-	cmd.Flags().StringVar(&kind, "kind", "", "Kind of jobs to list. Either 'execution' or 'session'.")
-	cmd.Flags().StringVar(&cluster, "cluster", "", "Cluster to list jobs.")
-	cmd.Flags().StringVar(&node, "node", "", "Node to list jobs. Defaults to current node.")
-	cmd.Flags().BoolVar(&finalized, "finalized", false, "Show only finalized jobs")
+	var kind string
+	var node string
+	cmd.Flags().StringVar(&cluster, "cluster", "", "List jobs on a cluster.")
+	cmd.Flags().StringArrayVar(&experiments, "experiment", nil, "List jobs in a set of experiments.")
+	cmd.Flags().BoolVar(&finalized, "finalized", false, "List finalized jobs.")
+	cmd.Flags().StringVar(&kind, "kind", "", "List jobs of a certain kind. Either 'execution' or 'session'.")
+	cmd.Flags().StringVar(&node, "node", "", "List jobs on a node. Defaults to current node if no other filters are specified.")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		var opts client.ListJobOpts
+		opts := client.ListJobOpts{
+			Cluster:     cluster,
+			Experiments: experiments,
+			Finalized:   &finalized,
+		}
 		if kind != "" {
 			kind := api.JobKind(kind)
 			opts.Kind = &kind
 		}
-		if !all {
-			opts.Finalized = &finalized
-			opts.Cluster = cluster
-
-			if !cmd.Flag("node").Changed && cluster == "" {
-				var err error
-				if node, err = getCurrentNode(); err != nil {
-					return fmt.Errorf("failed to detect node; use --node flag: %w", err)
-				}
+		if node == "" && cluster == "" && len(experiments) == 0 {
+			var err error
+			if node, err = getCurrentNode(); err != nil {
+				return fmt.Errorf("failed to detect node; use --node flag: %w", err)
 			}
-			if node != "" {
-				opts.Node = &node
-			}
+			opts.Node = &node
+		}
+		if len(experiments) > 0 {
+			opts.Experiments = experiments
 		}
 
 		jobs, err := listJobs(opts)

@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/beaker/client/api"
-	"github.com/beaker/client/client"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -18,7 +17,6 @@ func newGroupCommand() *cobra.Command {
 	cmd.AddCommand(newGroupAddCommand())
 	cmd.AddCommand(newGroupCreateCommand())
 	cmd.AddCommand(newGroupDeleteCommand())
-	cmd.AddCommand(newGroupExecutionsCommand())
 	cmd.AddCommand(newGroupExperimentsCommand())
 	cmd.AddCommand(newGroupGetCommand())
 	cmd.AddCommand(newGroupRemoveCommand())
@@ -103,28 +101,6 @@ func newGroupDeleteCommand() *cobra.Command {
 				fmt.Println("Deleted group " + color.BlueString(args[0]))
 			}
 			return nil
-		},
-	}
-}
-
-func newGroupExecutionsCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "executions <group>",
-		Short: "List executions in a group",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			experimentIDs, err := beaker.Group(args[0]).Experiments(ctx)
-			if err != nil {
-				return err
-			}
-
-			jobs, err := listJobs(client.ListJobOpts{
-				Experiments: experimentIDs,
-			})
-			if err != nil {
-				return err
-			}
-			return printJobs(jobs)
 		},
 	}
 }

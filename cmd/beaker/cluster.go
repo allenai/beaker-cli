@@ -22,7 +22,6 @@ func newClusterCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newClusterCreateCommand())
 	cmd.AddCommand(newClusterDeleteCommand())
-	cmd.AddCommand(newClusterExecutionsCommand())
 	cmd.AddCommand(newClusterGetCommand())
 	cmd.AddCommand(newClusterListCommand())
 	cmd.AddCommand(newClusterNodesCommand())
@@ -165,25 +164,6 @@ func newClusterDeleteCommand() *cobra.Command {
 
 			fmt.Printf("Deleted %s\n", color.BlueString(args[0]))
 			return nil
-		},
-	}
-}
-
-func newClusterExecutionsCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "executions <cluster>",
-		Short: "List executions in a cluster",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			kind := api.JobKindExecution
-			jobs, err := listJobs(client.ListJobOpts{
-				Kind:    &kind,
-				Cluster: args[0],
-			})
-			if err != nil {
-				return err
-			}
-			return printJobs(jobs)
 		},
 	}
 }
