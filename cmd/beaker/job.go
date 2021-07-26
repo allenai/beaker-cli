@@ -95,7 +95,7 @@ func newJobListCommand() *cobra.Command {
 func newJobLogsCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "logs <job>",
-		Short: "Fetch job logs",
+		Short: "Print job logs",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return printJobLogs(args[0])
