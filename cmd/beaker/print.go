@@ -97,7 +97,7 @@ func printDatasets(datasets []api.Dataset) error {
 			"ID",
 			"WORKSPACE",
 			"AUTHOR",
-			"COMMITTED",
+			"CREATED",
 			"SOURCE EXECUTION",
 		); err != nil {
 			return err
@@ -111,7 +111,7 @@ func printDatasets(datasets []api.Dataset) error {
 				name,
 				dataset.Workspace.FullName,
 				dataset.Author.Name,
-				dataset.Committed,
+				dataset.Created,
 				dataset.SourceExecution,
 			); err != nil {
 				return err
