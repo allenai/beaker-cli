@@ -19,7 +19,7 @@ func printTableRow(cells ...interface{}) error {
 		var formatted string
 		if t, ok := cell.(time.Time); ok {
 			if !t.IsZero() {
-				formatted = t.Format(time.Stamp)
+				formatted = t.Local().Format("2006-01-02 15:04:05")
 			}
 		} else if d, ok := cell.(time.Duration); ok {
 			// Format duration as HH:MM:SS.
