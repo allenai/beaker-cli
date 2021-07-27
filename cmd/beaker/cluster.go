@@ -95,7 +95,9 @@ func newClusterCreateCommand() *cobra.Command {
 			return err
 		}
 
-		fmt.Printf("Cluster %s created (ID %s)\n", color.BlueString(cluster.Name), color.BlueString(cluster.ID))
+		fmt.Printf("Cluster %s created. See details at %s/cl/%s\n",
+			color.BlueString(cluster.FullName), beaker.Address(), cluster.FullName)
+
 		if !cluster.Autoscale {
 			return nil
 		}

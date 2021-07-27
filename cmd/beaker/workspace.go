@@ -67,15 +67,20 @@ func newWorkspaceCreateCommand() *cobra.Command {
 			Organization: org,
 		}
 
-		workspace, err := beaker.CreateWorkspace(ctx, spec)
+		wsRef, err := beaker.CreateWorkspace(ctx, spec)
+		if err != nil {
+			return err
+		}
+		workspace, err := wsRef.Get(ctx)
 		if err != nil {
 			return err
 		}
 
 		if quiet {
-			fmt.Println(workspace.Ref())
+			fmt.Println(workspace.ID)
 		} else {
-			fmt.Printf("Workspace %s created (ID %s)\n", color.BlueString(spec.Name), color.BlueString(workspace.Ref()))
+			fmt.Printf("Workspace %s created. See details at %s/ws/%s\n",
+				color.BlueString(workspace.FullName), beaker.Address(), workspace.FullName)
 		}
 		return nil
 	}

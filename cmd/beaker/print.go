@@ -19,7 +19,7 @@ func printTableRow(cells ...interface{}) error {
 		var formatted string
 		if t, ok := cell.(time.Time); ok {
 			if !t.IsZero() {
-				formatted = t.Format(time.Stamp)
+				formatted = t.Local().Format("2006-01-02 15:04:05")
 			}
 		} else if d, ok := cell.(time.Duration); ok {
 			// Format duration as HH:MM:SS.
@@ -74,7 +74,7 @@ func printClusters(clusters []api.Cluster) error {
 				}
 			}
 			if err := printTableRow(
-				cluster.Name,
+				cluster.FullName,
 				gpuType,
 				gpuCount,
 				cpuCount,
@@ -97,21 +97,21 @@ func printDatasets(datasets []api.Dataset) error {
 			"ID",
 			"WORKSPACE",
 			"AUTHOR",
-			"COMMITTED",
+			"CREATED",
 			"SOURCE EXECUTION",
 		); err != nil {
 			return err
 		}
 		for _, dataset := range datasets {
 			name := dataset.ID
-			if dataset.Name != "" {
-				name = dataset.Name
+			if dataset.FullName != "" {
+				name = dataset.FullName
 			}
 			if err := printTableRow(
 				name,
-				dataset.Workspace.Name,
+				dataset.Workspace.FullName,
 				dataset.Author.Name,
-				dataset.Committed,
+				dataset.Created,
 				dataset.SourceExecution,
 			); err != nil {
 				return err
@@ -137,8 +137,8 @@ func printExperiments(experiments []api.Experiment) error {
 		}
 		for _, experiment := range experiments {
 			name := experiment.ID
-			if experiment.Name != "" {
-				name = experiment.Name
+			if experiment.FullName != "" {
+				name = experiment.FullName
 			}
 			var executions []api.Execution
 			for _, execution := range experiment.Executions {
@@ -146,7 +146,7 @@ func printExperiments(experiments []api.Experiment) error {
 			}
 			if err := printTableRow(
 				name,
-				experiment.Workspace.Name,
+				experiment.Workspace.FullName,
 				experiment.Author.Name,
 				experiment.Created,
 				executionsStatus(executions),
@@ -173,12 +173,12 @@ func printGroups(groups []api.Group) error {
 		}
 		for _, group := range groups {
 			name := group.ID
-			if group.Name != "" {
-				name = group.Name
+			if group.FullName != "" {
+				name = group.FullName
 			}
 			if err := printTableRow(
 				name,
-				group.Workspace.Name,
+				group.Workspace.FullName,
 				group.Author.Name,
 				group.Created,
 			); err != nil {
@@ -204,12 +204,12 @@ func printImages(images []api.Image) error {
 		}
 		for _, image := range images {
 			name := image.ID
-			if image.Name != "" {
-				name = image.Name
+			if image.FullName != "" {
+				name = image.FullName
 			}
 			if err := printTableRow(
 				name,
-				image.Workspace.Name,
+				image.Workspace.FullName,
 				image.Author.Name,
 				image.Created,
 			); err != nil {
@@ -459,7 +459,7 @@ func printWorkspaces(workspaces []api.Workspace) error {
 		}
 		for _, workspace := range workspaces {
 			if err := printTableRow(
-				workspace.Name,
+				workspace.FullName,
 				workspace.Author.Name,
 				workspace.Size.Datasets,
 				workspace.Size.Experiments,
