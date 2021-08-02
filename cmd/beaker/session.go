@@ -459,7 +459,7 @@ func awaitSessionSchedule(session api.Job) (*api.Job, error) {
 
 	// Subtract each running job from its node's capacity.
 	for _, job := range jobs {
-		node, ok := nodesByID[session.Node]
+		node, ok := nodesByID[job.Node]
 		if !ok || node.Limits == nil {
 			continue
 		}
