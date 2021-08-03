@@ -70,7 +70,9 @@ func newImageCreateCommand() *cobra.Command {
 			return err
 		}
 
-		docker, err := docker.NewClientWithOpts(docker.FromEnv)
+		docker, err := docker.NewClientWithOpts(
+			docker.FromEnv,
+			docker.WithAPIVersionNegotiation())
 		if err != nil {
 			return fmt.Errorf("failed to create Docker client: %w", err)
 		}
@@ -207,7 +209,9 @@ func newImagePullCommand() *cobra.Command {
 				tag = args[1]
 			}
 
-			docker, err := docker.NewClientWithOpts(docker.FromEnv)
+			docker, err := docker.NewClientWithOpts(
+				docker.FromEnv,
+				docker.WithAPIVersionNegotiation())
 			if err != nil {
 				return errors.Wrap(err, "failed to create Docker client")
 			}
