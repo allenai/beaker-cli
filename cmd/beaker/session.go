@@ -205,7 +205,9 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 
 		labels := map[string]string{
 			sessionContainerLabel: session.ID,
-			sessionGPULabel:       strings.Join(session.Limits.GPUs, ","),
+		}
+		if session.Limits != nil {
+			labels[sessionGPULabel] = strings.Join(session.Limits.GPUs, ",")
 		}
 
 		env := make(map[string]string, 1)
@@ -222,7 +224,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			})
 		}
 
-		container, err := rt.CreateContainer(ctx, &runtime.ContainerOpts{
+		opts := &runtime.ContainerOpts{
 			Name: strings.ToLower("session-" + session.ID),
 			Image: &runtime.DockerImage{
 				Tag: rtImage.Tag,
@@ -231,13 +233,23 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			Labels:      labels,
 			Env:         env,
 			Mounts:      mounts,
-			CPUCount:    session.Limits.CPUCount,
-			GPUs:        session.Limits.GPUs,
-			Memory:      session.Limits.Memory.Int64(),
 			Interactive: true,
 			User:        userGroup,
 			WorkingDir:  home.ContainerPath,
-		})
+		}
+		if limits := session.Limits; limits == nil {
+			opts.Evictable = true
+		} else {
+			// CPUCount must be provided for the K8s runtime.
+			opts.CPUCount = limits.CPUCount
+			// CPUShares is used for Docker and CRI. 1024 shares per GPU. Defaults to 1024 if 0.
+			opts.CPUShares = 1024 * int64(len(limits.GPUs))
+			opts.GPUs = limits.GPUs
+			if m := limits.Memory; m != nil {
+				opts.Memory = m.Int64()
+			}
+		}
+		container, err := rt.CreateContainer(ctx, opts)
 		if err != nil {
 			return err
 		}
@@ -552,7 +564,7 @@ func checkNodeCapacity(node *api.Node, request *api.ResourceRequest) error {
 	case node.Cordoned != nil:
 		return errors.New("the node is cordoned")
 
-	case request == nil:
+	case request == nil || *request == api.ResourceRequest{}:
 		// No request means it'll fit anywhere.
 		return nil
 
