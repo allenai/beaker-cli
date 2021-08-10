@@ -237,9 +237,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			User:        userGroup,
 			WorkingDir:  home.ContainerPath,
 		}
-		if limits := session.Limits; limits == nil {
-			opts.Evictable = true
-		} else {
+		if limits := session.Limits; limits != nil {
 			// CPUCount must be provided for the K8s runtime.
 			opts.CPUCount = limits.CPUCount
 			// CPUShares is used for Docker and CRI. 1024 shares per GPU. Defaults to 1024 if 0.
