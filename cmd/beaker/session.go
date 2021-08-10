@@ -562,7 +562,7 @@ func checkNodeCapacity(node *api.Node, request *api.ResourceRequest) error {
 	case node.Cordoned != nil:
 		return errors.New("the node is cordoned")
 
-	case request == nil || *request == api.ResourceRequest{}:
+	case request.IsEmpty():
 		// No request means it'll fit anywhere.
 		return nil
 
