@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   validate:
     docker:
-      - image: cimg/go:1.15
+      - image: cimg/go:1.16
     steps:
       - checkout
       - run:
@@ -22,7 +22,7 @@ jobs:
 
   release:
     docker:
-      - image: cimg/go:1.15
+      - image: cimg/go:1.16
     steps:
       - checkout
       - run:
