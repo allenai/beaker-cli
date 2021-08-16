@@ -216,12 +216,17 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			env["HOME"] = home.ContainerPath
 			mounts = append(mounts, home)
 		}
-		if _, err := os.Stat("/net"); !os.IsNotExist(err) {
-			// Mount in /net for NFS.
-			mounts = append(mounts, runtime.Mount{
-				HostPath:      "/net",
-				ContainerPath: "/net",
-			})
+		// Mount all allowed host paths into the container.
+		if config, err := getExecutorConfig(); err == nil {
+			for _, mountPath := range config.MountPaths {
+				if _, err := os.Stat(mountPath); err != nil {
+					continue
+				}
+				mounts = append(mounts, runtime.Mount{
+					HostPath:      mountPath,
+					ContainerPath: mountPath,
+				})
+			}
 		}
 
 		opts := &runtime.ContainerOpts{

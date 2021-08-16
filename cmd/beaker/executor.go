@@ -30,6 +30,9 @@ type executorConfig struct {
 	// to an NFS mount to enable roaming profiles. If unset, sessions mount the
 	// invoking user's home directory.
 	SessionHome string `yaml:"sessionHome"`
+
+	// (optional) List of allowed mount paths for this machine.
+	MountPaths []string `yaml:"mountPaths"`
 }
 
 // Get the config of the executor running on this machine.
