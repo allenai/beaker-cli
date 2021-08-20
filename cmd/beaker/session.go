@@ -155,7 +155,6 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		defer verificationFile.Close()
 		defer os.Remove(verificationFile.Name())
 
-		// TODO This is always cancelling, need to set shouldCancel somewhere.
 		shouldCancel, sessionID := true, session.ID
 		defer func() {
 			// If we fail to start the session, cancel it so that the executor
@@ -197,7 +196,11 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			return err
 		}
 
-		return handleAttachErr(container.Stream(ctx, resp))
+		if err := handleAttachErr(container.Stream(ctx, resp)); err != nil {
+			return err
+		}
+		shouldCancel = false
+		return nil
 	}
 	return cmd
 }
