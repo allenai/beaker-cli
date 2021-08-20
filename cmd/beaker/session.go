@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/user"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -14,7 +12,6 @@ import (
 	"github.com/allenai/bytefmt"
 	"github.com/beaker/client/api"
 	"github.com/beaker/client/client"
-	"github.com/beaker/runtime"
 	"github.com/beaker/runtime/docker"
 	"github.com/spf13/cobra"
 )
@@ -52,13 +49,13 @@ func newSessionAttachCommand() *cobra.Command {
 				return err
 			}
 
-			resp, err := container.(*docker.Container).Attach(ctx)
+			resp, err := container.Attach(ctx)
 			if err != nil {
 				return err
 			}
 			defer resp.Close()
 
-			return handleAttachErr(container.(*docker.Container).Stream(ctx, resp))
+			return handleAttachErr(container.Stream(ctx, resp))
 		},
 	}
 }
@@ -78,7 +75,6 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 	var image string
 	var name string
 	var node string
-	var pull string
 	cmd.Flags().StringVar(
 		&image,
 		"image",
@@ -87,8 +83,6 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 	cmd.Flags().BoolVar(&localHome, "local-home", false, "Mount the invoking user's home directory, ignoring Beaker configuration")
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the session")
 	cmd.Flags().StringVar(&node, "node", "", "Node that the session will run on. Defaults to current node.")
-	cmd.Flags().StringVar(&pull, "pull", string(runtime.PullIfMissing), fmt.Sprintf(
-		"Pull image before running (%s|%s|%s)", runtime.PullAlways, runtime.PullIfMissing, runtime.PullNever))
 
 	var cpus float64
 	var gpus int
@@ -116,25 +110,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			}
 		}
 
-		u, err := user.Current()
-		if err != nil {
-			return err
-		}
-
-		userGroup := u.Uid + ":" + u.Gid
-		home := runtime.Mount{HostPath: u.HomeDir, ContainerPath: u.HomeDir}
-
-		// Mount in a Beaker-managed home directory by default, if there's one configured.
-		if config, err := getExecutorConfig(); err == nil && config.SessionHome != "" && !localHome {
-			// TODO: u.Username is highly dependent on host configuration. We
-			// should consider using the stable Beaker user ID instead.
-			home.HostPath = filepath.Join(config.SessionHome, u.Username)
-			if err := os.MkdirAll(home.HostPath, 0700); err != nil {
-				return fmt.Errorf("couldn't create home directory: %w", err)
-			}
-		}
-
-		rtImage, err := resolveImage(beaker, image)
+		imageSource, err := resolveImage(beaker, image)
 		if err != nil {
 			return err
 		}
@@ -148,12 +124,23 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 					GPUCount: gpus,
 					Memory:   memSize,
 				},
+				Command:   args,
+				Image:     *imageSource,
+				LocalHome: localHome,
 			},
 		})
 		if err != nil {
 			return err
 		}
 
+		verificationFile, err := os.Create(session.SessionVerificationFile())
+		if err != nil {
+			return fmt.Errorf("failed to create session verification file")
+		}
+		defer verificationFile.Close()
+		defer os.Remove(verificationFile.Name())
+
+		// TODO This is always cancelling, need to set shouldCancel somewhere.
 		shouldCancel, sessionID := true, session.ID
 		defer func() {
 			// If we fail to start the session, cancel it so that the executor
@@ -176,20 +163,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			fmt.Println("... (Press Ctrl+C to cancel)")
 		}
 
-		// Pull the image after creating the session and before waiting to minimize delay.
-		// The policy is validated in rt.PullImage.
-		if !quiet {
-			fmt.Printf("Verifying image (%s)...\n", image)
-		}
-		pullPolicy := runtime.PullPolicy(strings.ToLower(pull))
-		if err := rt.PullImage(ctx, rtImage, pullPolicy, quiet); err != nil {
-			return err
-		}
-		if !quiet {
-			fmt.Println()
-		}
-
-		if session, err = awaitSessionSchedule(*session); err != nil {
+		if session, err = awaitSessionStart(*session); err != nil {
 			return err
 		}
 
@@ -197,67 +171,8 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			fmt.Println("Reserved", lim)
 		}
 
-		// Pass nil instead of empty slice when there are no arguments.
-		command := args
-		if len(command) == 0 {
-			command = nil
-		}
-
-		labels := map[string]string{
-			sessionContainerLabel: session.ID,
-		}
-		if session.Limits != nil {
-			labels[sessionGPULabel] = strings.Join(session.Limits.GPUs, ",")
-		}
-
-		env := make(map[string]string, 1)
-		var mounts []runtime.Mount
-		if home.ContainerPath != "" {
-			env["HOME"] = home.ContainerPath
-			mounts = append(mounts, home)
-		}
-		// Mount all allowed host paths into the container.
-		if config, err := getExecutorConfig(); err == nil {
-			for _, mountPath := range config.MountPaths {
-				if _, err := os.Stat(mountPath); err != nil {
-					continue
-				}
-				mounts = append(mounts, runtime.Mount{
-					HostPath:      mountPath,
-					ContainerPath: mountPath,
-				})
-			}
-		}
-
-		opts := &runtime.ContainerOpts{
-			Name: strings.ToLower("session-" + session.ID),
-			Image: &runtime.DockerImage{
-				Tag: rtImage.Tag,
-			},
-			Command:     command,
-			Labels:      labels,
-			Env:         env,
-			Mounts:      mounts,
-			Interactive: true,
-			User:        userGroup,
-			WorkingDir:  home.ContainerPath,
-		}
-		if limits := session.Limits; limits != nil {
-			// CPUCount must be provided for the K8s runtime.
-			opts.CPUCount = limits.CPUCount
-			// CPUShares is used for Docker and CRI. 1024 shares per GPU. Defaults to 1024 if 0.
-			opts.CPUShares = 1024 * int64(len(limits.GPUs))
-			opts.GPUs = limits.GPUs
-			if m := limits.Memory; m != nil {
-				opts.Memory = m.Int64()
-			}
-		}
-		container, err := rt.CreateContainer(ctx, opts)
-		if err != nil {
-			return err
-		}
-
-		resp, err := container.(*docker.Container).Attach(ctx)
+		container := rt.Container(session.ContainerName()).(*docker.Container)
+		resp, err := container.Attach(ctx)
 		if err != nil {
 			return err
 		}
@@ -267,7 +182,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			return err
 		}
 
-		return handleAttachErr(container.(*docker.Container).Stream(ctx, resp))
+		return handleAttachErr(container.Stream(ctx, resp))
 	}
 	return cmd
 }
@@ -308,7 +223,7 @@ func resourceString(gpuCount int, cpuCount float64, memory *bytefmt.Size) string
 	return strings.Join(requests, ", ")
 }
 
-func resolveImage(beaker *client.Client, name string) (*runtime.DockerImage, error) {
+func resolveImage(beaker *client.Client, name string) (*api.ImageSource, error) {
 	parts := strings.SplitN(name, "://", 2)
 	if len(parts) < 2 {
 		return nil, fmt.Errorf("image must include scheme such as beaker:// or docker://")
@@ -317,22 +232,10 @@ func resolveImage(beaker *client.Client, name string) (*runtime.DockerImage, err
 
 	switch strings.ToLower(scheme) {
 	case "beaker":
-		repo, err := beaker.Image(image).Repository(ctx, false)
-		if err != nil {
-			return nil, err
-		}
-
-		return &runtime.DockerImage{
-			Tag: repo.ImageTag,
-			Auth: &runtime.RegistryAuth{
-				ServerAddress: repo.Auth.ServerAddress,
-				Username:      repo.Auth.User,
-				Password:      repo.Auth.Password,
-			},
-		}, nil
+		return &api.ImageSource{Beaker: image}, nil
 
 	case "docker":
-		return &runtime.DockerImage{Tag: image}, nil
+		return &api.ImageSource{Docker: image}, nil
 
 	default:
 		return nil, fmt.Errorf("%q is not a supported image type", scheme)
@@ -359,7 +262,7 @@ If no command is provided, exec will run 'bash -l'`,
 				command = args[1:]
 			}
 
-			err = container.(*docker.Container).Exec(ctx, &docker.ExecOpts{
+			err = container.Exec(ctx, &docker.ExecOpts{
 				Command: command,
 			})
 			return handleAttachErr(err)
@@ -449,7 +352,7 @@ func newSessionStopCommand() *cobra.Command {
 	return cmd
 }
 
-func awaitSessionSchedule(session api.Job) (*api.Job, error) {
+func awaitSessionStart(session api.Job) (*api.Job, error) {
 	s := beaker.Job(session.ID)
 	cl := beaker.Cluster(session.Cluster)
 
@@ -529,7 +432,7 @@ func awaitSessionSchedule(session api.Job) (*api.Job, error) {
 	}
 
 	if !quiet {
-		fmt.Printf("Waiting for session to be scheduled")
+		fmt.Printf("Waiting for session to start")
 	}
 	delay := time.NewTimer(0) // When to poll session status.
 	for attempt := 0; ; attempt++ {
@@ -543,7 +446,13 @@ func awaitSessionSchedule(session api.Job) (*api.Job, error) {
 				return nil, err
 			}
 
-			if session.Status.Scheduled != nil {
+			if session.Status.Finalized != nil {
+				if !quiet {
+					fmt.Println()
+				}
+				return nil, fmt.Errorf("session finalized: %s", session.Status.Message)
+			}
+			if session.Status.Started != nil {
 				if !quiet {
 					fmt.Println()
 				}
@@ -601,7 +510,7 @@ func handleAttachErr(err error) error {
 	return err
 }
 
-func findRunningContainer(session string) (runtime.Container, error) {
+func findRunningContainer(session string) (*docker.Container, error) {
 	info, err := beaker.Job(session).Get(ctx)
 	if err != nil {
 		return nil, err
@@ -620,26 +529,5 @@ func findRunningContainer(session string) (runtime.Container, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	containers, err := rt.ListContainers(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var container runtime.Container
-	for _, c := range containers {
-		info, err := c.Info(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		if session == info.Labels[sessionContainerLabel] {
-			container = c
-			break
-		}
-	}
-	if container == nil {
-		return nil, fmt.Errorf("container not found")
-	}
-	return container, nil
+	return rt.Container(info.ContainerName()).(*docker.Container), nil
 }
