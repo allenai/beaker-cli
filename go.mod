@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/Microsoft/go-winio v0.4.19 // indirect
 	github.com/allenai/bytefmt v0.1.2
-	github.com/beaker/client v0.0.0-20210810203325-60eeb1972a98
+	github.com/beaker/client v0.0.0-20210823200206-2db88d14aff7
 	github.com/beaker/fileheap v0.0.0-20210701203425-01e1890a1025
 	github.com/beaker/runtime v0.0.0-20210810203340-f1025301816c
 	github.com/docker/distribution v2.7.1+incompatible
