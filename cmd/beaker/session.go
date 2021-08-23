@@ -93,9 +93,11 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 	var cpus float64
 	var gpus int
 	var memory string
+	var sharedMemory string
 	cmd.Flags().Float64Var(&cpus, "cpus", 0, "Minimum CPU cores to reserve, e.g. 7.5")
 	cmd.Flags().IntVar(&gpus, "gpus", 0, "Minimum number of GPUs to reserve")
 	cmd.Flags().StringVar(&memory, "memory", "", "Minimum memory to reserve, e.g. 6.5GiB")
+	cmd.Flags().StringVar(&sharedMemory, "shared-memory", "", "Shared memory (size of /dev/shm), e.g. 1GiB")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		rt, err := docker.NewRuntime()
@@ -113,6 +115,13 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		if memory != "" {
 			if memSize, err = bytefmt.Parse(memory); err != nil {
 				return fmt.Errorf("invalid value for --memory: %w", err)
+			}
+		}
+
+		var sharedMemSize *bytefmt.Size
+		if sharedMemory != "" {
+			if sharedMemSize, err = bytefmt.Parse(sharedMemory); err != nil {
+				return fmt.Errorf("invalid value for --shared-memory: %w", err)
 			}
 		}
 
@@ -144,9 +153,10 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 				Name: name,
 				Node: node,
 				Requests: &api.ResourceRequest{
-					CPUCount: cpus,
-					GPUCount: gpus,
-					Memory:   memSize,
+					CPUCount:     cpus,
+					GPUCount:     gpus,
+					Memory:       memSize,
+					SharedMemory: sharedMemSize,
 				},
 			},
 		})

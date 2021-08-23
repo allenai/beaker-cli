@@ -19,3 +19,5 @@ require (
 )
 
 replace github.com/spf13/viper => ./viperstub
+
+replace github.com/beaker/client => ../client
