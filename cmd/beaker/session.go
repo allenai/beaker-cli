@@ -12,7 +12,6 @@ import (
 	"github.com/allenai/bytefmt"
 	"github.com/beaker/client/api"
 	"github.com/beaker/client/client"
-	"github.com/beaker/runtime"
 	"github.com/beaker/runtime/docker"
 	"github.com/spf13/cobra"
 )
@@ -114,20 +113,6 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		imageSource, err := getImageSource(image)
 		if err != nil {
 			return err
-		}
-
-		// Pulling the image here is only necessary to show progress updates to the user.
-		// The executor will pull the image itself before creating the container.
-		if !quiet {
-			fmt.Printf("Verifying image (%s)...\n", image)
-			rtImage, err := resolveImage(beaker, imageSource)
-			if err != nil {
-				return err
-			}
-			if err := rt.PullImage(ctx, rtImage, runtime.PullAlways, quiet); err != nil {
-				return err
-			}
-			fmt.Println()
 		}
 
 		session, err := beaker.CreateJob(ctx, api.JobSpec{
@@ -257,31 +242,6 @@ func getImageSource(name string) (*api.ImageSource, error) {
 
 	default:
 		return nil, fmt.Errorf("%q is not a supported image type", scheme)
-	}
-}
-
-func resolveImage(beaker *client.Client, image *api.ImageSource) (*runtime.DockerImage, error) {
-	switch {
-	case image.Beaker != "":
-		repo, err := beaker.Image(image.Beaker).Repository(ctx, false)
-		if err != nil {
-			return nil, err
-		}
-
-		return &runtime.DockerImage{
-			Tag: repo.ImageTag,
-			Auth: &runtime.RegistryAuth{
-				ServerAddress: repo.Auth.ServerAddress,
-				Username:      repo.Auth.User,
-				Password:      repo.Auth.Password,
-			},
-		}, nil
-
-	case image.Docker != "":
-		return &runtime.DockerImage{Tag: image.Docker}, nil
-
-	default:
-		return nil, fmt.Errorf("empty image source")
 	}
 }
 
