@@ -69,7 +69,8 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 	var image string
 	var name string
 	var node string
-	var save string
+	var workspace string
+	var saveImage bool
 	cmd.Flags().StringVar(
 		&image,
 		"image",
@@ -78,7 +79,13 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 	cmd.Flags().BoolVar(&localHome, "local-home", false, "Mount the invoking user's home directory, ignoring Beaker configuration")
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the session")
 	cmd.Flags().StringVar(&node, "node", "", "Node that the session will run on. Defaults to current node.")
-	cmd.Flags().StringVar(&save, "save", "", "Workspace where the session's image will be saved after it completes")
+	cmd.Flags().StringVarP(&workspace, "workspace", "w", "", "Workspace where the session will be placed")
+	cmd.Flags().BoolVarP(
+		&saveImage,
+		"save-image",
+		"s",
+		false,
+		"Save the result image of the session. A new image will be created in the session's workspace.")
 
 	var cpus float64
 	var gpus int
@@ -120,20 +127,27 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			return err
 		}
 
+		if saveImage {
+			if workspace, err = ensureWorkspace(workspace); err != nil {
+				return err
+			}
+		}
+
 		session, err := beaker.CreateJob(ctx, api.JobSpec{
 			Session: &api.SessionJobSpec{
-				Name: name,
-				Node: node,
+				Workspace: workspace,
+				Name:      name,
+				Node:      node,
 				Requests: &api.ResourceRequest{
 					CPUCount:     cpus,
 					GPUCount:     gpus,
 					Memory:       memSize,
 					SharedMemory: sharedMemSize,
 				},
-				Command:              args,
-				Image:                *imageSource,
-				ResultImageWorkspace: save,
-				LocalHome:            localHome,
+				Command:   args,
+				Image:     *imageSource,
+				LocalHome: localHome,
+				SaveImage: saveImage,
 			},
 		})
 		if err != nil {
@@ -188,7 +202,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			return err
 		}
 
-		if save != "" && !quiet {
+		if saveImage && !quiet {
 			fmt.Println(color.YellowString(`
 WARNING: The root filesystem of this session will be saved.
 Do not write sensitive information outside of the home directory.
@@ -200,7 +214,7 @@ Do not write sensitive information outside of the home directory.
 		}
 		shouldCancel = false
 
-		if save != "" {
+		if saveImage {
 			if !quiet {
 				fmt.Printf("Waiting for image capture to complete")
 			}
