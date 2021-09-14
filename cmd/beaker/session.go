@@ -67,6 +67,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 
 	var env map[string]string
 	var secretEnv map[string]string
+	var secretMount map[string]string
 	var localHome bool
 	var image string
 	var name string
@@ -78,12 +79,17 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		"env",
 		"e",
 		map[string]string{},
-		"Environment variables")
+		"Environment variables in the format <variable>=<value>")
 	cmd.Flags().StringToStringVar(
 		&secretEnv,
 		"secret-env",
 		map[string]string{},
-		"Secret environment variables")
+		"Secret environment variables in the format <variable>=<secret name>")
+	cmd.Flags().StringToStringVar(
+		&secretMount,
+		"secret-mount",
+		map[string]string{},
+		"Secret file mounts in the format <secret name>=<file path> e.g. SECRET=/secret")
 	cmd.Flags().StringVar(
 		&image,
 		"image",
@@ -158,6 +164,16 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			})
 		}
 
+		var mounts []api.DataMount
+		for k, v := range secretMount {
+			mounts = append(mounts, api.DataMount{
+				MountPath: v,
+				Source: api.DataSource{
+					Secret: k,
+				},
+			})
+		}
+
 		session, err := beaker.CreateJob(ctx, api.JobSpec{
 			Session: &api.SessionJobSpec{
 				Workspace: workspace,
@@ -171,6 +187,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 				},
 				Command:   args,
 				EnvVars:   envVars,
+				Datasets:  mounts,
 				Image:     *imageSource,
 				LocalHome: localHome,
 				SaveImage: saveImage,
