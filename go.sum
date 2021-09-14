@@ -97,8 +97,8 @@ github.com/allenai/bytefmt v0.1.2/go.mod h1:3hhcDqHXjwM3JBHx4cX79jG5G3V8zKsjeutb
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
 github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a/go.mod h1:lB+ZfQJz7igIIfQNfa7Ml4HSf2uFQQRzpGGRXenZAgY=
 github.com/aws/aws-sdk-go v1.15.11/go.mod h1:mFuSZ37Z9YOHbQEwBWztmVzqXrEkub65tZoCYDt7FT0=
-github.com/beaker/client v0.0.0-20210823213835-37bd0af3bc90 h1:2I/V1PdgEJhAw5GYf10Dkbh2uAGZPyUU27h480unJeY=
-github.com/beaker/client v0.0.0-20210823213835-37bd0af3bc90/go.mod h1:81i7lcaUX9ndXXvzibvBaRPIVNGJYRKyjBNFtMYrsRM=
+github.com/beaker/client v0.0.0-20210913212946-64994f6928fc h1:Law3WSdS0Sms/UgqsplLOeAEUE02jNAc3ewVALwjMRU=
+github.com/beaker/client v0.0.0-20210913212946-64994f6928fc/go.mod h1:81i7lcaUX9ndXXvzibvBaRPIVNGJYRKyjBNFtMYrsRM=
 github.com/beaker/fileheap v0.0.0-20210701203425-01e1890a1025 h1:VdlhhP4Z/k9ZXynH/3S4aCg8WrW7XocGghY0URwwLag=
 github.com/beaker/fileheap v0.0.0-20210701203425-01e1890a1025/go.mod h1:BRoXCV4r7kcKQmu/ecNvUNHoAdprT2LZvv8rnCRpI/Y=
 github.com/beaker/runtime v0.0.0-20210810203340-f1025301816c h1:s2aXRu2Nr6cytw39mTXsNTlZdovBMBMSQxLgf31F3q4=

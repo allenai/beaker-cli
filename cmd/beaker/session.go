@@ -13,15 +13,8 @@ import (
 	"github.com/beaker/client/api"
 	"github.com/beaker/client/client"
 	"github.com/beaker/runtime/docker"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-)
-
-const (
-	// Label containing the session ID on session containers.
-	sessionContainerLabel = "beaker.org/session"
-
-	// Label containing a list of the GPUs assigned to the container e.g. "1,2".
-	sessionGPULabel = "beaker.org/gpus"
 )
 
 func newSessionCommand() *cobra.Command {
@@ -33,6 +26,7 @@ func newSessionCommand() *cobra.Command {
 	cmd.AddCommand(newSessionCreateCommand())
 	cmd.AddCommand(newSessionExecCommand())
 	cmd.AddCommand(newSessionGetCommand())
+	cmd.AddCommand(newSessionImagesCommand())
 	cmd.AddCommand(newSessionListCommand())
 	cmd.AddCommand(newSessionStopCommand())
 	return cmd
@@ -75,6 +69,8 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 	var image string
 	var name string
 	var node string
+	var workspace string
+	var saveImage bool
 	cmd.Flags().StringVar(
 		&image,
 		"image",
@@ -83,6 +79,13 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 	cmd.Flags().BoolVar(&localHome, "local-home", false, "Mount the invoking user's home directory, ignoring Beaker configuration")
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the session")
 	cmd.Flags().StringVar(&node, "node", "", "Node that the session will run on. Defaults to current node.")
+	cmd.Flags().StringVarP(&workspace, "workspace", "w", "", "Workspace where the session will be placed")
+	cmd.Flags().BoolVarP(
+		&saveImage,
+		"save-image",
+		"s",
+		false,
+		"Save the result image of the session. A new image will be created in the session's workspace.")
 
 	var cpus float64
 	var gpus int
@@ -124,10 +127,17 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			return err
 		}
 
+		if saveImage {
+			if workspace, err = ensureWorkspace(workspace); err != nil {
+				return err
+			}
+		}
+
 		session, err := beaker.CreateJob(ctx, api.JobSpec{
 			Session: &api.SessionJobSpec{
-				Name: name,
-				Node: node,
+				Workspace: workspace,
+				Name:      name,
+				Node:      node,
 				Requests: &api.ResourceRequest{
 					CPUCount:     cpus,
 					GPUCount:     gpus,
@@ -137,6 +147,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 				Command:   args,
 				Image:     *imageSource,
 				LocalHome: localHome,
+				SaveImage: saveImage,
 			},
 		})
 		if err != nil {
@@ -165,7 +176,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		}()
 
 		if !quiet {
-			fmt.Printf("Starting session %s", session.ID)
+			fmt.Printf("Starting session %s", color.BlueString(session.ID))
 			if req := resourceRequestString(session.Requests); req != "" {
 				fmt.Print(" with at least ", req)
 			}
@@ -191,10 +202,43 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			return err
 		}
 
+		if saveImage && !quiet {
+			fmt.Println(color.YellowString(`
+WARNING: The root filesystem of this session will be saved.
+Do not write sensitive information outside of the home directory.
+`))
+		}
+
 		if err := handleAttachErr(container.Stream(ctx, resp)); err != nil {
 			return err
 		}
 		shouldCancel = false
+
+		if saveImage {
+			if !quiet {
+				fmt.Printf("Waiting for image capture to complete")
+			}
+			job, err := awaitJobFinalization(session.ID)
+			if err != nil {
+				return err
+			}
+			if job.Status.Failed != nil {
+				return fmt.Errorf("session failed: %s", job.Status.Message)
+			}
+			images, err := beaker.Job(job.ID).GetImages(ctx)
+			if err != nil {
+				return err
+			}
+			if len(images) == 0 {
+				return fmt.Errorf("job has no result images")
+			}
+			if !quiet {
+				fmt.Printf(`Image saved to %[1]s: %[2]s/im/%[3]s
+Resume this session with: beaker session create --image beaker://%[3]s
+`, color.BlueString(images[0].ID), beaker.Address(), images[0].ID)
+			}
+		}
+
 		return nil
 	}
 	return cmd
@@ -255,6 +299,33 @@ func getImageSource(name string) (*api.ImageSource, error) {
 	}
 }
 
+func awaitJobFinalization(id string) (*api.Job, error) {
+	delay := time.NewTimer(0) // When to poll job status.
+	for attempt := 0; ; attempt++ {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+
+		case <-delay.C:
+			job, err := beaker.Job(id).Get(ctx)
+			if err != nil {
+				return nil, err
+			}
+			if job.Status.Finalized != nil {
+				if !quiet {
+					fmt.Println(" Done!")
+				}
+				return job, nil
+			}
+
+			if !quiet {
+				fmt.Print(".")
+			}
+			delay.Reset(3 * time.Second)
+		}
+	}
+}
+
 func newSessionExecCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "exec <session> [command...]",
@@ -299,6 +370,21 @@ func newSessionGetCommand() *cobra.Command {
 				jobs = append(jobs, *info)
 			}
 			return printJobs(jobs)
+		},
+	}
+}
+
+func newSessionImagesCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "images <session>",
+		Short: "List result images of a session",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			images, err := beaker.Job(args[0]).GetImages(ctx)
+			if err != nil {
+				return err
+			}
+			return printImages(images)
 		},
 	}
 }
@@ -461,13 +547,13 @@ func awaitSessionStart(session api.Job) (*api.Job, error) {
 
 			if session.Status.Finalized != nil {
 				if !quiet {
-					fmt.Println()
+					fmt.Println(" Failed!")
 				}
 				return nil, fmt.Errorf("session finalized: %s", session.Status.Message)
 			}
 			if session.Status.Started != nil {
 				if !quiet {
-					fmt.Println()
+					fmt.Println(" Done!")
 				}
 				return session, nil
 			}
