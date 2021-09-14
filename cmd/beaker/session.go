@@ -65,15 +65,31 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		Args: cobra.ArbitraryArgs,
 	}
 
-	var env map[string]string
-	var secretEnv map[string]string
-	var secretMount map[string]string
 	var localHome bool
 	var image string
 	var name string
 	var node string
 	var workspace string
 	var saveImage bool
+	cmd.Flags().StringVar(
+		&image,
+		"image",
+		"beaker://ai2/cuda11.2-ubuntu20.04",
+		"Base image to run, may be a Beaker or Docker image")
+	cmd.Flags().BoolVar(&localHome, "local-home", false, "Mount the invoking user's home directory, ignoring Beaker configuration")
+	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the session")
+	cmd.Flags().StringVar(&node, "node", "", "Node that the session will run on. Defaults to current node.")
+	cmd.Flags().StringVarP(&workspace, "workspace", "w", "", "Workspace where the session will be placed")
+	cmd.Flags().BoolVarP(
+		&saveImage,
+		"save-image",
+		"s",
+		false,
+		"Save the result image of the session. A new image will be created in the session's workspace.")
+
+	var env map[string]string
+	var secretEnv map[string]string
+	var secretMount map[string]string
 	cmd.Flags().StringToStringVarP(
 		&env,
 		"env",
@@ -90,21 +106,6 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		"secret-mount",
 		map[string]string{},
 		"Secret file mounts in the format <secret name>=<file path> e.g. SECRET=/secret")
-	cmd.Flags().StringVar(
-		&image,
-		"image",
-		"beaker://ai2/cuda11.2-ubuntu20.04",
-		"Base image to run, may be a Beaker or Docker image")
-	cmd.Flags().BoolVar(&localHome, "local-home", false, "Mount the invoking user's home directory, ignoring Beaker configuration")
-	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the session")
-	cmd.Flags().StringVar(&node, "node", "", "Node that the session will run on. Defaults to current node.")
-	cmd.Flags().StringVarP(&workspace, "workspace", "w", "", "Workspace where the session will be placed")
-	cmd.Flags().BoolVarP(
-		&saveImage,
-		"save-image",
-		"s",
-		false,
-		"Save the result image of the session. A new image will be created in the session's workspace.")
 
 	var cpus float64
 	var gpus int
