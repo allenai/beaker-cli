@@ -87,15 +87,8 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		false,
 		"Save the result image of the session. A new image will be created in the session's workspace.")
 
-	var env map[string]string
 	var secretEnv map[string]string
 	var secretMount map[string]string
-	cmd.Flags().StringToStringVarP(
-		&env,
-		"env",
-		"e",
-		map[string]string{},
-		"Environment variables in the format <variable>=<value>")
 	cmd.Flags().StringToStringVar(
 		&secretEnv,
 		"secret-env",
@@ -152,12 +145,6 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		}
 
 		var envVars []api.EnvironmentVariable
-		for k, v := range env {
-			envVars = append(envVars, api.EnvironmentVariable{
-				Name:  k,
-				Value: api.StringPtr(v),
-			})
-		}
 		for k, v := range secretEnv {
 			envVars = append(envVars, api.EnvironmentVariable{
 				Name:   k,
