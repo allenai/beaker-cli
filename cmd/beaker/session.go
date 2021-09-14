@@ -65,12 +65,25 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		Args: cobra.ArbitraryArgs,
 	}
 
+	var env map[string]string
+	var secretEnv map[string]string
 	var localHome bool
 	var image string
 	var name string
 	var node string
 	var workspace string
 	var saveImage bool
+	cmd.Flags().StringToStringVarP(
+		&env,
+		"env",
+		"e",
+		map[string]string{},
+		"Environment variables")
+	cmd.Flags().StringToStringVar(
+		&secretEnv,
+		"secret-env",
+		map[string]string{},
+		"Secret environment variables")
 	cmd.Flags().StringVar(
 		&image,
 		"image",
@@ -127,10 +140,22 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			return err
 		}
 
-		if saveImage {
-			if workspace, err = ensureWorkspace(workspace); err != nil {
-				return err
-			}
+		if workspace, err = ensureWorkspace(workspace); err != nil {
+			return err
+		}
+
+		var envVars []api.EnvironmentVariable
+		for k, v := range env {
+			envVars = append(envVars, api.EnvironmentVariable{
+				Name:  k,
+				Value: api.StringPtr(v),
+			})
+		}
+		for k, v := range secretEnv {
+			envVars = append(envVars, api.EnvironmentVariable{
+				Name:   k,
+				Secret: v,
+			})
 		}
 
 		session, err := beaker.CreateJob(ctx, api.JobSpec{
@@ -145,6 +170,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 					SharedMemory: sharedMemSize,
 				},
 				Command:   args,
+				EnvVars:   envVars,
 				Image:     *imageSource,
 				LocalHome: localHome,
 				SaveImage: saveImage,
