@@ -87,6 +87,19 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		false,
 		"Save the result image of the session. A new image will be created in the session's workspace.")
 
+	var secretEnv map[string]string
+	var secretMount map[string]string
+	cmd.Flags().StringToStringVar(
+		&secretEnv,
+		"secret-env",
+		map[string]string{},
+		"Secret environment variables in the format <variable>=<secret name>")
+	cmd.Flags().StringToStringVar(
+		&secretMount,
+		"secret-mount",
+		map[string]string{},
+		"Secret file mounts in the format <secret name>=<file path> e.g. SECRET=/secret")
+
 	var cpus float64
 	var gpus int
 	var memory string
@@ -127,10 +140,26 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			return err
 		}
 
-		if saveImage {
-			if workspace, err = ensureWorkspace(workspace); err != nil {
-				return err
-			}
+		if workspace, err = ensureWorkspace(workspace); err != nil {
+			return err
+		}
+
+		var envVars []api.EnvironmentVariable
+		for k, v := range secretEnv {
+			envVars = append(envVars, api.EnvironmentVariable{
+				Name:   k,
+				Secret: v,
+			})
+		}
+
+		var mounts []api.DataMount
+		for k, v := range secretMount {
+			mounts = append(mounts, api.DataMount{
+				MountPath: v,
+				Source: api.DataSource{
+					Secret: k,
+				},
+			})
 		}
 
 		session, err := beaker.CreateJob(ctx, api.JobSpec{
@@ -145,6 +174,8 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 					SharedMemory: sharedMemSize,
 				},
 				Command:   args,
+				EnvVars:   envVars,
+				Datasets:  mounts,
 				Image:     *imageSource,
 				LocalHome: localHome,
 				SaveImage: saveImage,

@@ -119,6 +119,9 @@ func ensureWorkspace(workspaceRef string) (string, error) {
 2. Configure a default workspace with 'beaker config set default_workspace <workspace>'`)
 		}
 		workspaceRef = beakerConfig.DefaultWorkspace
+		if !quiet {
+			fmt.Printf("Defaulting to workspace %s\n", color.BlueString(workspaceRef))
+		}
 	}
 
 	// Create the workspace if it doesn't exist.
