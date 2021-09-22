@@ -49,7 +49,7 @@ func newClusterCreateCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&protected, "protected", false, "Only allow admins to make changes")
 	cmd.Flags().Float64Var(&cpuCount, "cpus", 0, "Minimum CPU cores per node, e.g. 7.5")
 	cmd.Flags().IntVar(&gpuCount, "gpus", 0, "Number of GPUs per node: 1, 2, 4, or 8")
-	cmd.Flags().StringVar(&gpuType, "gpu-type", "", "Type of GPU: k80, p100, v100, or t4")
+	cmd.Flags().StringVar(&gpuType, "gpu-type", "", "Type of GPU: a100, k80, p100, p4, t4, v100")
 	cmd.Flags().StringVar(&memory, "memory", "", "Minimum memory per node, e.g. 6.5GiB")
 
 	// Deprecated flags are replaced by the above.
