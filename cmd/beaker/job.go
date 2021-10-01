@@ -16,11 +16,31 @@ func newJobCommand() *cobra.Command {
 		Short:   "Manage jobs",
 		Aliases: []string{"execution"},
 	}
+	cmd.AddCommand(newJobFinalizeCommand())
 	cmd.AddCommand(newJobGetCommand())
 	cmd.AddCommand(newJobListCommand())
 	cmd.AddCommand(newJobLogsCommand())
 	cmd.AddCommand(newJobResultsCommand())
 	cmd.AddCommand(newJobStopCommand())
+	return cmd
+}
+
+func newJobFinalizeCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "finalize",
+		Short: "Finalize a job",
+		Args:  cobra.ExactArgs(1),
+	}
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		job, err := beaker.Job(args[0]).Patch(ctx, api.JobPatch{
+			Status: &api.JobStatusUpdate{Finalized: true},
+		})
+		if err != nil {
+			return err
+		}
+		return printJobs([]api.Job{*job})
+	}
 	return cmd
 }
 
