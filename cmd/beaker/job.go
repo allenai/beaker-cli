@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"github.com/beaker/client/api"
 	"github.com/beaker/client/client"
@@ -16,6 +17,7 @@ func newJobCommand() *cobra.Command {
 		Short:   "Manage jobs",
 		Aliases: []string{"execution"},
 	}
+	cmd.AddCommand(newJobAwaitCommand())
 	cmd.AddCommand(newJobFinalizeCommand())
 	cmd.AddCommand(newJobGetCommand())
 	cmd.AddCommand(newJobListCommand())
@@ -25,9 +27,92 @@ func newJobCommand() *cobra.Command {
 	return cmd
 }
 
+func newJobAwaitCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "await <job> <status>",
+		Short: "Wait until a job reaches a state",
+		Args:  cobra.ExactArgs(2),
+	}
+
+	var interval time.Duration
+	var timeout time.Duration
+	cmd.Flags().DurationVar(&interval, "interval", 5*time.Second, "Interval to poll status.")
+	cmd.Flags().DurationVar(&timeout, "timeout", 5*time.Minute, "Maximum time to poll for status.")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		jobID := args[0]
+		status := args[1]
+
+		delay := time.NewTimer(0) // No delay on first attempt.
+		done := time.NewTimer(timeout)
+		for {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+
+			case <-done.C:
+				return fmt.Errorf("job did not reach status %q before timeout %q", status, timeout)
+
+			case <-delay.C:
+				delay.Reset(interval)
+
+				job, err := beaker.Job(jobID).Get(ctx)
+				if err != nil {
+					return err
+				}
+
+				done, err := isAtStatus(job.Status, status)
+				if err != nil {
+					return err
+				}
+				if done {
+					return printJobs([]api.Job{*job})
+				}
+			}
+		}
+	}
+	return cmd
+}
+
+func isAtStatus(status api.JobStatus, target string) (bool, error) {
+	switch target {
+	case "scheduled":
+		if status.Scheduled != nil {
+			return true, nil
+		}
+	case "started":
+		if status.Started != nil {
+			return true, nil
+		}
+	case "exited":
+		if status.Exited != nil {
+			return true, nil
+		}
+	case "failed":
+		if status.Failed != nil {
+			return true, nil
+		}
+	case "finalized":
+		if status.Finalized != nil {
+			return true, nil
+		}
+	case "canceled":
+		if status.Canceled != nil {
+			return true, nil
+		}
+	case "idle":
+		if status.IdleSince != nil {
+			return true, nil
+		}
+	default:
+		return false, fmt.Errorf("invalid status: %s", status)
+	}
+	return true, nil
+}
+
 func newJobFinalizeCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "finalize",
+		Use:   "finalize <job>",
 		Short: "Finalize a job",
 		Args:  cobra.ExactArgs(1),
 	}
