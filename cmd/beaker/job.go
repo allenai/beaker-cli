@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/beaker/client/api"
@@ -107,7 +109,7 @@ func isAtStatus(status api.JobStatus, target string) (bool, error) {
 	default:
 		return false, fmt.Errorf("invalid status: %s", target)
 	}
-	return true, nil
+	return false, nil
 }
 
 func newJobFinalizeCommand() *cobra.Command {
@@ -198,14 +200,40 @@ func newJobListCommand() *cobra.Command {
 }
 
 func newJobLogsCommand() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "logs <job>",
 		Short: "Print job logs",
 		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return printJobLogs(args[0])
-		},
 	}
+
+	var noTimestamps bool
+	cmd.Flags().BoolVar(&noTimestamps, "no-timestamps", false, "Don't include timestamps in logs.")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		logs, err := beaker.Job(args[0]).GetLogs(ctx)
+		if err != nil {
+			return err
+		}
+
+		if !noTimestamps {
+			_, err = io.Copy(os.Stdout, logs)
+			return err
+		}
+
+		scanner := bufio.NewScanner(logs)
+		for scanner.Scan() {
+			line := scanner.Text()
+			i := strings.Index(line, " ")
+			if i < 0 {
+				return fmt.Errorf("timestamp not found: %q", line)
+			}
+			if _, err := fmt.Println(line[i+1:]); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	return cmd
 }
 
 func newJobResultsCommand() *cobra.Command {
@@ -272,14 +300,4 @@ func listJobs(opts client.ListJobOpts) ([]api.Job, error) {
 		opts.Cursor = page.Next
 	}
 	return jobs, nil
-}
-
-func printJobLogs(jobID string) error {
-	logs, err := beaker.Job(jobID).GetLogs(ctx)
-	if err != nil {
-		return err
-	}
-
-	_, err = io.Copy(os.Stdout, logs)
-	return err
 }
