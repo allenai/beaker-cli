@@ -7,7 +7,9 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/beaker/client/api"
 	"github.com/beaker/client/client"
@@ -20,6 +22,7 @@ func newExperimentCommand() *cobra.Command {
 		Use:   "experiment <command>",
 		Short: "Manage experiments",
 	}
+	cmd.AddCommand(newExperimentAwaitCommand())
 	cmd.AddCommand(newExperimentCreateCommand())
 	cmd.AddCommand(newExperimentDeleteCommand())
 	cmd.AddCommand(newExperimentGroupsCommand())
@@ -29,6 +32,88 @@ func newExperimentCommand() *cobra.Command {
 	cmd.AddCommand(newExperimentSpecCommand())
 	cmd.AddCommand(newExperimentStopCommand())
 	cmd.AddCommand(newExperimentTasksCommand())
+	return cmd
+}
+
+func newExperimentAwaitCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "await <experiment> <task> <status>",
+		Short: "Wait until a task in an experiment reach the given status",
+		Args:  cobra.ExactArgs(3),
+	}
+
+	var index bool
+	var interval time.Duration
+	var timeout time.Duration
+	cmd.Flags().BoolVar(&index, "index", false, "Interpret task reference as an index.")
+	cmd.Flags().DurationVar(&interval, "interval", 5*time.Second, "Interval to poll status.")
+	cmd.Flags().DurationVar(&timeout, "timeout", 5*time.Minute, "Maximum time to poll for status.")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		experimentID := args[0]
+		taskRef := args[1]
+		status := args[2]
+
+		var taskIndex int
+		if index {
+			var err error
+			taskIndex, err = strconv.Atoi(taskRef)
+			if err != nil {
+				return fmt.Errorf("invalid task index %s: %w", taskRef, err)
+			}
+		}
+
+		var taskID string
+		tasks, err := beaker.Experiment(experimentID).Tasks(ctx)
+		if err != nil {
+			return err
+		}
+		for i, task := range tasks {
+			if task.Name == taskRef || task.ID == taskRef || (index && i == taskIndex) {
+				taskID = task.ID
+				break
+			}
+		}
+		if taskID == "" {
+			return fmt.Errorf("task not found: %s", taskRef)
+		}
+
+		delay := time.NewTimer(0) // No delay on first attempt.
+		done := time.NewTimer(timeout)
+		for {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+
+			case <-done.C:
+				return fmt.Errorf("task %s did not reach status %s before timeout %s", taskID, status, timeout)
+
+			case <-delay.C:
+				delay.Reset(interval)
+
+				task, err := beaker.Task(taskID).Get(ctx)
+				if err != nil {
+					return err
+				}
+				if len(task.Executions) == 0 {
+					continue // Controller has not created any executions yet.
+				}
+				// Use status of last execution.
+				execution := task.Executions[len(task.Executions)-1]
+				done, err := isAtStatus(execution.State, status)
+				if err != nil {
+					return err
+				}
+				if done {
+					job, err := beaker.Job(execution.ID).Get(ctx)
+					if err != nil {
+						return err
+					}
+					return printJobs([]api.Job{*job})
+				}
+			}
+		}
+	}
 	return cmd
 }
 

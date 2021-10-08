@@ -51,7 +51,7 @@ func newJobAwaitCommand() *cobra.Command {
 				return ctx.Err()
 
 			case <-done.C:
-				return fmt.Errorf("job did not reach status %q before timeout %q", status, timeout)
+				return fmt.Errorf("job did not reach status %s before timeout %s", status, timeout)
 
 			case <-delay.C:
 				delay.Reset(interval)
@@ -105,7 +105,7 @@ func isAtStatus(status api.JobStatus, target string) (bool, error) {
 			return true, nil
 		}
 	default:
-		return false, fmt.Errorf("invalid status: %s", status)
+		return false, fmt.Errorf("invalid status: %s", target)
 	}
 	return true, nil
 }
