@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -10,6 +11,7 @@ import (
 	"path"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -40,12 +42,15 @@ var (
 )
 
 var configTemplate = template.Must(template.New("config").Parse(`
+logLevel: debug
 storagePath: {{.StoragePath}}
 beaker:
+  address: {{.Address}}
   tokenPath: {{.TokenPath}}
   cluster: {{.Cluster}}`))
 
 type configOpts struct {
+	Address     string
 	StoragePath string
 	TokenPath   string
 	Cluster     string
@@ -95,6 +100,20 @@ Requires access to /etc, /var, and /usr/bin. Also requires access to systemd.`,
 		Args: cobra.ExactArgs(1),
 	}
 
+	var address string
+	cmd.Flags().StringVar(
+		&address,
+		"address",
+		"https://beaker.org",
+		"Address of the Beaker API")
+
+	var version string
+	cmd.Flags().StringVar(
+		&version,
+		"version",
+		"",
+		"Version of the Beaker executor. Defaults to the latest version if empty.")
+
 	var storageDir string
 	cmd.Flags().StringVar(
 		&storageDir,
@@ -131,6 +150,7 @@ Run "upgrade" to install the latest version or run "uninstall" before installing
 		}
 		defer configFile.Close()
 		if err := configTemplate.Execute(configFile, configOpts{
+			Address:     address,
 			StoragePath: storageDir,
 			TokenPath:   executorTokenPath,
 			Cluster:     cluster,
@@ -150,7 +170,13 @@ Run "upgrade" to install the latest version or run "uninstall" before installing
 			return err
 		}
 
-		if err := downloadExecutor(); err != nil {
+		if version == "" {
+			version, err = getLatestVersion()
+			if err != nil {
+				return err
+			}
+		}
+		if err := downloadExecutor(version); err != nil {
 			return err
 		}
 
@@ -159,11 +185,55 @@ Run "upgrade" to install the latest version or run "uninstall" before installing
 		}
 
 		if !quiet {
-			fmt.Println("Executor installed and started")
+			fmt.Println("Executor installed. Waiting for initialization to complete...")
+		}
+		ready := func() (bool, error) {
+			out, err := run("sudo", "systemctl", "is-active", executorService)
+			if err != nil {
+				return false, fmt.Errorf("executor status is not active: %s", out)
+			}
+
+			// Check if the executor has registered a node.
+			_, err = os.Stat(path.Join(storageDir, "node"))
+			if os.IsNotExist(err) {
+				return false, nil
+			}
+			if err != nil {
+				return false, fmt.Errorf("stat node file: %w", err)
+			}
+			return true, nil
+		}
+		ctx, cancel := context.WithDeadline(ctx, time.Now().Add(time.Minute))
+		defer cancel()
+		if err := await(ctx, ready, time.Second); err != nil {
+			return fmt.Errorf("error initializing executor: %w", err)
+		}
+		if !quiet {
+			fmt.Println("Executor is ready to use.")
 		}
 		return nil
 	}
 	return cmd
+}
+
+func await(ctx context.Context, f func() (bool, error), interval time.Duration) error {
+	delay := time.NewTimer(0) // No delay on first attempt.
+	for {
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("context done")
+
+		case <-delay.C:
+			ok, err := f()
+			if err != nil {
+				return err
+			}
+			if ok {
+				return nil
+			}
+			delay.Reset(interval)
+		}
+	}
 }
 
 func newExecutorRestartCommand() *cobra.Command {
@@ -301,39 +371,50 @@ Are you sure you want to uninstall the executor?`
 }
 
 func newExecutorUpgradeCommand() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "upgrade",
 		Short: "Upgrade the executor binary to the latest version",
 		Long: `Upgrade the executor binary to the latest version.
 To update executor configuration, run uninstall and then install.`,
 		Args: cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := stopExecutor(); err != nil {
-				return err
-			}
-
-			if err := downloadExecutor(); err != nil {
-				return err
-			}
-
-			if err := startExecutor(); err != nil {
-				return err
-			}
-
-			if !quiet {
-				fmt.Println("Executor upgraded")
-			}
-			return nil
-		},
 	}
+
+	var version string
+	cmd.Flags().StringVar(
+		&version,
+		"version",
+		"",
+		"Version of the Beaker executor. Defaults to the latest version if empty.")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		if err := stopExecutor(); err != nil {
+			return err
+		}
+
+		if version == "" {
+			var err error
+			version, err = getLatestVersion()
+			if err != nil {
+				return err
+			}
+		}
+		if err := downloadExecutor(version); err != nil {
+			return err
+		}
+
+		if err := startExecutor(); err != nil {
+			return err
+		}
+
+		if !quiet {
+			fmt.Println("Executor upgraded")
+		}
+		return nil
+	}
+	return cmd
 }
 
-func downloadExecutor() error {
-	version, err := getLatestVersion()
-	if err != nil {
-		return err
-	}
-
+func downloadExecutor(version string) error {
 	resp, err := http.Get(fmt.Sprintf(executorURL, version))
 	if err != nil {
 		return err
@@ -369,41 +450,46 @@ func getLatestVersion() (string, error) {
 }
 
 func startExecutor() error {
-	if err := run("systemctl", "daemon-reload"); err != nil {
+	if _, err := run("systemctl", "daemon-reload"); err != nil {
 		return err
 	}
 
-	if err := run("systemctl", "enable", executorService); err != nil {
+	if _, err := run("systemctl", "enable", executorService); err != nil {
 		return err
 	}
 
-	return run("systemctl", "start", executorService)
+	if _, err := run("systemctl", "start", executorService); err != nil {
+		return err
+	}
+	return nil
 }
 
 func stopExecutor() error {
-	if err := run("systemctl", "disable", executorService); err != nil {
+	if _, err := run("systemctl", "disable", executorService); err != nil {
 		return err
 	}
 
-	return run("systemctl", "stop", executorService)
+	_, err := run("systemctl", "stop", executorService)
+	return err
 }
 
 // The executor cleanup command removes running containers.
 func cleanupExecutor() error {
 	cmd := exec.CommandContext(ctx, executorPath, "cleanup")
 	cmd.Env = []string{strings.Join([]string{"CONFIG_PATH", executorConfigPath}, "=")}
-	return runCmd(cmd)
+	_, err := runCmd(cmd)
+	return err
 }
 
-func runCmd(cmd *exec.Cmd) error {
+func runCmd(cmd *exec.Cmd) ([]byte, error) {
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Printf("Output from %q:\n%s\n", strings.Join(cmd.Args, " "), out)
-		return err
+		fmt.Printf("Error running from %q:\n%s\n", strings.Join(cmd.Args, " "), out)
+		return nil, err
 	}
-	return nil
+	return out, nil
 }
 
-func run(path string, args ...string) error {
+func run(path string, args ...string) ([]byte, error) {
 	return runCmd(exec.CommandContext(ctx, path, args...))
 }
