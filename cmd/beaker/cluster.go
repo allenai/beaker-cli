@@ -95,25 +95,33 @@ func newClusterCreateCommand() *cobra.Command {
 			return err
 		}
 
-		fmt.Printf("Cluster %s created. See details at %s/cl/%s\n",
-			color.BlueString(cluster.FullName), beaker.Address(), cluster.FullName)
+		if !quiet {
+			fmt.Printf("Cluster %s created. See details at %s/cl/%s\n",
+				color.BlueString(cluster.FullName), beaker.Address(), cluster.FullName)
+		}
 
 		if !cluster.Autoscale {
 			return nil
 		}
 
-		fmt.Printf("Preparing cluster...")
+		if !quiet {
+			fmt.Printf("Preparing cluster...")
+		}
 		ticker := time.NewTicker(3 * time.Second)
 		for {
 			select {
 			case <-ctx.Done():
-				fmt.Println(" canceled")
+				if !quiet {
+					fmt.Println(" canceled")
+				}
 				os.Exit(1)
 
 			case <-ticker.C:
 				cluster, err = beaker.Cluster(cluster.ID).Get(ctx)
 				if err != nil {
-					fmt.Println(" failed")
+					if !quiet {
+						fmt.Println(" failed")
+					}
 					return err
 				}
 
@@ -122,7 +130,10 @@ func newClusterCreateCommand() *cobra.Command {
 					continue
 
 				case api.ClusterActive:
-					fmt.Println("Success!")
+					if quiet {
+						fmt.Println(cluster.FullName)
+						return nil
+					}
 
 					gpuStr := "none"
 					if gpuCount := cluster.NodeShape.GPUCount; gpuCount != 0 {
@@ -141,11 +152,15 @@ func newClusterCreateCommand() *cobra.Command {
 					return nil
 
 				case api.ClusterFailed:
-					fmt.Println(" failed")
+					if !quiet {
+						fmt.Println(" failed")
+					}
 					return errors.New(cluster.StatusMessage)
 
 				default:
-					fmt.Println(" failed")
+					if !quiet {
+						fmt.Println(" failed")
+					}
 					return fmt.Errorf("unrecognized cluster state: %s", cluster.Status)
 				}
 			}
@@ -164,7 +179,9 @@ func newClusterDeleteCommand() *cobra.Command {
 				return err
 			}
 
-			fmt.Printf("Deleted %s\n", color.BlueString(args[0]))
+			if !quiet {
+				fmt.Printf("Deleted %s\n", color.BlueString(args[0]))
+			}
 			return nil
 		},
 	}

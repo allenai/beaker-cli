@@ -225,12 +225,12 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		container := rt.Container(session.ContainerName()).(*docker.Container)
 		resp, err := container.Attach(ctx)
 		if err != nil {
-			return err
+			return fmt.Errorf("attach: %w", err)
 		}
 		defer resp.Close()
 
 		if err := container.Start(ctx); err != nil {
-			return err
+			return fmt.Errorf("start: %w", err)
 		}
 
 		if saveImage && !quiet {
@@ -241,7 +241,7 @@ Do not write sensitive information outside of the home directory.
 		}
 
 		if err := handleAttachErr(container.Stream(ctx, resp)); err != nil {
-			return err
+			return fmt.Errorf("stream: %w", err)
 		}
 		shouldCancel = false
 

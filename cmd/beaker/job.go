@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/beaker/client/api"
 	"github.com/beaker/client/client"
@@ -16,6 +19,7 @@ func newJobCommand() *cobra.Command {
 		Short:   "Manage jobs",
 		Aliases: []string{"execution"},
 	}
+	cmd.AddCommand(newJobAwaitCommand())
 	cmd.AddCommand(newJobFinalizeCommand())
 	cmd.AddCommand(newJobGetCommand())
 	cmd.AddCommand(newJobListCommand())
@@ -25,9 +29,92 @@ func newJobCommand() *cobra.Command {
 	return cmd
 }
 
+func newJobAwaitCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "await <job> <status>",
+		Short: "Wait until a job reaches a state",
+		Args:  cobra.ExactArgs(2),
+	}
+
+	var interval time.Duration
+	var timeout time.Duration
+	cmd.Flags().DurationVar(&interval, "interval", 5*time.Second, "Interval to poll status.")
+	cmd.Flags().DurationVar(&timeout, "timeout", 5*time.Minute, "Maximum time to poll for status.")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		jobID := args[0]
+		status := args[1]
+
+		delay := time.NewTimer(0) // No delay on first attempt.
+		done := time.NewTimer(timeout)
+		for {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+
+			case <-done.C:
+				return fmt.Errorf("job did not reach status %s before timeout %s", status, timeout)
+
+			case <-delay.C:
+				delay.Reset(interval)
+
+				job, err := beaker.Job(jobID).Get(ctx)
+				if err != nil {
+					return err
+				}
+
+				done, err := isAtStatus(job.Status, status)
+				if err != nil {
+					return err
+				}
+				if done {
+					return printJobs([]api.Job{*job})
+				}
+			}
+		}
+	}
+	return cmd
+}
+
+func isAtStatus(status api.JobStatus, target string) (bool, error) {
+	switch target {
+	case "scheduled":
+		if status.Scheduled != nil {
+			return true, nil
+		}
+	case "started":
+		if status.Started != nil {
+			return true, nil
+		}
+	case "exited":
+		if status.Exited != nil {
+			return true, nil
+		}
+	case "failed":
+		if status.Failed != nil {
+			return true, nil
+		}
+	case "finalized":
+		if status.Finalized != nil {
+			return true, nil
+		}
+	case "canceled":
+		if status.Canceled != nil {
+			return true, nil
+		}
+	case "idle":
+		if status.IdleSince != nil {
+			return true, nil
+		}
+	default:
+		return false, fmt.Errorf("invalid status: %s", target)
+	}
+	return false, nil
+}
+
 func newJobFinalizeCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "finalize",
+		Use:   "finalize <job>",
 		Short: "Finalize a job",
 		Args:  cobra.ExactArgs(1),
 	}
@@ -113,14 +200,40 @@ func newJobListCommand() *cobra.Command {
 }
 
 func newJobLogsCommand() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "logs <job>",
 		Short: "Print job logs",
 		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return printJobLogs(args[0])
-		},
 	}
+
+	var noTimestamps bool
+	cmd.Flags().BoolVar(&noTimestamps, "no-timestamps", false, "Don't include timestamps in logs.")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		logs, err := beaker.Job(args[0]).GetLogs(ctx)
+		if err != nil {
+			return err
+		}
+
+		if !noTimestamps {
+			_, err = io.Copy(os.Stdout, logs)
+			return err
+		}
+
+		scanner := bufio.NewScanner(logs)
+		for scanner.Scan() {
+			line := scanner.Text()
+			i := strings.Index(line, " ")
+			if i < 0 {
+				return fmt.Errorf("timestamp not found: %q", line)
+			}
+			if _, err := fmt.Println(line[i+1:]); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	return cmd
 }
 
 func newJobResultsCommand() *cobra.Command {
@@ -187,14 +300,4 @@ func listJobs(opts client.ListJobOpts) ([]api.Job, error) {
 		opts.Cursor = page.Next
 	}
 	return jobs, nil
-}
-
-func printJobLogs(jobID string) error {
-	logs, err := beaker.Job(jobID).GetLogs(ctx)
-	if err != nil {
-		return err
-	}
-
-	_, err = io.Copy(os.Stdout, logs)
-	return err
 }
