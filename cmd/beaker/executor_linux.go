@@ -112,7 +112,7 @@ Requires access to /etc, /var, and /usr/bin. Also requires access to systemd.`,
 		&version,
 		"version",
 		"",
-		"Version of the Beaker executor. Defaults to the latest version if empty.")
+		"Version of the Beaker executor. Commit SHA from allenai/beaker-serivce. Defaults to the latest version if empty.")
 
 	var storageDir string
 	cmd.Flags().StringVar(
