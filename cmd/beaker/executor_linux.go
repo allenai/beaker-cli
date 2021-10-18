@@ -42,7 +42,7 @@ var (
 )
 
 var configTemplate = template.Must(template.New("config").Parse(`
-logLevel: debug
+logLevel: {{.LogLevel}}
 storagePath: {{.StoragePath}}
 beaker:
   address: {{.Address}}
@@ -50,6 +50,7 @@ beaker:
   cluster: {{.Cluster}}`))
 
 type configOpts struct {
+	LogLevel    string
 	Address     string
 	StoragePath string
 	TokenPath   string
@@ -107,6 +108,13 @@ Requires access to /etc, /var, and /usr/bin. Also requires access to systemd.`,
 		"https://beaker.org",
 		"Address of the Beaker API")
 
+	var logLevel string
+	cmd.Flags().StringVar(
+		&logLevel,
+		"log-level",
+		"info",
+		"Log level")
+
 	var version string
 	cmd.Flags().StringVar(
 		&version,
@@ -150,6 +158,7 @@ Run "upgrade" to install the latest version or run "uninstall" before installing
 		}
 		defer configFile.Close()
 		if err := configTemplate.Execute(configFile, configOpts{
+			LogLevel:    logLevel,
 			Address:     address,
 			StoragePath: storageDir,
 			TokenPath:   executorTokenPath,
@@ -218,6 +227,7 @@ Run "upgrade" to install the latest version or run "uninstall" before installing
 
 func await(ctx context.Context, f func() (bool, error), interval time.Duration) error {
 	delay := time.NewTimer(0) // No delay on first attempt.
+	defer delay.Stop()
 	for {
 		select {
 		case <-ctx.Done():
