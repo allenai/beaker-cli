@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"html/template"
 	"io"
@@ -78,41 +79,30 @@ func newExperimentAwaitCommand() *cobra.Command {
 			return fmt.Errorf("task not found: %s", taskRef)
 		}
 
-		delay := time.NewTimer(0) // No delay on first attempt.
-		done := time.NewTimer(timeout)
-		for {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-
-			case <-done.C:
-				return fmt.Errorf("task %s did not reach status %s before timeout %s", taskID, status, timeout)
-
-			case <-delay.C:
-				delay.Reset(interval)
-
-				task, err := beaker.Task(taskID).Get(ctx)
-				if err != nil {
-					return err
-				}
-				if len(task.Executions) == 0 {
-					continue // Controller has not created any executions yet.
-				}
-				// Use status of last execution.
-				execution := task.Executions[len(task.Executions)-1]
-				done, err := isAtStatus(execution.State, status)
-				if err != nil {
-					return err
-				}
-				if done {
-					job, err := beaker.Job(execution.ID).Get(ctx)
-					if err != nil {
-						return err
-					}
-					return printJobs([]api.Job{*job})
-				}
+		var execution api.Execution
+		experimentAtStatus := func(ctx context.Context) (bool, error) {
+			task, err := beaker.Task(taskID).Get(ctx)
+			if err != nil {
+				return false, err
 			}
+			if len(task.Executions) == 0 {
+				return false, nil // Controller has not created any executions yet.
+			}
+			// Use status of last execution.
+			execution = task.Executions[len(task.Executions)-1]
+			return isAtStatus(execution.State, status)
 		}
+		ctx, cancel := context.WithDeadline(ctx, time.Now().Add(timeout))
+		defer cancel()
+		message := "Waiting for experiment to reach status " + status
+		if err := await(ctx, message, experimentAtStatus, interval); err != nil {
+			return err
+		}
+		job, err := beaker.Job(execution.ID).Get(ctx)
+		if err != nil {
+			return err
+		}
+		return printJobs([]api.Job{*job})
 	}
 	return cmd
 }

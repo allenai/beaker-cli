@@ -34,7 +34,7 @@ func printTableRow(cells ...interface{}) error {
 		} else {
 			formatted = fmt.Sprintf("%v", cell)
 		}
-		if formatted == "" {
+		if formatted == "" || formatted == "<nil>" {
 			formatted = "N/A"
 		}
 		cellStrings = append(cellStrings, formatted)
@@ -50,36 +50,52 @@ func printClusters(clusters []api.Cluster) error {
 	default:
 		if err := printTableRow(
 			"NAME",
-			"GPU TYPE",
-			"GPU COUNT",
-			"CPU COUNT",
-			"MEMORY",
-			"AUTOSCALE",
+			"TYPE",
+			"CAPACITY",
+			"NODE SHAPE",
+			"NODE COST",
 		); err != nil {
 			return err
 		}
 		for _, cluster := range clusters {
 			var (
-				gpuType  string
-				gpuCount int
-				cpuCount float64
-				memory   string
+				clusterType string
+				capacity    string
+				nodeShape   string
+				nodeCost    string
 			)
-			if cluster.NodeShape != nil {
-				gpuType = cluster.NodeShape.GPUType
-				gpuCount = cluster.NodeShape.GPUCount
-				cpuCount = cluster.NodeShape.CPUCount
-				if cluster.NodeShape.Memory != nil {
-					memory = cluster.NodeShape.Memory.String()
+			if cluster.Autoscale {
+				clusterType = "cloud"
+				capacity = strconv.Itoa(cluster.Capacity)
+				if cluster.NodeShape != nil {
+					var parts []string
+					if cluster.NodeShape.CPUCount > 0 {
+						parts = append(parts, fmt.Sprintf("%v CPUs", cluster.NodeShape.CPUCount))
+					}
+					if cluster.NodeShape.GPUCount > 0 {
+						parts = append(parts, fmt.Sprintf(
+							"%d %s GPUs",
+							cluster.NodeShape.GPUCount,
+							cluster.NodeShape.GPUType))
+					}
+					if cluster.NodeShape.Memory != nil {
+						parts = append(parts, fmt.Sprintf("%v Memory", cluster.NodeShape.Memory))
+					}
+					nodeShape = strings.Join(parts, ", ")
 				}
+				if cluster.NodeCost != nil {
+					nodeCost = fmt.Sprintf("$%s/hr", cluster.NodeCost.Round(2))
+				}
+			} else {
+				clusterType = "on-premise"
+				nodeShape = fmt.Sprintf("Variable; see 'beaker cluster nodes %s'", cluster.FullName)
 			}
 			if err := printTableRow(
 				cluster.FullName,
-				gpuType,
-				gpuCount,
-				cpuCount,
-				memory,
-				cluster.Autoscale,
+				clusterType,
+				capacity,
+				nodeShape,
+				nodeCost,
 			); err != nil {
 				return err
 			}
