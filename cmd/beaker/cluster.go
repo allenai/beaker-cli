@@ -1,12 +1,9 @@
 package main
 
 import (
-	"errors"
+	"context"
 	"fmt"
-	"os"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/allenai/bytefmt"
 	"github.com/beaker/client/api"
@@ -31,22 +28,30 @@ func newClusterCommand() *cobra.Command {
 
 func newClusterCreateCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create <name>",
+		Use:   "create <type>",
 		Short: "Create a new cluster",
+	}
+	cmd.AddCommand(newClusterCreateCloudCommand())
+	cmd.AddCommand(newClusterCreateOnPremCommand())
+	return cmd
+}
+
+func newClusterCreateCloudCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "cloud <name>",
+		Short: "Create a new cloud cluster with autoscaling",
 		Args:  cobra.ExactArgs(1),
 	}
 
 	var maxSize int
 	var preemptible bool
-	var protected bool
 	var cpuCount float64
 	var gpuCount int
 	var gpuType string
 	var memory string
 
-	cmd.Flags().IntVar(&maxSize, "max-size", 0, "Maximum number of nodes")
+	cmd.Flags().IntVar(&maxSize, "max-size", 1, "Maximum number of nodes")
 	cmd.Flags().BoolVar(&preemptible, "preemptible", false, "Enable cheaper but more volatile nodes")
-	cmd.Flags().BoolVar(&protected, "protected", false, "Only allow admins to make changes")
 	cmd.Flags().Float64Var(&cpuCount, "cpus", 0, "Minimum CPU cores per node, e.g. 7.5")
 	cmd.Flags().IntVar(&gpuCount, "gpus", 0, "Number of GPUs per node: 1, 2, 4, or 8")
 	cmd.Flags().StringVar(&gpuType, "gpu-type", "", "Type of GPU: a100, k80, p100, p4, t4, or v100")
@@ -63,6 +68,11 @@ func newClusterCreateCommand() *cobra.Command {
 		if len(parts) != 2 {
 			return fmt.Errorf("cluster names must be fully scoped in the form %s", color.GreenString("account/cluster"))
 		}
+		account, clusterName := parts[0], parts[1]
+
+		if cpuCount == 0 && gpuCount == 0 && gpuType == "" && memory == "" {
+			return fmt.Errorf("cloud clusters must specify at least 1 resource")
+		}
 
 		var memorySize *bytefmt.Size
 		if memory != "" {
@@ -71,25 +81,17 @@ func newClusterCreateCommand() *cobra.Command {
 				return err
 			}
 		}
-
-		account, clusterName := parts[0], parts[1]
-		var nodeSpec *api.NodeResources
-		if cpuCount != 0 || gpuCount != 0 || gpuType != "" || memory != "" {
-			nodeSpec = &api.NodeResources{
-				CPUCount: cpuCount,
-				GPUCount: gpuCount,
-				GPUType:  gpuType,
-				Memory:   memorySize,
-			}
-		}
 		spec := api.ClusterSpec{
 			Name:        clusterName,
 			Capacity:    maxSize,
 			Preemptible: preemptible,
-			Protected:   protected,
-			Spec:        nodeSpec,
+			Spec: &api.NodeResources{
+				CPUCount: cpuCount,
+				GPUCount: gpuCount,
+				GPUType:  gpuType,
+				Memory:   memorySize,
+			},
 		}
-
 		cluster, err := beaker.CreateCluster(ctx, account, spec)
 		if err != nil {
 			return err
@@ -100,73 +102,53 @@ func newClusterCreateCommand() *cobra.Command {
 				color.BlueString(cluster.FullName), beaker.Address(), cluster.FullName)
 		}
 
-		if !cluster.Autoscale {
-			return nil
-		}
-
-		if !quiet {
-			fmt.Printf("Preparing cluster...")
-		}
-		ticker := time.NewTicker(3 * time.Second)
-		for {
-			select {
-			case <-ctx.Done():
-				if !quiet {
-					fmt.Println(" canceled")
-				}
-				os.Exit(1)
-
-			case <-ticker.C:
-				cluster, err = beaker.Cluster(cluster.ID).Get(ctx)
-				if err != nil {
-					if !quiet {
-						fmt.Println(" failed")
-					}
-					return err
-				}
-
-				switch cluster.Status {
-				case api.ClusterPending:
-					continue
-
-				case api.ClusterActive:
-					if quiet {
-						fmt.Println(cluster.FullName)
-						return nil
-					}
-
-					gpuStr := "none"
-					if gpuCount := cluster.NodeShape.GPUCount; gpuCount != 0 {
-						gpuStr = strconv.FormatInt(int64(gpuCount), 10)
-						if gpuType := cluster.NodeShape.GPUType; gpuType != "" {
-							gpuStr += " " + gpuType
-						}
-					}
-
-					fmt.Print("\nEstimated cost per node: ")
-					color.Green("$%v/hour", cluster.NodeCost.Round(2))
-					fmt.Println("Nodes may exceed requested parameters to optimize cost:")
-					fmt.Println("    CPUs:      ", cluster.NodeShape.CPUCount)
-					fmt.Println("    CPU Memory:", cluster.NodeShape.Memory)
-					fmt.Println("    GPUs:      ", gpuStr)
-					return nil
-
-				case api.ClusterFailed:
-					if !quiet {
-						fmt.Println(" failed")
-					}
-					return errors.New(cluster.StatusMessage)
-
-				default:
-					if !quiet {
-						fmt.Println(" failed")
-					}
-					return fmt.Errorf("unrecognized cluster state: %s", cluster.Status)
-				}
+		validated := func(ctx context.Context) (bool, error) {
+			var err error
+			cluster, err = beaker.Cluster(cluster.ID).Get(ctx)
+			if err != nil {
+				return false, err
 			}
+			return cluster.Status != api.ClusterPending, nil
+		}
+		err = await(ctx, "Validating cluster", validated, 0)
+		if err != nil {
+			return fmt.Errorf("await cluster validation: %w", err)
+		}
+		switch cluster.Status {
+		case api.ClusterActive:
+			return printClusters([]api.Cluster{*cluster})
+		case api.ClusterFailed:
+			return fmt.Errorf("cluster validation failed: %s", cluster.StatusMessage)
+		default:
+			return fmt.Errorf("unexpected cluster state: %s", cluster.Status)
 		}
 	}
 	return cmd
+}
+
+func newClusterCreateOnPremCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "on-prem <name>",
+		Short: "Create a new on-premise cluster without autoscaling",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			parts := strings.Split(args[0], "/")
+			if len(parts) != 2 {
+				return fmt.Errorf("cluster names must be fully scoped in the form %s", color.GreenString("account/cluster"))
+			}
+			account, name := parts[0], parts[1]
+			cluster, err := beaker.CreateCluster(ctx, account, api.ClusterSpec{Name: name})
+			if err != nil {
+				return err
+			}
+
+			if !quiet {
+				fmt.Printf("Cluster %s created. See details at %s/cl/%s\n",
+					color.BlueString(cluster.FullName), beaker.Address(), cluster.FullName)
+			}
+			return printClusters([]api.Cluster{*cluster})
+		},
+	}
 }
 
 func newClusterDeleteCommand() *cobra.Command {
