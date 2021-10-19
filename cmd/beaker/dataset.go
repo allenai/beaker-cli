@@ -178,42 +178,61 @@ func newDatasetFetchCommand() *cobra.Command {
 		Short: "Download a dataset",
 		Args:  cobra.ExactArgs(1),
 	}
+	flags := addFetchFlags(cmd)
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		return fetchDataset(args[0], flags.outputPath, flags.prefix, flags.concurrency)
+	}
+	return cmd
+}
 
-	var outputPath string
-	var prefix string
-	var concurrency int
-	cmd.Flags().StringVarP(&outputPath, "output", "o", ".", "Target path for fetched data")
-	cmd.Flags().StringVar(&prefix, "prefix", "", "Only download files that start with the given prefix")
+type fetchFlags struct {
+	outputPath  string
+	prefix      string
+	concurrency int
+}
+
+func addFetchFlags(cmd *cobra.Command) *fetchFlags {
+	flags := &fetchFlags{}
+	cmd.Flags().StringVarP(&flags.outputPath, "output", "o", ".", "Target path for fetched data")
+	cmd.Flags().StringVar(&flags.prefix, "prefix", "", "Only download files that start with the given prefix")
 	cmd.Flags().IntVar(
-		&concurrency,
+		&flags.concurrency,
 		"concurrency",
 		defaultConcurrency,
 		"Number of files to download at a time")
+	return flags
+}
 
-	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		storage, _, err := beaker.Dataset(args[0]).Storage(ctx)
-		if err != nil {
-			return err
-		}
-
-		info, err := storage.Info(ctx)
-		if err != nil {
-			return err
-		}
-
-		fmt.Printf("Downloading %s to %s\n",
-			color.CyanString(args[0]),
-			color.GreenString(outputPath))
-
-		var tracker cli.ProgressTracker
-		if info.Size != nil && info.Size.Final {
-			tracker = cli.BoundedTracker(ctx, info.Size.Files, info.Size.Bytes)
-		} else {
-			tracker = cli.UnboundedTracker(ctx)
-		}
-		return cli.Download(ctx, storage, prefix, outputPath, tracker, concurrency)
+func fetchDataset(
+	dataset string,
+	outputPath string,
+	prefix string,
+	concurrency int,
+) error {
+	storage, _, err := beaker.Dataset(dataset).Storage(ctx)
+	if err != nil {
+		return err
 	}
-	return cmd
+
+	info, err := storage.Info(ctx)
+	if err != nil {
+		return err
+	}
+
+	if !quiet {
+		fmt.Printf("Downloading dataset %s to %s\n",
+			color.CyanString(dataset),
+			color.GreenString(outputPath))
+	}
+	var tracker cli.ProgressTracker
+	if quiet {
+		tracker = cli.NoTracker
+	} else if info.Size != nil && info.Size.Final {
+		tracker = cli.BoundedTracker(ctx, info.Size.Files, info.Size.Bytes)
+	} else {
+		tracker = cli.UnboundedTracker(ctx)
+	}
+	return cli.Download(ctx, storage, prefix, outputPath, tracker, concurrency)
 }
 
 func newDatasetGetCommand() *cobra.Command {
