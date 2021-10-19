@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -45,33 +46,22 @@ func newJobAwaitCommand() *cobra.Command {
 		jobID := args[0]
 		status := args[1]
 
-		delay := time.NewTimer(0) // No delay on first attempt.
-		done := time.NewTimer(timeout)
-		for {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-
-			case <-done.C:
-				return fmt.Errorf("job did not reach status %s before timeout %s", status, timeout)
-
-			case <-delay.C:
-				delay.Reset(interval)
-
-				job, err := beaker.Job(jobID).Get(ctx)
-				if err != nil {
-					return err
-				}
-
-				done, err := isAtStatus(job.Status, status)
-				if err != nil {
-					return err
-				}
-				if done {
-					return printJobs([]api.Job{*job})
-				}
+		var job *api.Job
+		jobAtStatus := func(ctx context.Context) (bool, error) {
+			var err error
+			job, err = beaker.Job(jobID).Get(ctx)
+			if err != nil {
+				return false, err
 			}
+			return isAtStatus(job.Status, status)
 		}
+		ctx, cancel := context.WithDeadline(ctx, time.Now().Add(timeout))
+		defer cancel()
+		message := "Waiting for job to reach status " + status
+		if err := await(ctx, message, jobAtStatus, interval); err != nil {
+			return err
+		}
+		return printJobs([]api.Job{*job})
 	}
 	return cmd
 }

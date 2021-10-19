@@ -196,7 +196,7 @@ Run "upgrade" to install the latest version or run "uninstall" before installing
 		if !quiet {
 			fmt.Println("Executor installed. Waiting for initialization to complete...")
 		}
-		ready := func() (bool, error) {
+		ready := func(ctx context.Context) (bool, error) {
 			out, err := run("sudo", "systemctl", "is-active", executorService)
 			if err != nil {
 				return false, fmt.Errorf("executor status is not active: %s", out)
@@ -214,7 +214,7 @@ Run "upgrade" to install the latest version or run "uninstall" before installing
 		}
 		ctx, cancel := context.WithDeadline(ctx, time.Now().Add(time.Minute))
 		defer cancel()
-		if err := await(ctx, ready, time.Second); err != nil {
+		if err := await(ctx, "Initializing executor", ready, time.Second); err != nil {
 			return fmt.Errorf("error initializing executor: %w", err)
 		}
 		if !quiet {
@@ -223,27 +223,6 @@ Run "upgrade" to install the latest version or run "uninstall" before installing
 		return nil
 	}
 	return cmd
-}
-
-func await(ctx context.Context, f func() (bool, error), interval time.Duration) error {
-	delay := time.NewTimer(0) // No delay on first attempt.
-	defer delay.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("context done")
-
-		case <-delay.C:
-			ok, err := f()
-			if err != nil {
-				return err
-			}
-			if ok {
-				return nil
-			}
-			delay.Reset(interval)
-		}
-	}
 }
 
 func newExecutorRestartCommand() *cobra.Command {

@@ -1,10 +1,8 @@
 package main
 
 import (
-	"errors"
+	"context"
 	"fmt"
-	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -98,7 +96,6 @@ func newClusterCreateCloudCommand() *cobra.Command {
 				Memory:   memorySize,
 			},
 		}
-
 		cluster, err := beaker.CreateCluster(ctx, account, spec)
 		if err != nil {
 			return err
@@ -109,66 +106,25 @@ func newClusterCreateCloudCommand() *cobra.Command {
 				color.BlueString(cluster.FullName), beaker.Address(), cluster.FullName)
 		}
 
-		if !quiet {
-			fmt.Printf("Preparing cluster...")
-		}
-		ticker := time.NewTicker(3 * time.Second)
-		for {
-			select {
-			case <-ctx.Done():
-				if !quiet {
-					fmt.Println(" canceled")
-				}
-				os.Exit(1)
-
-			case <-ticker.C:
-				cluster, err = beaker.Cluster(cluster.ID).Get(ctx)
-				if err != nil {
-					if !quiet {
-						fmt.Println(" failed")
-					}
-					return err
-				}
-
-				switch cluster.Status {
-				case api.ClusterPending:
-					continue
-
-				case api.ClusterActive:
-					if quiet {
-						fmt.Println(cluster.FullName)
-						return nil
-					}
-
-					gpuStr := "none"
-					if gpuCount := cluster.NodeShape.GPUCount; gpuCount != 0 {
-						gpuStr = strconv.FormatInt(int64(gpuCount), 10)
-						if gpuType := cluster.NodeShape.GPUType; gpuType != "" {
-							gpuStr += " " + gpuType
-						}
-					}
-
-					fmt.Print("\nEstimated cost per node: ")
-					color.Green("$%v/hour", cluster.NodeCost.Round(2))
-					fmt.Println("Nodes may exceed requested parameters to optimize cost:")
-					fmt.Println("    CPUs:      ", cluster.NodeShape.CPUCount)
-					fmt.Println("    CPU Memory:", cluster.NodeShape.Memory)
-					fmt.Println("    GPUs:      ", gpuStr)
-					return nil
-
-				case api.ClusterFailed:
-					if !quiet {
-						fmt.Println(" failed")
-					}
-					return errors.New(cluster.StatusMessage)
-
-				default:
-					if !quiet {
-						fmt.Println(" failed")
-					}
-					return fmt.Errorf("unrecognized cluster state: %s", cluster.Status)
-				}
+		validated := func(ctx context.Context) (bool, error) {
+			var err error
+			cluster, err = beaker.Cluster(cluster.ID).Get(ctx)
+			if err != nil {
+				return false, err
 			}
+			return cluster.Status != api.ClusterPending, nil
+		}
+		err = await(ctx, "Validating cluster", validated, time.Second)
+		if err != nil {
+			return fmt.Errorf("await cluster validation: %w", err)
+		}
+		switch cluster.Status {
+		case api.ClusterActive:
+			return printClusters([]api.Cluster{*cluster})
+		case api.ClusterFailed:
+			return fmt.Errorf("cluster validation failed: %s", cluster.StatusMessage)
+		default:
+			return fmt.Errorf("unexpected cluster state: %s", cluster.Status)
 		}
 	}
 	return cmd

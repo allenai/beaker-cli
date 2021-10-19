@@ -246,12 +246,17 @@ Do not write sensitive information outside of the home directory.
 		shouldCancel = false
 
 		if saveImage {
-			if !quiet {
-				fmt.Printf("Waiting for image capture to complete")
+			var job *api.Job
+			started := func(ctx context.Context) (bool, error) {
+				var err error
+				job, err = beaker.Job(session.ID).Get(ctx)
+				if err != nil {
+					return false, err
+				}
+				return job.Status.Finalized != nil, nil
 			}
-			job, err := awaitJobFinalization(session.ID)
-			if err != nil {
-				return err
+			if err := await(ctx, "Waiting for image capture to complete", started, 3*time.Second); err != nil {
+				return fmt.Errorf("waiting for image capture to complete: %w", err)
 			}
 			if job.Status.Failed != nil {
 				return fmt.Errorf("session failed: %s", job.Status.Message)
@@ -327,33 +332,6 @@ func getImageSource(name string) (*api.ImageSource, error) {
 
 	default:
 		return nil, fmt.Errorf("%q is not a supported image type", scheme)
-	}
-}
-
-func awaitJobFinalization(id string) (*api.Job, error) {
-	delay := time.NewTimer(0) // When to poll job status.
-	for attempt := 0; ; attempt++ {
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-
-		case <-delay.C:
-			job, err := beaker.Job(id).Get(ctx)
-			if err != nil {
-				return nil, err
-			}
-			if job.Status.Finalized != nil {
-				if !quiet {
-					fmt.Println(" Done!")
-				}
-				return job, nil
-			}
-
-			if !quiet {
-				fmt.Print(".")
-			}
-			delay.Reset(3 * time.Second)
-		}
 	}
 }
 
@@ -561,40 +539,19 @@ func awaitSessionStart(session api.Job) (*api.Job, error) {
 		}
 	}
 
-	if !quiet {
-		fmt.Printf("Waiting for session to start")
-	}
-	delay := time.NewTimer(0) // When to poll session status.
-	for attempt := 0; ; attempt++ {
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-
-		case <-delay.C:
-			session, err := s.Get(ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			if session.Status.Finalized != nil {
-				if !quiet {
-					fmt.Println(" Failed!")
-				}
-				return nil, fmt.Errorf("session finalized: %s", session.Status.Message)
-			}
-			if session.Status.Started != nil {
-				if !quiet {
-					fmt.Println(" Done!")
-				}
-				return session, nil
-			}
-
-			if !quiet {
-				fmt.Print(".")
-			}
-			delay.Reset(3 * time.Second)
+	var job *api.Job
+	started := func(ctx context.Context) (bool, error) {
+		var err error
+		job, err = s.Get(ctx)
+		if err != nil {
+			return false, err
 		}
+		if job.Status.Finalized != nil {
+			return false, fmt.Errorf("session finalized: %s", session.Status.Message)
+		}
+		return job.Status.Started != nil, nil
 	}
+	return job, await(ctx, "Waiting for session to start", started, 3*time.Second)
 }
 
 func checkNodeCapacity(node *api.Node, request *api.ResourceRequest) error {
