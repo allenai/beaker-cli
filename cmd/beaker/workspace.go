@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"path"
 
 	"github.com/beaker/client/api"
 	"github.com/beaker/client/client"
@@ -26,6 +27,7 @@ func newWorkspaceCommand() *cobra.Command {
 	cmd.AddCommand(newWorkspaceMoveCommand())
 	cmd.AddCommand(newWorkspacePermissionsCommand())
 	cmd.AddCommand(newWorkspaceRenameCommand())
+	cmd.AddCommand(newWorkspaceResultsCommand())
 	cmd.AddCommand(newWorkspaceUnarchiveCommand())
 	return cmd
 }
@@ -467,6 +469,88 @@ func newWorkspaceRenameCommand() *cobra.Command {
 			return nil
 		},
 	}
+}
+
+func newWorkspaceResultsCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "results <workspace>",
+		Short: "Download the results of every experiment in a workspace.",
+		Long: `Download the results of every experiment in a workspace.
+
+One folder will be created for each experiment in the workspace. The name
+of the folder will be the name of the experiment or its ID if the experiment
+does not have a name. Within each experiment's folder, one folder will be
+created for each task in the experiment. The name of the folder will be the
+name of the task or its ID if the task does not have a name. If the task has
+executed multiple times, the results of the latest execution will be downloaded.
+
+Example: beaker workspace results --output workspace <workspace>
+workspace/
+  experiment/
+    task/
+	  file`,
+		Args: cobra.ExactArgs(1),
+	}
+	flags := addFetchFlags(cmd)
+	var text string
+	cmd.Flags().StringVar(&text, "text", "", "Only download results of experiments matching the text")
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		workspace := beaker.Workspace(args[0])
+
+		var experiments []api.Experiment
+		var cursor string
+		for {
+			var page []api.Experiment
+			var err error
+			if page, cursor, err = workspace.Experiments(ctx, &client.ListExperimentOptions{
+				Cursor: cursor,
+				Text:   text,
+			}); err != nil {
+				return err
+			}
+			experiments = append(experiments, page...)
+			if cursor == "" {
+				break
+			}
+		}
+		if !quiet {
+			fmt.Printf("Found %d experiments\n", len(experiments))
+		}
+
+		for _, experiment := range experiments {
+			tasks, err := beaker.Experiment(experiment.ID).Tasks(ctx)
+			if err != nil {
+				return err
+			}
+			experimentName := experiment.ID
+			if experiment.Name != "" {
+				experimentName = experiment.Name
+			}
+
+			for _, task := range tasks {
+				taskName := task.ID
+				if task.Name != "" {
+					taskName = task.Name
+				}
+				if len(task.Executions) == 0 {
+					fmt.Printf("Task %s/%s has no executions; skipping\n", experimentName, taskName)
+					continue
+				}
+				execution := task.Executions[len(task.Executions)-1] // Use last execution.
+				outputPath := path.Join(flags.outputPath, experimentName, taskName)
+				if err := fetchDataset(
+					execution.Result.Beaker,
+					outputPath,
+					flags.prefix,
+					flags.concurrency,
+				); err != nil {
+					return fmt.Errorf("fetching result of %s: %w", execution.ID, err)
+				}
+			}
+		}
+		return nil
+	}
+	return cmd
 }
 
 func newWorkspaceUnarchiveCommand() *cobra.Command {
