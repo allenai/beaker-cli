@@ -263,7 +263,12 @@ func newExperimentResultsCommand() *cobra.Command {
 One folder will be created for each task in the experiment. The name of the
 folder will be the name of the task or its ID if the task does not have a name.
 If the task has executed multiple times, the results of the latest execution
-will be downloaded.`,
+will be downloaded.
+
+Example: beaker experiment results --output experiment <experiment>
+experiment/
+  task/
+    file`,
 		Args: cobra.ExactArgs(1),
 	}
 	flags := addFetchFlags(cmd)

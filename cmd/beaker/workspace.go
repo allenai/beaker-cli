@@ -488,7 +488,7 @@ Example: beaker workspace results --output workspace <workspace>
 workspace/
   experiment/
     task/
-	  file`,
+      file`,
 		Args: cobra.ExactArgs(1),
 	}
 	flags := addFetchFlags(cmd)
