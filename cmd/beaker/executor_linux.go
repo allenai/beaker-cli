@@ -214,7 +214,7 @@ Run "upgrade" to install the latest version or run "uninstall" before installing
 		}
 		ctx, cancel := context.WithDeadline(ctx, time.Now().Add(time.Minute))
 		defer cancel()
-		if err := await(ctx, "Initializing executor", ready, time.Second); err != nil {
+		if err := await(ctx, "Initializing executor", ready, 0); err != nil {
 			return fmt.Errorf("error initializing executor: %w", err)
 		}
 		if !quiet {

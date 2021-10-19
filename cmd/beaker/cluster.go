@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/allenai/bytefmt"
 	"github.com/beaker/client/api"
@@ -111,7 +110,7 @@ func newClusterCreateCloudCommand() *cobra.Command {
 			}
 			return cluster.Status != api.ClusterPending, nil
 		}
-		err = await(ctx, "Validating cluster", validated, time.Second)
+		err = await(ctx, "Validating cluster", validated, 0)
 		if err != nil {
 			return fmt.Errorf("await cluster validation: %w", err)
 		}

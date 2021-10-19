@@ -6,9 +6,14 @@ import (
 	"time"
 )
 
+// defaultInterval used for await.
+const defaultInterval = time.Second
+
 // Await the completion of an operation. The operation is considered complete
 // when f() returns true. If f() returns and error, await exits early and returns
 // an error.
+//
+// If interval is zero, it defaults to defaultInterval.
 //
 // To implement a timeout, use context.WithDeadline():
 //   ctx, cancel := context.WithDeadline(ctx, time.Now().Add(time.Minute))
@@ -20,6 +25,9 @@ func await(
 	f func(context.Context) (bool, error),
 	interval time.Duration,
 ) error {
+	if interval == 0 {
+		interval = defaultInterval
+	}
 	if !quiet {
 		fmt.Print(message)
 		defer fmt.Println(" Done!")

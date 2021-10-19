@@ -7,7 +7,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/allenai/bytefmt"
 	"github.com/beaker/client/api"
@@ -255,7 +254,7 @@ Do not write sensitive information outside of the home directory.
 				}
 				return job.Status.Finalized != nil, nil
 			}
-			if err := await(ctx, "Waiting for image capture to complete", started, 3*time.Second); err != nil {
+			if err := await(ctx, "Waiting for image capture to complete", started, 0); err != nil {
 				return fmt.Errorf("waiting for image capture to complete: %w", err)
 			}
 			if job.Status.Failed != nil {
@@ -551,7 +550,7 @@ func awaitSessionStart(session api.Job) (*api.Job, error) {
 		}
 		return job.Status.Started != nil, nil
 	}
-	return job, await(ctx, "Waiting for session to start", started, 3*time.Second)
+	return job, await(ctx, "Waiting for session to start", started, 0)
 }
 
 func checkNodeCapacity(node *api.Node, request *api.ResourceRequest) error {
