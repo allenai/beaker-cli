@@ -46,7 +46,6 @@ func newClusterCreateCloudCommand() *cobra.Command {
 
 	var maxSize int
 	var preemptible bool
-	var protected bool
 	var cpuCount float64
 	var gpuCount int
 	var gpuType string
@@ -54,7 +53,6 @@ func newClusterCreateCloudCommand() *cobra.Command {
 
 	cmd.Flags().IntVar(&maxSize, "max-size", 1, "Maximum number of nodes")
 	cmd.Flags().BoolVar(&preemptible, "preemptible", false, "Enable cheaper but more volatile nodes")
-	cmd.Flags().BoolVar(&protected, "protected", false, "Only allow admins to make changes")
 	cmd.Flags().Float64Var(&cpuCount, "cpus", 0, "Minimum CPU cores per node, e.g. 7.5")
 	cmd.Flags().IntVar(&gpuCount, "gpus", 0, "Number of GPUs per node: 1, 2, 4, or 8")
 	cmd.Flags().StringVar(&gpuType, "gpu-type", "", "Type of GPU: a100, k80, p100, p4, t4, or v100")
@@ -88,7 +86,6 @@ func newClusterCreateCloudCommand() *cobra.Command {
 			Name:        clusterName,
 			Capacity:    maxSize,
 			Preemptible: preemptible,
-			Protected:   protected,
 			Spec: &api.NodeResources{
 				CPUCount: cpuCount,
 				GPUCount: gpuCount,
