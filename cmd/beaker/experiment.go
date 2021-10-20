@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -29,6 +30,7 @@ func newExperimentCommand() *cobra.Command {
 	cmd.AddCommand(newExperimentGroupsCommand())
 	cmd.AddCommand(newExperimentGetCommand())
 	cmd.AddCommand(newExperimentRenameCommand())
+	cmd.AddCommand(newExperimentResultsCommand())
 	cmd.AddCommand(newExperimentResumeCommand())
 	cmd.AddCommand(newExperimentSpecCommand())
 	cmd.AddCommand(newExperimentStopCommand())
@@ -240,6 +242,55 @@ func newExperimentRenameCommand() *cobra.Command {
 			return nil
 		},
 	}
+}
+
+func newExperimentResultsCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "results <experiment>",
+		Short: "Download the results of an experiment",
+		Long: `Download the results of an experiment.
+
+One folder will be created for each task in the experiment. The name of the
+folder will be the name of the task or its ID if the task does not have a name.
+If the task has executed multiple times, the results of the latest execution
+will be downloaded.
+
+Example: beaker experiment results --output experiment <experiment>
+experiment/
+  task/
+    file`,
+		Args: cobra.ExactArgs(1),
+	}
+	flags := addFetchFlags(cmd)
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		tasks, err := beaker.Experiment(args[0]).Tasks(ctx)
+		if err != nil {
+			return err
+		}
+
+		for _, task := range tasks {
+			name := task.ID
+			if task.Name != "" {
+				name = task.Name
+			}
+			if len(task.Executions) == 0 {
+				fmt.Printf("Task %s has no executions; skipping\n", name)
+				continue
+			}
+			execution := task.Executions[len(task.Executions)-1] // Use last execution.
+			outputPath := path.Join(flags.outputPath, name)
+			if err := fetchDataset(
+				execution.Result.Beaker,
+				outputPath,
+				flags.prefix,
+				flags.concurrency,
+			); err != nil {
+				return fmt.Errorf("fetching result of %s: %w", execution.ID, err)
+			}
+		}
+		return nil
+	}
+	return cmd
 }
 
 func newExperimentResumeCommand() *cobra.Command {
