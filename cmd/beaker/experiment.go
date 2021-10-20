@@ -81,18 +81,18 @@ func newExperimentAwaitCommand() *cobra.Command {
 			return fmt.Errorf("task not found: %s", taskRef)
 		}
 
-		var execution api.Execution
+		var job api.Job
 		experimentAtStatus := func(ctx context.Context) (bool, error) {
 			task, err := beaker.Task(taskID).Get(ctx)
 			if err != nil {
 				return false, err
 			}
-			if len(task.Executions) == 0 {
-				return false, nil // Controller has not created any executions yet.
+			if len(task.Jobs) == 0 {
+				return false, nil // Controller has not created any jobs yet.
 			}
-			// Use status of last execution.
-			execution = task.Executions[len(task.Executions)-1]
-			return isAtStatus(execution.State, status)
+			// Use status of last job.
+			job = task.Jobs[len(task.Jobs)-1]
+			return isAtStatus(job.Status, status)
 		}
 		ctx, cancel := context.WithDeadline(ctx, time.Now().Add(timeout))
 		defer cancel()
@@ -100,11 +100,7 @@ func newExperimentAwaitCommand() *cobra.Command {
 		if err := await(ctx, message, experimentAtStatus, interval); err != nil {
 			return err
 		}
-		job, err := beaker.Job(execution.ID).Get(ctx)
-		if err != nil {
-			return err
-		}
-		return printJobs([]api.Job{*job})
+		return printJobs([]api.Job{job})
 	}
 	return cmd
 }
@@ -273,19 +269,19 @@ experiment/
 			if task.Name != "" {
 				name = task.Name
 			}
-			if len(task.Executions) == 0 {
+			if len(task.Jobs) == 0 {
 				fmt.Printf("Task %s has no executions; skipping\n", name)
 				continue
 			}
-			execution := task.Executions[len(task.Executions)-1] // Use last execution.
+			job := task.Jobs[len(task.Jobs)-1] // Use last job.
 			outputPath := path.Join(flags.outputPath, name)
 			if err := fetchDataset(
-				execution.Result.Beaker,
+				job.Execution.Result.Beaker,
 				outputPath,
 				flags.prefix,
 				flags.concurrency,
 			); err != nil {
-				return fmt.Errorf("fetching result of %s: %w", execution.ID, err)
+				return fmt.Errorf("fetching result of %s: %w", job.ID, err)
 			}
 		}
 		return nil

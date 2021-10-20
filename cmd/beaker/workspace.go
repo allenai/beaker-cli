@@ -532,19 +532,19 @@ workspace/
 				if task.Name != "" {
 					taskName = task.Name
 				}
-				if len(task.Executions) == 0 {
+				if len(task.Jobs) == 0 {
 					fmt.Printf("Task %s/%s has no executions; skipping\n", experimentName, taskName)
 					continue
 				}
-				execution := task.Executions[len(task.Executions)-1] // Use last execution.
+				job := task.Jobs[len(task.Jobs)-1] // Use last job.
 				outputPath := path.Join(flags.outputPath, experimentName, taskName)
 				if err := fetchDataset(
-					execution.Result.Beaker,
+					job.Execution.Result.Beaker,
 					outputPath,
 					flags.prefix,
 					flags.concurrency,
 				); err != nil {
-					return fmt.Errorf("fetching result of %s: %w", execution.ID, err)
+					return fmt.Errorf("fetching result of %s: %w", job.ID, err)
 				}
 			}
 		}
