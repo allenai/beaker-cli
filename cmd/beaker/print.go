@@ -156,16 +156,12 @@ func printExperiments(experiments []api.Experiment) error {
 			if experiment.FullName != "" {
 				name = experiment.FullName
 			}
-			var executions []api.Execution
-			for _, execution := range experiment.Executions {
-				executions = append(executions, *execution)
-			}
 			if err := printTableRow(
 				name,
 				experiment.Workspace.FullName,
 				experiment.Author.Name,
 				experiment.Created,
-				executionsStatus(executions),
+				jobsStatus(experiment.Jobs),
 			); err != nil {
 				return err
 			}
@@ -422,7 +418,7 @@ func printTasks(tasks []api.Task) error {
 				task.ExperimentID,
 				task.Name,
 				task.Author.Name,
-				executionsStatus(task.Executions),
+				jobsStatus(task.Jobs),
 			); err != nil {
 				return err
 			}
@@ -541,10 +537,10 @@ func jobStatus(state api.JobStatus) string {
 	}
 }
 
-func executionsStatus(executions []api.Execution) string {
+func jobsStatus(jobs []api.Job) string {
 	counts := make(map[string]int)
-	for _, execution := range executions {
-		status := jobStatus(execution.State)
+	for _, job := range jobs {
+		status := jobStatus(job.Status)
 		count, ok := counts[status]
 		if ok {
 			counts[status] = count + 1
