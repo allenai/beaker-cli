@@ -42,14 +42,15 @@ var configTemplate = template.Must(template.New("config").Parse(`
 beaker:
   address: {{.Address}}
   tokenPath: {{.TokenPath}}
-  cluster: {{.Cluster}}`))
+  cluster: {{.Cluster}}
+resources:
+  gpus: {{.GPUs}}`))
 
 type configOpts struct {
-	LogLevel    string
-	Address     string
-	StoragePath string
-	TokenPath   string
-	Cluster     string
+	Address   string
+	TokenPath string
+	Cluster   string
+	GPUs      string
 }
 
 var systemdTemplate = template.Must(template.New("systemd").Parse(`
@@ -95,6 +96,13 @@ func newExecutorConfigureCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 	}
 
+	var cpuOnly bool
+	cmd.Flags().BoolVar(
+		&cpuOnly,
+		"cpu-only",
+		false,
+		"Don't try to detect GPUs.")
+
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		cluster := args[0]
 		if _, err := beaker.Cluster(args[0]).Get(ctx); err != nil {
@@ -113,6 +121,11 @@ func newExecutorConfigureCommand() *cobra.Command {
 			return err
 		}
 
+		gpus := "null"
+		if cpuOnly {
+			gpus = "[]"
+		}
+
 		configFile, err := os.Create(executorConfigPath)
 		if err != nil {
 			return err
@@ -122,6 +135,7 @@ func newExecutorConfigureCommand() *cobra.Command {
 			Address:   beakerConfig.BeakerAddress,
 			TokenPath: executorTokenPath,
 			Cluster:   cluster,
+			GPUs:      gpus,
 		})
 	}
 	return cmd
