@@ -28,9 +28,6 @@ const (
 
 	// Name of the executor's systemd service.
 	executorService = "beaker-executor"
-
-	// Default location for storing datasets.
-	defaultStorageDir = "/var/beaker"
 )
 
 var (
