@@ -78,6 +78,7 @@ func newExecutorCommand() *cobra.Command {
 		Use:   "executor <command>",
 		Short: "Manage the executor",
 	}
+	cmd.AddCommand(newExecutorConfigureCommand())
 	cmd.AddCommand(newExecutorInstallCommand())
 	cmd.AddCommand(newExecutorRestartCommand())
 	cmd.AddCommand(newExecutorStartCommand())
