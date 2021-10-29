@@ -42,8 +42,6 @@ var (
 )
 
 var configTemplate = template.Must(template.New("config").Parse(`
-logLevel: {{.LogLevel}}
-storagePath: {{.StoragePath}}
 beaker:
   address: {{.Address}}
   tokenPath: {{.TokenPath}}
@@ -92,49 +90,14 @@ func newExecutorCommand() *cobra.Command {
 	return cmd
 }
 
-func newExecutorInstallCommand() *cobra.Command {
+func newExecutorConfigureCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "install <cluster>",
-		Short: "Install and start the Beaker executor",
-		Long: `Install the Beaker executor, start it, and configure it to run on boot.
-Requires access to /etc, /var, and /usr/bin. Also requires access to systemd.`,
-		Args: cobra.ExactArgs(1),
+		Use:   "configure <cluster>",
+		Short: "Configure the Beaker executor.",
+		Args:  cobra.ExactArgs(1),
 	}
 
-	var address string
-	cmd.Flags().StringVar(
-		&address,
-		"address",
-		"https://beaker.org",
-		"Address of the Beaker API")
-
-	var logLevel string
-	cmd.Flags().StringVar(
-		&logLevel,
-		"log-level",
-		"info",
-		"Log level")
-
-	var version string
-	cmd.Flags().StringVar(
-		&version,
-		"version",
-		"",
-		"Version of the Beaker executor. Commit SHA from allenai/beaker-serivce. Defaults to the latest version if empty.")
-
-	var storageDir string
-	cmd.Flags().StringVar(
-		&storageDir,
-		"storage-dir",
-		defaultStorageDir,
-		"Writeable directory for storing Beaker datasets")
-
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		if _, err := os.Stat(executorPath); err == nil {
-			return fmt.Errorf(`executor is already installed.
-Run "upgrade" to install the latest version or run "uninstall" before installing.`)
-		}
-
 		cluster := args[0]
 		if _, err := beaker.Cluster(args[0]).Get(ctx); err != nil {
 			return err
@@ -157,14 +120,49 @@ Run "upgrade" to install the latest version or run "uninstall" before installing
 			return err
 		}
 		defer configFile.Close()
-		if err := configTemplate.Execute(configFile, configOpts{
-			LogLevel:    logLevel,
-			Address:     address,
-			StoragePath: storageDir,
-			TokenPath:   executorTokenPath,
-			Cluster:     cluster,
-		}); err != nil {
-			return err
+		return configTemplate.Execute(configFile, configOpts{
+			Address:   beakerConfig.BeakerAddress,
+			TokenPath: executorTokenPath,
+			Cluster:   cluster,
+		})
+	}
+	return cmd
+}
+
+func newExecutorInstallCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "install",
+		Short: "Install and start the Beaker executor",
+		Long: `Install the Beaker executor, start it, and configure it to run on boot.
+Requires access to /etc, /var, and /usr/bin. Also requires access to systemd.`,
+		Args: cobra.NoArgs,
+	}
+
+	var version string
+	cmd.Flags().StringVar(
+		&version,
+		"version",
+		"",
+		"Version of the Beaker executor. Commit SHA from allenai/beaker-service. Defaults to the latest version if empty.")
+
+	var validate bool
+	cmd.Flags().BoolVar(
+		&validate,
+		"validate",
+		true,
+		"Validate the executor installation by waiting for the executor to register a node.")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		if _, err := os.Stat(executorPath); err == nil {
+			return fmt.Errorf(`executor is already installed.
+Run "upgrade" to install the latest version or run "uninstall" before installing.`)
+		}
+
+		if _, err := os.Stat(executorConfigPath); os.IsNotExist(err) {
+			return fmt.Errorf(`config file not found.
+Run "configure" to generate a configuration file or write configuration to %s manually.`, executorConfigPath)
+		} else if err != nil {
+			return fmt.Errorf("stat config file: %w", err)
 		}
 
 		systemdFile, err := os.Create(executorSystemdPath)
@@ -194,7 +192,25 @@ Run "upgrade" to install the latest version or run "uninstall" before installing
 		}
 
 		if !quiet {
-			fmt.Println("Executor installed. Waiting for initialization to complete...")
+			fmt.Println("Executor installed.")
+		}
+		if !validate {
+			return nil
+		}
+		if !quiet {
+			fmt.Println("Waiting for initialization to complete...")
+		}
+		config, err := getExecutorConfig()
+		if err != nil {
+			return err
+		}
+		storagePath := config.StoragePath
+		if storagePath == "" {
+			home, err := os.UserHomeDir()
+			if err != nil {
+				return err
+			}
+			storagePath = path.Join(home, ".beaker", "storage")
 		}
 		ready := func(ctx context.Context) (bool, error) {
 			out, err := run("sudo", "systemctl", "is-active", executorService)
@@ -203,7 +219,7 @@ Run "upgrade" to install the latest version or run "uninstall" before installing
 			}
 
 			// Check if the executor has registered a node.
-			_, err = os.Stat(path.Join(storageDir, "node"))
+			_, err = os.Stat(path.Join(storagePath, "node"))
 			if os.IsNotExist(err) {
 				return false, nil
 			}
