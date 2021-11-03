@@ -7,6 +7,7 @@ import (
 
 	"github.com/allenai/bytefmt"
 	"github.com/beaker/client/api"
+	"github.com/beaker/client/client"
 	fileheapAPI "github.com/beaker/fileheap/api"
 	"github.com/beaker/fileheap/cli"
 	fileheap "github.com/beaker/fileheap/client"
@@ -31,6 +32,7 @@ func newDatasetCommand() *cobra.Command {
 	cmd.AddCommand(newDatasetRenameCommand())
 	cmd.AddCommand(newDatasetSizeCommand())
 	cmd.AddCommand(newDatasetStreamFileCommand())
+	cmd.AddCommand(newDatasetSyncCommand())
 	return cmd
 }
 
@@ -65,6 +67,7 @@ func newDatasetCreateCommand() *cobra.Command {
 	var name string
 	var workspace string
 	var concurrency int
+	var commit bool
 	cmd.Flags().StringVar(&description, "desc", "", "Assign a description to the dataset")
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the dataset")
 	cmd.Flags().StringVarP(&workspace, "workspace", "w", "", "Workspace where the dataset will be placed")
@@ -73,19 +76,12 @@ func newDatasetCreateCommand() *cobra.Command {
 		"concurrency",
 		defaultConcurrency,
 		"Number of files to upload at a time")
+	cmd.Flags().BoolVar(&commit, "commit", true, "Commit the dataset after successful upload")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		source := args[0]
 
-		info, err := os.Stat(source)
-		if err != nil {
-			return err
-		}
-		if info.Mode()&(os.ModeSymlink|os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {
-			return errors.Errorf("%s is a %s", source, modeToString(info.Mode()))
-		}
-
-		workspace, err = ensureWorkspace(workspace)
+		workspace, err := ensureWorkspace(workspace)
 		if err != nil {
 			return err
 		}
@@ -101,52 +97,21 @@ func newDatasetCreateCommand() *cobra.Command {
 			return err
 		}
 
-		if !quiet {
-			if name == "" {
-				fmt.Printf("Uploading %s to %s\n", color.GreenString(source), color.CyanString(dataset.Ref()))
-			} else {
-				fmt.Printf("Uploading %s to %s (%s)\n", color.GreenString(source), color.CyanString(name), dataset.Ref())
-			}
-		}
-
-		storage, _, err := dataset.Storage(ctx)
-		if err != nil {
+		if err := syncDataset(source, dataset, concurrency); err != nil {
 			return err
 		}
 
-		if info.IsDir() {
-			var tracker cli.ProgressTracker = cli.NoTracker
-			if !quiet {
-				files, bytes, err := cli.UploadStats(source)
-				if err != nil {
-					return err
-				}
-				tracker = cli.BoundedTracker(ctx, files, bytes)
+		if commit {
+			if _, err := dataset.Patch(ctx, api.DatasetPatch{
+				Commit: true,
+			}); err != nil {
+				return errors.WithMessage(err, "failed to commit dataset")
 			}
-			if err := cli.Upload(ctx, source, storage, "", tracker, concurrency); err != nil {
-				return err
-			}
-		} else {
-			file, err := os.Open(source)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-			defer func() { _ = file.Close() }()
-
-			if err := storage.WriteFile(ctx, info.Name(), file, info.Size()); err != nil {
-				return err
-			}
-		}
-
-		if _, err := dataset.Patch(ctx, api.DatasetPatch{
-			Commit: true,
-		}); err != nil {
-			return errors.WithMessage(err, "failed to commit dataset")
 		}
 
 		if quiet {
 			fmt.Println(dataset.Ref())
-		} else if !info.IsDir() {
+		} else {
 			fmt.Println("Done.")
 		}
 		return nil
@@ -432,6 +397,82 @@ func newDatasetStreamFileCommand() *cobra.Command {
 		return err
 	}
 	return cmd
+}
+
+func newDatasetSyncCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "sync <source> <target>",
+		Short: "Sync the source to an uncommitted dataset",
+		Args:  cobra.ExactArgs(2),
+	}
+
+	var concurrency int
+	cmd.Flags().IntVar(
+		&concurrency,
+		"concurrency",
+		defaultConcurrency,
+		"Number of files to upload at a time")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		source := args[0]
+		target := args[1]
+
+		if err := syncDataset(source, beaker.Dataset(target), concurrency); err != nil {
+			return err
+		}
+
+		if quiet {
+			fmt.Println(target)
+		} else {
+			fmt.Println("Done.")
+		}
+		return nil
+	}
+	return cmd
+}
+
+func syncDataset(source string, target *client.DatasetHandle, concurrency int) error {
+	info, err := os.Stat(source)
+	if err != nil {
+		return err
+	}
+	if info.Mode()&(os.ModeSymlink|os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {
+		return errors.Errorf("%s is a %s", source, modeToString(info.Mode()))
+	}
+
+	if !quiet {
+		fmt.Printf("Uploading %s to %s\n", color.GreenString(source), color.CyanString(target.Ref()))
+	}
+
+	storage, _, err := target.Storage(ctx)
+	if err != nil {
+		return err
+	}
+
+	if info.IsDir() {
+		var tracker cli.ProgressTracker = cli.NoTracker
+		if !quiet {
+			files, bytes, err := cli.UploadStats(source)
+			if err != nil {
+				return err
+			}
+			tracker = cli.BoundedTracker(ctx, files, bytes)
+		}
+		if err := cli.Upload(ctx, source, storage, "", tracker, concurrency); err != nil {
+			return err
+		}
+	} else {
+		file, err := os.Open(source)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		defer func() { _ = file.Close() }()
+
+		if err := storage.WriteFile(ctx, info.Name(), file, info.Size()); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func modeToString(mode os.FileMode) string {
