@@ -1,21 +1,58 @@
 module github.com/allenai/beaker
 
-go 1.16
+go 1.17
 
 require (
-	github.com/Microsoft/go-winio v0.4.19 // indirect
 	github.com/allenai/bytefmt v0.1.2
-	github.com/beaker/client v0.0.0-20211109210027-f47a58bed970
+	github.com/beaker/client v0.0.0-20211213171028-d71be4677425
 	github.com/beaker/fileheap v0.0.0-20211007204440-1bd3920c4320
-	github.com/beaker/runtime v0.0.0-20211109210053-606594000f3e
+	github.com/beaker/runtime v0.0.0-20211213171103-95151aa06fad
 	github.com/docker/distribution v2.7.1+incompatible
-	github.com/docker/docker v20.10.7+incompatible
-	github.com/fatih/color v1.12.0
-	github.com/moby/term v0.0.0-20201216013528-df9cb8a40635 // indirect
+	github.com/docker/docker v20.10.12+incompatible
+	github.com/fatih/color v1.13.0
 	github.com/pkg/errors v0.9.1
-	github.com/spf13/cobra v1.2.0
-	golang.org/x/net v0.0.0-20211108170745-6635138e15ea // indirect
+	github.com/spf13/cobra v1.2.1
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+)
+
+require (
+	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
+	github.com/Microsoft/go-winio v0.5.1 // indirect
+	github.com/PuerkitoBio/purell v1.1.1 // indirect
+	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
+	github.com/VividCortex/ewma v1.2.0 // indirect
+	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d // indirect
+	github.com/beaker/unique v0.0.0-20210625205350-416101674f78 // indirect
+	github.com/containerd/containerd v1.5.8 // indirect
+	github.com/docker/go-connections v0.4.0 // indirect
+	github.com/docker/go-units v0.4.0 // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/goware/urlx v0.3.1 // indirect
+	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/mattn/go-colorable v0.1.12 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
+	github.com/morikuni/aec v1.0.0 // indirect
+	github.com/oklog/ulid v1.3.1 // indirect
+	github.com/opencontainers/go-digest v1.0.0 // indirect
+	github.com/opencontainers/image-spec v1.0.2 // indirect
+	github.com/shopspring/decimal v1.3.1 // indirect
+	github.com/sirupsen/logrus v1.8.1 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/vbauerster/mpb/v4 v4.12.2 // indirect
+	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
+	golang.org/x/crypto v0.0.0-20211209193657-4570a0811e8b // indirect
+	golang.org/x/net v0.0.0-20211209124913-491a49abca63 // indirect
+	golang.org/x/sys v0.0.0-20211213223007-03aa0b5f6827 // indirect
+	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
+	golang.org/x/text v0.3.7 // indirect
+	google.golang.org/appengine v1.6.7 // indirect
+	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa // indirect
+	google.golang.org/grpc v1.42.0 // indirect
+	google.golang.org/protobuf v1.27.1 // indirect
 )
 
 // See https://github.com/advisories/GHSA-c2h3-6mxw-7mvq
@@ -46,3 +83,8 @@ exclude github.com/containerd/containerd v1.5.0-rc.0
 exclude github.com/containerd/containerd v1.5.1
 
 replace github.com/spf13/viper => ./viperstub
+
+// See https://github.com/google/gnostic/issues/262
+replace github.com/googleapis/gnostic v0.5.6 => github.com/googleapis/gnostic v0.5.5
+
+replace github.com/googleapis/gnostic v0.5.7 => github.com/googleapis/gnostic v0.5.5
