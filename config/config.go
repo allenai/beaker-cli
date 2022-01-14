@@ -15,7 +15,6 @@ type Config struct {
 	// Client settings
 	BeakerAddress    string `yaml:"agent_address"` // TODO: Find a better name than "agent_address"
 	UserToken        string `yaml:"user_token"`
-	DefaultOrg       string `yaml:"default_org"`
 	DefaultWorkspace string `yaml:"default_workspace"`
 }
 

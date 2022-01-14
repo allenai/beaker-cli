@@ -112,20 +112,6 @@ func newConfigTestCommand() *cobra.Command {
 
 			fmt.Printf("Authenticated as user: %q (%s)\n\n", user.Name, user.ID)
 
-			if cfg.DefaultOrg == "" {
-				fmt.Println("No default org set.")
-			} else {
-				fmt.Printf("Verifying default org: %q\n\n", cfg.DefaultOrg)
-				_, err := beaker.Organization(cfg.DefaultOrg).Get(ctx)
-				if err != nil {
-					fmt.Println("There was a problem verifying your default org.")
-					fmt.Println("Set the default organization in your config in the format `default_org: <org_name>`. Note that the name may be different from the name displayed in beaker UI.")
-					return err
-				}
-
-				fmt.Printf("Default org verified: %q\n", cfg.DefaultOrg)
-			}
-
 			if cfg.DefaultWorkspace == "" {
 				fmt.Println("No default workspace set.")
 			} else {
