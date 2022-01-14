@@ -53,8 +53,9 @@ func newConfigSetCommand() *cobra.Command {
 		Short: "Set a specific config setting",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			beakerCfg := &config.Config{}
 			configFilePath := config.GetFilePath()
-			beakerCfg, err := config.ReadConfigFromFile(configFilePath)
+			err := config.ReadConfigFromFile(configFilePath, beakerCfg)
 			if err != nil {
 				if os.IsNotExist(err) {
 					beakerCfg = beakerConfig
@@ -136,8 +137,9 @@ func newConfigUnsetCommand() *cobra.Command {
 		Short: "Unset a specific config setting",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			beakerCfg := &config.Config{}
 			configFilePath := config.GetFilePath()
-			beakerCfg, err := config.ReadConfigFromFile(configFilePath)
+			err := config.ReadConfigFromFile(configFilePath, beakerCfg)
 			if err != nil {
 				return err
 			}
