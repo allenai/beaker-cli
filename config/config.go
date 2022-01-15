@@ -1,6 +1,7 @@
 package config
 
 import (
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -70,7 +71,7 @@ func ReadConfigFromFile(path string, config *Config) error {
 	defer r.Close()
 
 	d := yaml.NewDecoder(r)
-	if err := d.Decode(config); err != nil {
+	if err := d.Decode(config); err != nil && err != io.EOF {
 		return errors.Wrap(err, "failed to read config")
 	}
 
