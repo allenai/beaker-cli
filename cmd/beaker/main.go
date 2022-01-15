@@ -149,7 +149,7 @@ func ensureWorkspace(workspaceRef string) (string, error) {
 				fmt.Println("The workspace will be created if it does not exist yet.")
 			} else {
 				fmt.Println("No default workspace is configured. You have no existing workspaces.")
-				fmt.Println("Enter the name of a new workspace .g. ai2/my-workspace.")
+				fmt.Println("Enter the name of a new workspace e.g. ai2/my-workspace.")
 			}
 			workspaceRef = prompt("Default workspace")
 			if i, err := strconv.Atoi(workspaceRef); err == nil {
