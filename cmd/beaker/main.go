@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"strconv"
 	"strings"
 	"text/tabwriter"
 
@@ -112,15 +113,57 @@ func main() {
 // exists if workspaceRef is empty.
 // Returns an error if workspaceRef and the default workspace are empty.
 func ensureWorkspace(workspaceRef string) (string, error) {
+	// If this flag is true, workspaceRef is written to config as the default workspace on exit.
+	var updateConfig bool
 	if workspaceRef == "" {
 		if beakerConfig.DefaultWorkspace == "" {
-			return "", errors.New(`workspace not provided, either:
-1. Pass the --workspace flag
-2. Configure a default workspace with 'beaker config set default_workspace <workspace>'`)
-		}
-		workspaceRef = beakerConfig.DefaultWorkspace
-		if !quiet {
-			fmt.Printf("Defaulting to workspace %s\n", color.BlueString(workspaceRef))
+			user, err := beaker.WhoAmI(ctx)
+			if err != nil {
+				return "", err
+			}
+			orgs, err := beaker.ListMyOrgs(ctx)
+			if err != nil {
+				return "", err
+			}
+
+			var workspaces []api.Workspace
+			for _, org := range orgs {
+				w, _, err := beaker.ListWorkspaces(ctx, org.Name, &client.ListWorkspaceOptions{
+					Author:    user.Name,
+					SortBy:    api.WorkspaceModified,
+					SortOrder: api.SortDescending,
+					Limit:     20,
+				})
+				if err != nil {
+					return "", err
+				}
+				workspaces = append(workspaces, w...)
+			}
+			if len(workspaces) > 0 {
+				fmt.Println("No default workspace is configured. Please select one of your workspaces:")
+				for i, workspace := range workspaces {
+					fmt.Printf(" %3d. %s (%d experiments)\n", i, workspace.FullName, workspace.Size.Experiments)
+				}
+
+				fmt.Println("Enter a number from the list above or the name workspace e.g. ai2/my-workspace.")
+				fmt.Println("The workspace will be created if it does not exist yet.")
+			} else {
+				fmt.Println("No default workspace is configured. You have no existing workspaces.")
+				fmt.Println("Enter the name of a new workspace .g. ai2/my-workspace.")
+			}
+			workspaceRef = prompt("Default workspace")
+			if i, err := strconv.Atoi(workspaceRef); err == nil {
+				if i < 0 || i >= len(workspaces) {
+					return "", fmt.Errorf("list index out of range: %d", i)
+				}
+				workspaceRef = workspaces[i].FullName
+			}
+			updateConfig = true
+		} else {
+			workspaceRef = beakerConfig.DefaultWorkspace
+			if !quiet {
+				fmt.Printf("Defaulting to workspace %s\n", color.BlueString(workspaceRef))
+			}
 		}
 	}
 
@@ -132,6 +175,9 @@ func ensureWorkspace(workspaceRef string) (string, error) {
 				return "", errors.New("workspace must be formatted like '<account>/<name>'")
 			}
 
+			if !quiet {
+				fmt.Printf("Creating workspace %s\n", color.BlueString(workspaceRef))
+			}
 			if _, err = beaker.CreateWorkspace(ctx, api.WorkspaceSpec{
 				Organization: parts[0],
 				Name:         parts[1],
@@ -143,6 +189,16 @@ func ensureWorkspace(workspaceRef string) (string, error) {
 		}
 	}
 
+	if !updateConfig {
+		return workspaceRef, nil
+	}
+	if !quiet {
+		fmt.Printf("Setting default workspace to %s\n", color.BlueString(workspaceRef))
+	}
+	beakerConfig.DefaultWorkspace = workspaceRef
+	if err := config.WriteConfig(beakerConfig, config.GetFilePath()); err != nil {
+		return "", nil
+	}
 	return workspaceRef, nil
 }
 
@@ -236,4 +292,14 @@ func confirm(prompt string) (bool, error) {
 		}
 	}
 	return false, scanner.Err()
+}
+
+// Prompt the user for input.
+func prompt(prompt string) string {
+	fmt.Print(prompt, ": ")
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	input := scanner.Text()
+	input = strings.TrimSpace(input)
+	return input
 }
