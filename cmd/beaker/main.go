@@ -145,7 +145,7 @@ func ensureWorkspace(workspaceRef string) (string, error) {
 					fmt.Printf(" %3d. %s (%d experiments)\n", i, workspace.FullName, workspace.Size.Experiments)
 				}
 
-				fmt.Println("Enter a number from the list above or the name workspace e.g. ai2/my-workspace.")
+				fmt.Println("Enter a number from the list above or the workspace name e.g. ai2/my-workspace.")
 				fmt.Println("The workspace will be created if it does not exist yet.")
 			} else {
 				fmt.Println("No default workspace is configured. You have no existing workspaces.")
