@@ -132,7 +132,7 @@ func ensureWorkspace(workspaceRef string) (string, error) {
 					Author:    user.Name,
 					SortBy:    api.WorkspaceModified,
 					SortOrder: api.SortDescending,
-					Limit:     20,
+					Limit:     10,
 				})
 				if err != nil {
 					return "", err
