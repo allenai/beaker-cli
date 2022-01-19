@@ -15,7 +15,6 @@ type Config struct {
 	// Client settings
 	BeakerAddress    string `yaml:"agent_address"` // TODO: Find a better name than "agent_address"
 	UserToken        string `yaml:"user_token"`
-	DefaultOrg       string `yaml:"default_org"`
 	DefaultWorkspace string `yaml:"default_workspace"`
 }
 
@@ -37,16 +36,9 @@ func New() (*Config, error) {
 		BeakerAddress: defaultAddress,
 	}
 
-	r, err := findConfig()
+	err := ReadConfigFromFile(GetFilePath(), &config)
 	if err != nil {
 		return nil, err
-	}
-	if r != nil {
-		defer r.Close()
-
-		if err := yaml.NewDecoder(r).Decode(&config); err != nil {
-			return nil, errors.Wrap(err, "failed to read config")
-		}
 	}
 
 	// Environment variables override config.
@@ -71,20 +63,19 @@ func GetFilePath() string {
 	return filepath.Join(beakerConfigDir, beakerConfigFile)
 }
 
-func ReadConfigFromFile(path string) (*Config, error) {
+func ReadConfigFromFile(path string, config *Config) error {
 	r, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer r.Close()
 
-	config := Config{}
 	d := yaml.NewDecoder(r)
-	if err := d.Decode(&config); err != nil {
-		return nil, errors.Wrap(err, "failed to read config")
+	if err := d.Decode(config); err != nil && err != io.EOF {
+		return errors.Wrap(err, "failed to read config")
 	}
 
-	return &config, nil
+	return nil
 }
 
 func WriteConfig(config *Config, filePath string) error {
@@ -99,30 +90,4 @@ func WriteConfig(config *Config, filePath string) error {
 	}
 
 	return ioutil.WriteFile(filePath, bytes, 0644)
-}
-
-func findConfig() (io.ReadCloser, error) {
-	// Check the path override first.
-	if env, ok := os.LookupEnv(configPathKey); ok {
-		return os.Open(env)
-	}
-	if env, ok := os.LookupEnv(configPathKeyLegacy); ok {
-		return os.Open(env)
-	}
-
-	configPaths := []string{
-		beakerConfigDir,
-		"/etc/beaker",
-	}
-
-	for _, p := range configPaths {
-		r, err := os.Open(filepath.Join(p, beakerConfigFile))
-		if os.IsNotExist(err) {
-			continue
-		}
-		return r, errors.WithStack(err)
-	}
-
-	// No config file found; we'll just use defaults.
-	return nil, nil
 }
