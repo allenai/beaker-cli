@@ -35,7 +35,7 @@ func newConfigListCommand() *cobra.Command {
 			t := reflect.TypeOf(*beakerConfig)
 			for i := 0; i < t.NumField(); i++ {
 				field := t.Field(i)
-				propertyKey := field.Tag.Get("yaml")
+				propertyKey := trimTag(field.Tag.Get("yaml"))
 				value := reflect.ValueOf(beakerConfig).Elem().FieldByName(field.Name).String()
 				if value == "" {
 					value = "(unset)"
@@ -68,7 +68,7 @@ func newConfigSetCommand() *cobra.Command {
 			found := false
 			for i := 0; i < t.NumField(); i++ {
 				field := t.Field(i)
-				if field.Tag.Get("yaml") == args[0] {
+				if trimTag(field.Tag.Get("yaml")) == args[0] {
 					found = true
 					// The following code assumes all values are strings and will not work with non-string values.
 					reflect.ValueOf(beakerCfg).Elem().FieldByName(field.Name).SetString(strings.TrimSpace(args[1]))
@@ -148,7 +148,7 @@ func newConfigUnsetCommand() *cobra.Command {
 			found := false
 			for i := 0; i < t.NumField(); i++ {
 				field := t.Field(i)
-				if field.Tag.Get("yaml") == args[0] {
+				if trimTag(field.Tag.Get("yaml")) == args[0] {
 					found = true
 					reflect.ValueOf(beakerCfg).Elem().FieldByName(field.Name).Set(reflect.Zero(field.Type))
 				}
@@ -162,4 +162,9 @@ func newConfigUnsetCommand() *cobra.Command {
 			return config.WriteConfig(beakerCfg, configFilePath)
 		},
 	}
+}
+
+// Remove extra fields from a YAML tag e.g. "name,omitempty" -> "name".
+func trimTag(tag string) string {
+	return strings.Split(tag, ",")[0]
 }
