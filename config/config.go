@@ -13,9 +13,10 @@ import (
 // Config is a structured representation of a Beaker config file.
 type Config struct {
 	// Client settings
-	BeakerAddress    string `yaml:"agent_address"` // TODO: Find a better name than "agent_address"
-	UserToken        string `yaml:"user_token"`
-	DefaultWorkspace string `yaml:"default_workspace"`
+	BeakerAddress    string `yaml:"agent_address,omitempty"` // TODO: Find a better name than "agent_address"
+	UserToken        string `yaml:"user_token,omitempty"`
+	DefaultWorkspace string `yaml:"default_workspace,omitempty"`
+	DefaultImage     string `yaml:"default_image,omitempty"`
 }
 
 const (
