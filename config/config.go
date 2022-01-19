@@ -65,6 +65,9 @@ func GetFilePath() string {
 
 func ReadConfigFromFile(path string, config *Config) error {
 	r, err := os.Open(path)
+	if os.IsNotExist(err) {
+		return nil
+	}
 	if err != nil {
 		return err
 	}
