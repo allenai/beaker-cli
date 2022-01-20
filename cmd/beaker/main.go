@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	"github.com/allenai/beaker/config"
 	"github.com/beaker/client/api"
@@ -68,6 +69,16 @@ func main() {
 				beakerConfig.BeakerAddress,
 				beakerConfig.UserToken,
 			)
+			if beakerConfig.HTTPDiag {
+				beaker.HTTPResponseHook = func(resp *http.Response, duration time.Duration) {
+					durationMs := duration.Nanoseconds() / 1000000
+					fmt.Fprintf(os.Stderr,
+						"Beaker HTTP diagnostic: status_code = %d duration_ms = %d request = %s %s\n",
+						resp.StatusCode, durationMs, resp.Request.Method, resp.Request.URL.String(),
+					)
+				}
+			}
+
 			return err
 		},
 	}

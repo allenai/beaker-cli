@@ -169,13 +169,25 @@ func newJobListCommand() *cobra.Command {
 			kind := api.JobKind(kind)
 			opts.Kind = &kind
 		}
-		if node == "" && cluster == "" && len(experiments) == 0 {
-			var err error
-			if node, err = getCurrentNode(); err != nil {
-				return fmt.Errorf("failed to detect node; use --node flag: %w", err)
+
+		if node == "" {
+			if cluster == "" && len(experiments) == 0 {
+				var err error
+				if node, err = getCurrentNode(); err != nil {
+					return fmt.Errorf("failed to detect node; use --node flag: %w", err)
+				}
+				opts.Node = &node
+			}
+		} else { // some node is specified
+			if cluster != "" {
+				return fmt.Errorf("you cannot specify node and cluster")
+			}
+			if len(experiments) > 0 {
+				return fmt.Errorf("you cannot specify node and experiments")
 			}
 			opts.Node = &node
 		}
+
 		if len(experiments) > 0 {
 			opts.Experiments = experiments
 		}
