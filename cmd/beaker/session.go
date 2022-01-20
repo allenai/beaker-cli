@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/allenai/beaker/config"
 	"github.com/allenai/bytefmt"
 	"github.com/beaker/client/api"
 	"github.com/beaker/client/client"
@@ -15,6 +16,8 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
+
+const defaultImage = "beaker://ai2/cuda11.2-ubuntu20.04"
 
 func newSessionCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -70,11 +73,13 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 	var node string
 	var workspace string
 	var saveImage bool
-	cmd.Flags().StringVar(
+	var noUpdateDefaultImage bool
+	cmd.Flags().StringVarP(
 		&image,
 		"image",
-		"beaker://ai2/cuda11.2-ubuntu20.04",
-		"Base image to run, may be a Beaker or Docker image")
+		"i",
+		defaultImage,
+		"Base image to run, may be a Beaker or Docker image. Uses 'default_image' from the Beaker configuration if set.")
 	cmd.Flags().BoolVar(&localHome, "local-home", false, "Mount the invoking user's home directory, ignoring Beaker configuration")
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the session")
 	cmd.Flags().StringVar(&node, "node", "", "Node that the session will run on. Defaults to current node.")
@@ -85,6 +90,11 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		"s",
 		false,
 		"Save the result image of the session. A new image will be created in the session's workspace.")
+	cmd.Flags().BoolVar(
+		&noUpdateDefaultImage,
+		"no-update-default-image",
+		false,
+		"Do not update the default image when using --save-image.")
 
 	var secretEnv map[string]string
 	var secretMount map[string]string
@@ -134,6 +144,10 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			}
 		}
 
+		if image == defaultImage && beakerConfig.DefaultImage != "" {
+			fmt.Printf("Defaulting to image %s\n", color.BlueString(beakerConfig.DefaultImage))
+			image = beakerConfig.DefaultImage
+		}
 		imageSource, err := getImageSource(image)
 		if err != nil {
 			return err
@@ -244,36 +258,54 @@ Do not write sensitive information outside of the home directory.
 		}
 		shouldCancel = false
 
-		if saveImage {
-			var job *api.Job
-			started := func(ctx context.Context) (bool, error) {
-				var err error
-				job, err = beaker.Job(session.ID).Get(ctx)
-				if err != nil {
-					return false, err
-				}
-				return job.Status.Finalized != nil, nil
-			}
-			if err := await(ctx, "Waiting for image capture to complete", started, 0); err != nil {
-				return fmt.Errorf("waiting for image capture to complete: %w", err)
-			}
-			if job.Status.Failed != nil {
-				return fmt.Errorf("session failed: %s", job.Status.Message)
-			}
-			images, err := beaker.Job(job.ID).GetImages(ctx)
-			if err != nil {
-				return err
-			}
-			if len(images) == 0 {
-				return fmt.Errorf("job has no result images")
-			}
-			if !quiet {
-				fmt.Printf(`Image saved to %[1]s: %[2]s/im/%[3]s
-Resume this session with: beaker session create --image beaker://%[3]s
-`, color.BlueString(images[0].ID), beaker.Address(), images[0].ID)
-			}
+		if !saveImage {
+			return nil
 		}
-
+		var job *api.Job
+		started := func(ctx context.Context) (bool, error) {
+			var err error
+			job, err = beaker.Job(session.ID).Get(ctx)
+			if err != nil {
+				return false, err
+			}
+			return job.Status.Finalized != nil, nil
+		}
+		if err := await(ctx, "Waiting for image capture to complete", started, 0); err != nil {
+			return fmt.Errorf("waiting for image capture to complete: %w", err)
+		}
+		if job.Status.Failed != nil {
+			return fmt.Errorf("session failed: %s", job.Status.Message)
+		}
+		images, err := beaker.Job(job.ID).GetImages(ctx)
+		if err != nil {
+			return err
+		}
+		if len(images) == 0 {
+			return fmt.Errorf("job has no result images")
+		}
+		if !quiet {
+			fmt.Printf("Image saved to %s: %s/im/%s\n",
+				color.BlueString(images[0].ID),
+				beaker.Address(),
+				images[0].ID)
+		}
+		if noUpdateDefaultImage {
+			if !quiet {
+				fmt.Printf(`Default image not updated.
+Resume this session with: beaker session create --image beaker://%s
+`, images[0].ID)
+			}
+			return nil
+		}
+		beakerConfig.DefaultImage = "beaker://" + images[0].ID
+		if err := config.WriteConfig(beakerConfig, config.GetFilePath()); err != nil {
+			return fmt.Errorf("setting default image: %w", err)
+		}
+		if !quiet {
+			fmt.Printf(`Default image updated in your config file: %s
+Resume this session with: beaker session create
+`, config.GetFilePath())
+		}
 		return nil
 	}
 	return cmd
@@ -546,7 +578,7 @@ func awaitSessionStart(session api.Job) (*api.Job, error) {
 			return false, err
 		}
 		if job.Status.Finalized != nil {
-			return false, fmt.Errorf("session finalized: %s", session.Status.Message)
+			return false, fmt.Errorf("session finalized: %s", job.Status.Message)
 		}
 		return job.Status.Started != nil, nil
 	}
