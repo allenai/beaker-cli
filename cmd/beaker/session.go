@@ -73,7 +73,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 	var node string
 	var workspace string
 	var saveImage bool
-	var updateDefaultImage bool
+	var noUpdateDefaultImage bool
 	cmd.Flags().StringVarP(
 		&image,
 		"image",
@@ -91,10 +91,10 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		false,
 		"Save the result image of the session. A new image will be created in the session's workspace.")
 	cmd.Flags().BoolVar(
-		&updateDefaultImage,
-		"update-default-image",
-		true,
-		"Update the default image to the image used in this session if using --save-image.")
+		&noUpdateDefaultImage,
+		"no-update-default-image",
+		false,
+		"Do not update the default image when using --save-image.")
 
 	var secretEnv map[string]string
 	var secretMount map[string]string
@@ -289,7 +289,7 @@ Do not write sensitive information outside of the home directory.
 				beaker.Address(),
 				images[0].ID)
 		}
-		if !updateDefaultImage {
+		if noUpdateDefaultImage {
 			if !quiet {
 				fmt.Printf(`Default image not updated.
 Resume this session with: beaker session create --image beaker://%s
