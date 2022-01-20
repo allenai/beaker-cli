@@ -17,6 +17,7 @@ type Config struct {
 	UserToken        string `yaml:"user_token,omitempty"`
 	DefaultWorkspace string `yaml:"default_workspace,omitempty"`
 	DefaultImage     string `yaml:"default_image,omitempty"`
+	HTTPDiag         bool   `yaml:"http_diag,omitempty"`
 }
 
 const (
@@ -24,6 +25,7 @@ const (
 	configPathKey       = "BEAKER_CONFIG"
 	configPathKeyLegacy = "BEAKER_CONFIG_FILE" // TODO: Remove when we're sure it's unused.
 	tokenKey            = "BEAKER_TOKEN"
+	httpDiagKey         = "BEAKER_HTTP_DIAG"
 	defaultAddress      = "https://beaker.org"
 	beakerConfigFile    = "config.yml"
 )
@@ -48,6 +50,9 @@ func New() (*Config, error) {
 	}
 	if env, ok := os.LookupEnv(tokenKey); ok {
 		config.UserToken = env
+	}
+	if env, ok := os.LookupEnv(httpDiagKey); ok {
+		config.HTTPDiag = env == "true"
 	}
 
 	return &config, nil
