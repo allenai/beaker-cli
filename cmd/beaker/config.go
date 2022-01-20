@@ -164,7 +164,7 @@ func newConfigUnsetCommand() *cobra.Command {
 	}
 }
 
-// Remove extra fields from a YAML tag e.g. "name,omitempty" -> "name".
-func trimTag(tag string) string {
+// Return first fields from a YAML tag e.g. "name,omitempty" -> "name".
+func firstTag(tag string) string {
 	return strings.Split(tag, ",")[0]
 }
