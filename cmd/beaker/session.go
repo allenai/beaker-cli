@@ -301,7 +301,11 @@ Resume this session with: beaker session create --image beaker://%s
 		if err := config.WriteConfig(beakerConfig, config.GetFilePath()); err != nil {
 			return fmt.Errorf("setting default image: %w", err)
 		}
-		fmt.Println("Default image updated. Resume this session with: beaker session create")
+		if !quiet {
+			fmt.Printf(`Default image updated in your config file: %s
+Resume this session with: beaker session create
+`, config.GetFilePath())
+		}
 		return nil
 	}
 	return cmd
