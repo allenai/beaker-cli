@@ -13,31 +13,43 @@ func newSecretCommand() *cobra.Command {
 		Use:   "secret <command>",
 		Short: "Manage secrets",
 	}
-	cmd.AddCommand(newSecretDeleteCommand())
-	cmd.AddCommand(newSecretListCommand())
-	cmd.AddCommand(newSecretReadCommand())
-	cmd.AddCommand(newSecretWriteCommand())
+
+	var workspace string
+	cmd.PersistentFlags().StringVarP(&workspace, "workspace", "w", "", "Workspace of the secret")
+
+	cmd.AddCommand(newSecretDeleteCommand(&workspace))
+	cmd.AddCommand(newSecretListCommand(&workspace))
+	cmd.AddCommand(newSecretReadCommand(&workspace))
+	cmd.AddCommand(newSecretWriteCommand(&workspace))
 	return cmd
 }
 
-func newSecretDeleteCommand() *cobra.Command {
+func newSecretDeleteCommand(workspace *string) *cobra.Command {
 	return &cobra.Command{
-		Use:   "delete <workspace> <secret>",
+		Use:   "delete <secret>",
 		Short: "Permanently delete a secret",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return beaker.Workspace(args[0]).DeleteSecret(ctx, args[1])
+			workspace, err := ensureWorkspace(*workspace)
+			if err != nil {
+				return err
+			}
+			return beaker.Workspace(workspace).DeleteSecret(ctx, args[0])
 		},
 	}
 }
 
-func newSecretListCommand() *cobra.Command {
+func newSecretListCommand(workspace *string) *cobra.Command {
 	return &cobra.Command{
-		Use:   "list <workspace>",
+		Use:   "list",
 		Short: "List the metadata of all secrets in a workspace",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			secrets, err := beaker.Workspace(args[0]).ListSecrets(ctx)
+			workspace, err := ensureWorkspace(*workspace)
+			if err != nil {
+				return err
+			}
+			secrets, err := beaker.Workspace(workspace).ListSecrets(ctx)
 			if err != nil {
 				return err
 			}
@@ -46,13 +58,17 @@ func newSecretListCommand() *cobra.Command {
 	}
 }
 
-func newSecretReadCommand() *cobra.Command {
+func newSecretReadCommand(workspace *string) *cobra.Command {
 	return &cobra.Command{
-		Use:   "read <workspace> <secret>",
+		Use:   "read <secret>",
 		Short: "Read the value of a secret",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			secret, err := beaker.Workspace(args[0]).ReadSecret(ctx, args[1])
+			workspace, err := ensureWorkspace(*workspace)
+			if err != nil {
+				return err
+			}
+			secret, err := beaker.Workspace(workspace).ReadSecret(ctx, args[0])
 			if err != nil {
 				return err
 			}
@@ -62,23 +78,28 @@ func newSecretReadCommand() *cobra.Command {
 	}
 }
 
-func newSecretWriteCommand() *cobra.Command {
+func newSecretWriteCommand(workspace *string) *cobra.Command {
 	return &cobra.Command{
-		Use:   "write <workspace> <secret> [value]",
+		Use:   "write <secret> [value]",
 		Short: "Write a new secret or update an existing secret",
-		Args:  cobra.RangeArgs(2, 3),
+		Args:  cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			workspace, err := ensureWorkspace(*workspace)
+			if err != nil {
+				return err
+			}
+
 			var value []byte
-			if len(args) == 2 {
+			if len(args) == 1 {
 				var err error
 				if value, err = ioutil.ReadAll(os.Stdin); err != nil {
 					return err
 				}
 			} else {
-				value = []byte(args[2])
+				value = []byte(args[1])
 			}
 
-			_, err := beaker.Workspace(args[0]).PutSecret(ctx, args[1], value)
+			_, err = beaker.Workspace(workspace).PutSecret(ctx, args[0], value)
 			return err
 		},
 	}
