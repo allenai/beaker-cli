@@ -389,7 +389,6 @@ If no command is provided, exec will run 'bash -l'`,
 			return err
 		}
 
-		// Pass nil instead of empty slice when there are no arguments.
 		command := []string{"bash", "-l"}
 		if len(args) > 0 {
 			command = args
