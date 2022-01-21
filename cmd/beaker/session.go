@@ -685,6 +685,8 @@ func findRunningSession() (*api.Job, error) {
 	if err != nil {
 		return nil, fmt.Errorf("whoami: %w", err)
 	}
+	// The list jobs API does not support filtering by user so we filter client-side.
+	// TODO: https://github.com/allenai/beaker-service/issues/1872
 	var userSessions []api.Job
 	for _, session := range sessions.Data {
 		if session.Author.ID != user.Identity.ID {
