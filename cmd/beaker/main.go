@@ -112,6 +112,9 @@ func main() {
 		}
 	}
 	if err != nil {
+		// Print table output before errors.
+		tableOut.Flush()
+
 		// Don't print "context canceled" error on Ctrl-C.
 		if !errors.Is(err, context.Canceled) {
 			fmt.Fprintf(os.Stderr, "%s %+v\n", color.RedString("Error:"), err)
