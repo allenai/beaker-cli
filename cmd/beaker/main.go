@@ -43,12 +43,6 @@ var jsonOut *json.Encoder
 var tableOut *tabwriter.Writer
 
 func main() {
-	jsonOut = json.NewEncoder(os.Stdout)
-	jsonOut.SetIndent("", "    ")
-
-	tableOut = tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	defer tableOut.Flush()
-
 	var cancel context.CancelFunc
 	ctx, cancel = withSignal(context.Background())
 	defer cancel()
@@ -101,7 +95,11 @@ func main() {
 	root.AddCommand(newSessionCommand())
 	root.AddCommand(newWorkspaceCommand())
 
+	jsonOut = json.NewEncoder(os.Stdout)
+	jsonOut.SetIndent("", "    ")
+	tableOut = tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	err := root.Execute()
+	tableOut.Flush()
 	if err != nil {
 		var apiErr api.Error
 		if errors.As(err, &apiErr) && apiErr.Code == http.StatusUnauthorized {

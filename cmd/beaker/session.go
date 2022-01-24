@@ -35,25 +35,30 @@ func newSessionCommand() *cobra.Command {
 }
 
 func newSessionAttachCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "attach <session>",
+	cmd := &cobra.Command{
+		Use:   "attach",
 		Short: "Attach to a running session",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			container, err := findRunningContainer(args[0])
-			if err != nil {
-				return err
-			}
-
-			resp, err := container.Attach(ctx)
-			if err != nil {
-				return err
-			}
-			defer resp.Close()
-
-			return handleAttachErr(container.Stream(ctx, resp))
-		},
+		Args:  cobra.NoArgs,
 	}
+
+	var session string
+	cmd.Flags().StringVar(&session, "session", "", "Target session. Defaults to the running session.")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		container, err := findRunningSessionContainer(session)
+		if err != nil {
+			return err
+		}
+
+		resp, err := container.Attach(ctx)
+		if err != nil {
+			return err
+		}
+		defer resp.Close()
+
+		return handleAttachErr(container.Stream(ctx, resp))
+	}
+	return cmd
 }
 
 func newSessionCreateCommand() *cobra.Command {
@@ -367,31 +372,34 @@ func getImageSource(name string) (*api.ImageSource, error) {
 }
 
 func newSessionExecCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "exec <session> [command...]",
+	cmd := &cobra.Command{
+		Use:   "exec [command...]",
 		Short: "Execute a command in a session",
 		Long: `Execute a command in a session
 
 If no command is provided, exec will run 'bash -l'`,
-		Args: cobra.MinimumNArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			container, err := findRunningContainer(args[0])
-			if err != nil {
-				return err
-			}
-
-			// Pass nil instead of empty slice when there are no arguments.
-			command := []string{"bash", "-l"}
-			if len(args) > 1 {
-				command = args[1:]
-			}
-
-			err = container.Exec(ctx, &docker.ExecOpts{
-				Command: command,
-			})
-			return handleAttachErr(err)
-		},
 	}
+
+	var session string
+	cmd.Flags().StringVar(&session, "session", "", "Target session. Defaults to the running session.")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		container, err := findRunningSessionContainer(session)
+		if err != nil {
+			return err
+		}
+
+		command := []string{"bash", "-l"}
+		if len(args) > 0 {
+			command = args
+		}
+
+		err = container.Exec(ctx, &docker.ExecOpts{
+			Command: command,
+		})
+		return handleAttachErr(err)
+	}
+	return cmd
 }
 
 func newSessionGetCommand() *cobra.Command {
@@ -476,11 +484,22 @@ func newSessionStopCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "stop",
 		Short: "Stop a pending or running session",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.NoArgs,
 	}
 
+	var session string
+	cmd.Flags().StringVar(&session, "session", "", "Target session. Defaults to the running session.")
+
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		job, err := beaker.Job(args[0]).Patch(ctx, api.JobPatch{
+		if session == "" {
+			info, err := findRunningSession()
+			if err != nil {
+				return err
+			}
+			session = info.ID
+		}
+
+		job, err := beaker.Job(session).Patch(ctx, api.JobPatch{
 			Status: &api.JobStatusUpdate{Canceled: true},
 		})
 		if err != nil {
@@ -628,18 +647,80 @@ func handleAttachErr(err error) error {
 	return err
 }
 
-func findRunningContainer(session string) (*docker.Container, error) {
-	info, err := beaker.Job(session).Get(ctx)
+// Find the container of the given session or the running session if no
+// session reference is provided. Returns an error if there is not exactly
+// one running session or if the container is not in a running state.
+func findRunningSessionContainer(ref string) (*docker.Container, error) {
+	var session *api.Job
+	var err error
+	if ref == "" {
+		session, err = findRunningSession()
+	} else {
+		session, err = beaker.Job(ref).Get(ctx)
+	}
 	if err != nil {
 		return nil, err
 	}
-	if info.Status.Started == nil {
+	return findRunningContainer(*session)
+}
+
+// Find a running session. Returns an error if there are no running sessions
+// or if there are multiple running sessions.
+func findRunningSession() (*api.Job, error) {
+	node, err := getCurrentNode()
+	if err != nil {
+		return nil, fmt.Errorf("failed to detect current node, ensure executor is running: %w", err)
+	}
+	kind := api.JobKindSession
+	sessions, err := beaker.ListJobs(ctx, &client.ListJobOpts{
+		Kind:      &kind,
+		Node:      &node,
+		Scheduled: api.BoolPtr(true),
+		Finalized: api.BoolPtr(false),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("listing sessions: %w", err)
+	}
+	user, err := beaker.WhoAmI(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("whoami: %w", err)
+	}
+	// The list jobs API does not support filtering by user so we filter client-side.
+	// TODO: https://github.com/allenai/beaker-service/issues/1872
+	var userSessions []api.Job
+	for _, session := range sessions.Data {
+		if session.Author.ID != user.Identity.ID {
+			continue
+		}
+		userSessions = append(userSessions, session)
+	}
+	if len(userSessions) == 0 {
+		return nil, fmt.Errorf("no running sessions found")
+	}
+	if len(userSessions) > 1 {
+		if !quiet {
+			if err := printJobs(userSessions); err != nil {
+				return nil, err
+			}
+		}
+		return nil, fmt.Errorf("multiple running sessions found, select one with --session")
+	}
+	session := userSessions[0]
+	if !quiet {
+		fmt.Printf("Found running session: %s\n", color.BlueString(session.ID))
+	}
+	return &session, nil
+}
+
+// Find a running container for a session.
+func findRunningContainer(session api.Job) (*docker.Container, error) {
+	if session.Status.Started == nil {
 		return nil, fmt.Errorf("session not started")
 	}
-	if info.Status.Exited != nil || info.Status.Failed != nil {
+	if session.Status.Exited != nil || session.Status.Failed != nil {
 		return nil, fmt.Errorf("session already ended")
 	}
-	if info.Status.Finalized != nil {
+	if session.Status.Finalized != nil {
 		return nil, fmt.Errorf("session already finalized")
 	}
 
@@ -647,5 +728,5 @@ func findRunningContainer(session string) (*docker.Container, error) {
 	if err != nil {
 		return nil, err
 	}
-	return rt.Container(info.ContainerName()).(*docker.Container), nil
+	return rt.Container(session.ContainerName()).(*docker.Container), nil
 }
