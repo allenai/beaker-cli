@@ -143,6 +143,10 @@ func newExperimentCreateCommand() *cobra.Command {
 			return err
 		}
 
+		if format == formatJSON {
+			return printJSON([]api.Experiment{*experiment})
+		}
+
 		if quiet {
 			fmt.Println(experiment.ID)
 		} else {

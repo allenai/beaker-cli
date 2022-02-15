@@ -73,6 +73,10 @@ func main() {
 				}
 			}
 
+			if quiet && format != "" {
+				return errors.New("flags --quiet and --format are mutually exclusive")
+			}
+
 			return err
 		},
 	}
@@ -171,7 +175,7 @@ func ensureWorkspace(workspaceRef string) (string, error) {
 		} else {
 			workspaceRef = beakerConfig.DefaultWorkspace
 			if !quiet {
-				fmt.Printf("Defaulting to workspace %s\n", color.BlueString(workspaceRef))
+				fmt.Fprintf(os.Stderr, "Defaulting to workspace %s\n", color.BlueString(workspaceRef))
 			}
 		}
 	}
