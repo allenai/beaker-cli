@@ -72,7 +72,6 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		Args: cobra.ArbitraryArgs,
 	}
 
-	var localHome bool
 	var image string
 	var name string
 	var node string
@@ -85,7 +84,6 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 		"i",
 		defaultImage,
 		"Base image to run, may be a Beaker or Docker image. Uses 'default_image' from the Beaker configuration if set.")
-	cmd.Flags().BoolVar(&localHome, "local-home", false, "Mount the invoking user's home directory, ignoring Beaker configuration")
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the session")
 	cmd.Flags().StringVar(&node, "node", "", "Node that the session will run on. Defaults to current node.")
 	cmd.Flags().StringVarP(&workspace, "workspace", "w", "", "Workspace where the session will be placed")
@@ -195,7 +193,6 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 				EnvVars:   envVars,
 				Datasets:  mounts,
 				Image:     *imageSource,
-				LocalHome: localHome,
 				SaveImage: saveImage,
 			},
 		})
