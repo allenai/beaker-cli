@@ -13,6 +13,9 @@ const (
 	// Location for storing Beaker configuration.
 	executorConfigDir = "/etc/beaker"
 
+	// Location of Beaker runtime artifacts (datasets, node information, etc)
+	executorStoragePath = "/var/beaker"
+
 	// Path to the node file within the executor's storage directory.
 	executorNodePath = "node"
 )
