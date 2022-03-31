@@ -39,6 +39,7 @@ var (
 )
 
 var configTemplate = template.Must(template.New("config").Parse(`
+storagePath: {{.StoragePath}}
 beaker:
   address: {{.Address}}
   tokenPath: {{.TokenPath}}
@@ -47,10 +48,11 @@ resources:
   gpus: {{.GPUs}}`))
 
 type configOpts struct {
-	Address   string
-	TokenPath string
-	Cluster   string
-	GPUs      string
+	StoragePath string
+	Address     string
+	TokenPath   string
+	Cluster     string
+	GPUs        string
 }
 
 var systemdTemplate = template.Must(template.New("systemd").Parse(`
@@ -113,6 +115,10 @@ func newExecutorConfigureCommand() *cobra.Command {
 			return err
 		}
 
+		if err := os.MkdirAll(executorStoragePath, os.ModePerm); err != nil {
+			return err
+		}
+
 		if err := ioutil.WriteFile(
 			executorTokenPath,
 			[]byte(beakerConfig.UserToken),
@@ -132,10 +138,11 @@ func newExecutorConfigureCommand() *cobra.Command {
 		}
 		defer configFile.Close()
 		return configTemplate.Execute(configFile, configOpts{
-			Address:   beakerConfig.BeakerAddress,
-			TokenPath: executorTokenPath,
-			Cluster:   cluster,
-			GPUs:      gpus,
+			StoragePath: executorStoragePath,
+			Address:     beakerConfig.BeakerAddress,
+			TokenPath:   executorTokenPath,
+			Cluster:     cluster,
+			GPUs:        gpus,
 		})
 	}
 	return cmd
