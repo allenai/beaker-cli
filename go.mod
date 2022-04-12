@@ -7,7 +7,7 @@ require (
 	github.com/beaker/client v0.0.0-20220118174312-992c493d18d8
 	github.com/beaker/fileheap v0.0.0-20211007204440-1bd3920c4320
 	github.com/beaker/runtime v0.0.0-20211213171103-95151aa06fad
-	github.com/docker/distribution v2.7.1+incompatible
+	github.com/docker/distribution v2.8.1+incompatible
 	github.com/docker/docker v20.10.12+incompatible
 	github.com/fatih/color v1.13.0
 	github.com/pkg/errors v0.9.1
@@ -23,7 +23,7 @@ require (
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d // indirect
 	github.com/beaker/unique v0.0.0-20210625205350-416101674f78 // indirect
-	github.com/containerd/containerd v1.5.9 // indirect
+	github.com/containerd/containerd v1.6.2 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -54,6 +54,7 @@ require (
 	google.golang.org/genproto v0.0.0-20220208230804-65c12eb4c068 // indirect
 	google.golang.org/grpc v1.44.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
 
 // See https://github.com/advisories/GHSA-c2h3-6mxw-7mvq
