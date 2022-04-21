@@ -274,6 +274,23 @@ Do not write sensitive information outside of the home directory.
 `))
 		}
 
+		info, err := container.Info(ctx)
+		if err != nil {
+			return fmt.Errorf("getting container info: %w", err)
+		}
+
+		if len(info.TCPPorts) > 0 {
+			bindings := []string{}
+			for _, pb := range info.TCPPorts {
+				bindings = append(bindings, color.BlueString(
+					"0.0.0.0:%d->%d/tcp",
+					pb.HostPort,
+					pb.ContainerPort,
+				))
+			}
+			fmt.Printf("Exposed Ports: %s\n", strings.Join(bindings, ", "))
+		}
+
 		if err := handleAttachErr(container.Stream(ctx, resp)); err != nil {
 			return fmt.Errorf("stream: %w", err)
 		}

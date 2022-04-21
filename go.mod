@@ -6,7 +6,7 @@ require (
 	github.com/allenai/bytefmt v0.1.2
 	github.com/beaker/client v0.0.0-20220421175640-599703769000
 	github.com/beaker/fileheap v0.0.0-20211007204440-1bd3920c4320
-	github.com/beaker/runtime v0.0.0-20211213171103-95151aa06fad
+	github.com/beaker/runtime v0.0.0-20220421165624-9a027d1b3070
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/docker/docker v20.10.12+incompatible
 	github.com/fatih/color v1.13.0
@@ -47,14 +47,14 @@ require (
 	github.com/vbauerster/mpb/v4 v4.12.2 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	golang.org/x/crypto v0.0.0-20211209193657-4570a0811e8b // indirect
-	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
+	golang.org/x/net v0.0.0-20220420153159-1850ba15e1be // indirect
 	golang.org/x/sys v0.0.0-20220207234003-57398862261d // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220208230804-65c12eb4c068 // indirect
 	google.golang.org/grpc v1.44.0 // indirect
-	google.golang.org/protobuf v1.27.1 // indirect
+	google.golang.org/protobuf v1.28.0 // indirect
 )
 
 // See https://github.com/advisories/GHSA-c2h3-6mxw-7mvq
