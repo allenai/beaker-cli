@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/allenai/bytefmt v0.1.2
-	github.com/beaker/client v0.0.0-20220118174312-992c493d18d8
+	github.com/beaker/client v0.0.0-20220421175640-599703769000
 	github.com/beaker/fileheap v0.0.0-20211007204440-1bd3920c4320
 	github.com/beaker/runtime v0.0.0-20211213171103-95151aa06fad
 	github.com/docker/distribution v2.8.1+incompatible
@@ -33,6 +33,7 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/kr/pretty v0.2.1 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
@@ -54,7 +55,6 @@ require (
 	google.golang.org/genproto v0.0.0-20220208230804-65c12eb4c068 // indirect
 	google.golang.org/grpc v1.44.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
 
 // See https://github.com/advisories/GHSA-c2h3-6mxw-7mvq

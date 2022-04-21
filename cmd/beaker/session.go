@@ -116,10 +116,17 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 	var gpus int
 	var memory string
 	var sharedMemory string
+	var ports []string
 	cmd.Flags().Float64Var(&cpus, "cpus", 0, "Minimum CPU cores to reserve, e.g. 7.5")
 	cmd.Flags().IntVar(&gpus, "gpus", 0, "Minimum number of GPUs to reserve")
 	cmd.Flags().StringVar(&memory, "memory", "", "Minimum memory to reserve, e.g. 6.5GiB")
 	cmd.Flags().StringVar(&sharedMemory, "shared-memory", "", "Shared memory (size of /dev/shm), e.g. 1GiB")
+	cmd.Flags().StringSliceVar(
+		&ports,
+		"port",
+		[]string{},
+		"TCP container ports to expose. Each will be assigned a random, ephemeral port on the host.",
+	)
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		rt, err := docker.NewRuntime()
@@ -178,6 +185,17 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 			})
 		}
 
+		var tcpPorts []api.TCPPort
+		for _, p := range ports {
+			pp, err := strconv.ParseInt(p, 10, 32)
+			if err != nil {
+				return fmt.Errorf("invalid port: %d", pp)
+			}
+			// We know the conversion to int32 is safe because of the bitsize
+			// passed to strconv.ParseInt() above.
+			tcpPorts = append(tcpPorts, int32(pp))
+		}
+
 		session, err := beaker.CreateJob(ctx, api.JobSpec{
 			Session: &api.SessionJobSpec{
 				Workspace: workspace,
@@ -194,6 +212,7 @@ To pass flags, use "--" e.g. "create -- ls -l"`,
 				Datasets:  mounts,
 				Image:     *imageSource,
 				SaveImage: saveImage,
+				TCPPorts:  tcpPorts,
 			},
 		})
 		if err != nil {

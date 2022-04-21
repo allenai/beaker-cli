@@ -103,8 +103,8 @@ github.com/allenai/bytefmt v0.1.2 h1:27970/ph1eYlv9e5i6Jc6SZoIyXy+DVD4hDDiF0dQGI
 github.com/allenai/bytefmt v0.1.2/go.mod h1:3hhcDqHXjwM3JBHx4cX79jG5G3V8zKsjeutbhJ3XjI0=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
 github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a/go.mod h1:lB+ZfQJz7igIIfQNfa7Ml4HSf2uFQQRzpGGRXenZAgY=
-github.com/beaker/client v0.0.0-20220118174312-992c493d18d8 h1:rDcZ19MPKf20umUkBeQV5hw3R8q7UIK/aOIz2V0nvew=
-github.com/beaker/client v0.0.0-20220118174312-992c493d18d8/go.mod h1:gneEdoTEWgYoS32NWMZN6bsZWqlnYSj3NxFawTTJPWI=
+github.com/beaker/client v0.0.0-20220421175640-599703769000 h1:+q57+NHrNvNBscKC5TxKY/rcZRqGzVhj32VdqrtRUIg=
+github.com/beaker/client v0.0.0-20220421175640-599703769000/go.mod h1:3YTEVm+/Yb/iPCh9tq0PzotY/DTdEYoEO6WvU882XJU=
 github.com/beaker/fileheap v0.0.0-20211007204440-1bd3920c4320 h1:z3Ed6zWWi5wz+AUojzbxZglrfNLM8YeeMrmAv7WbsQQ=
 github.com/beaker/fileheap v0.0.0-20211007204440-1bd3920c4320/go.mod h1:B39KYPwS7QX1cXqPUKmC0ypuZy5idMGwPsLrY1N7dWQ=
 github.com/beaker/runtime v0.0.0-20211213171103-95151aa06fad h1:m6VFGPVTfwKAxjRakGf5tc9vy5e5SPVbRNfTpvEmPxY=
