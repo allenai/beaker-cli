@@ -7,11 +7,13 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/allenai/beaker/config"
 	"github.com/allenai/bytefmt"
 	"github.com/beaker/client/api"
 	"github.com/beaker/client/client"
+	"github.com/beaker/runtime"
 	"github.com/beaker/runtime/docker"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -28,6 +30,7 @@ func newSessionCommand() *cobra.Command {
 	cmd.AddCommand(newSessionCreateCommand())
 	cmd.AddCommand(newSessionExecCommand())
 	cmd.AddCommand(newSessionGetCommand())
+	cmd.AddCommand(newSessionDescribeCommand())
 	cmd.AddCommand(newSessionImagesCommand())
 	cmd.AddCommand(newSessionListCommand())
 	cmd.AddCommand(newSessionStopCommand())
@@ -45,7 +48,7 @@ func newSessionAttachCommand() *cobra.Command {
 	cmd.Flags().StringVar(&session, "session", "", "Target session. Defaults to the running session.")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		container, err := findRunningSessionContainer(session)
+		container, _, err := findRunningSessionContainer(session)
 		if err != nil {
 			return err
 		}
@@ -417,7 +420,7 @@ If no command is provided, exec will run 'bash -l'`,
 	cmd.Flags().StringVar(&session, "session", "", "Target session. Defaults to the running session.")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		container, err := findRunningSessionContainer(session)
+		container, _, err := findRunningSessionContainer(session)
 		if err != nil {
 			return err
 		}
@@ -437,10 +440,9 @@ If no command is provided, exec will run 'bash -l'`,
 
 func newSessionGetCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:     "get <session...>",
-		Aliases: []string{"inspect"},
-		Short:   "Display detailed information about one or more sessions",
-		Args:    cobra.MinimumNArgs(1),
+		Use:   "get <session...>",
+		Short: "Display basic information about one or more sessions",
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var jobs []api.Job
 			for _, id := range args {
@@ -451,6 +453,137 @@ func newSessionGetCommand() *cobra.Command {
 				jobs = append(jobs, *info)
 			}
 			return printJobs(jobs)
+		},
+	}
+}
+
+// These structs are local to the client because they represent the combination
+// of details the API knows about a session with those derived from the container
+// runtime. This is the information that's output via the `describe` command.
+type tcpPortBinding struct {
+	HostPort      runtime.TCPPort `json:"host_port"`
+	ContainerPort runtime.TCPPort `json:"container_port"`
+}
+type runtimeInfo struct {
+	TCPPorts []tcpPortBinding `json:"tcp_ports"`
+}
+type sessionDetails struct {
+	*api.Job
+	Runtime *runtimeInfo `json:"runtime"`
+}
+
+func newDetails(session *api.Job, info *runtime.ContainerInfo) *sessionDetails {
+	ports := []tcpPortBinding{}
+	for _, pb := range info.TCPPorts {
+		ports = append(ports, tcpPortBinding{
+			HostPort:      pb.HostPort,
+			ContainerPort: pb.ContainerPort,
+		})
+	}
+
+	ri := runtimeInfo{TCPPorts: ports}
+	return &sessionDetails{
+		Job:     session,
+		Runtime: &ri,
+	}
+}
+
+func newSessionDescribeCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "describe <session...>",
+		Short: "Display detailed information about a single session",
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ref := ""
+			if len(args) == 1 {
+				ref = args[0]
+			}
+			container, session, err := findRunningSessionContainer(ref)
+			if err != nil {
+				return err
+			}
+
+			info, err := container.Info(ctx)
+			if err != nil {
+				return err
+			}
+
+			node, err := beaker.Node(session.Node).Get(ctx)
+			if err != nil {
+				return err
+			}
+
+			details := newDetails(session, info)
+
+			switch format {
+			case formatJSON:
+				printJSON(details)
+			default:
+				printTableRow("ID", details.ID)
+				printTableRow("Name", details.Name)
+				printTableRow(
+					"User",
+					fmt.Sprintf(
+						"%s (%s)",
+						details.Author.DisplayName,
+						details.Author.Name,
+					),
+				)
+
+				var img string
+				if details.Session.Image.Beaker != "" {
+					img = fmt.Sprintf("beaker://%s", details.Session.Image.Beaker)
+				} else if details.Session.Image.Docker != "" {
+					img = fmt.Sprintf("docker://%s", details.Session.Image.Docker)
+				}
+				printTableRow("Image", img)
+
+				// Print some extra information for Beaker images, since we have it.
+				if details.Session.Image.Beaker != "" {
+					bkrImg, err := beaker.Image(details.Session.Image.Beaker).Get(ctx)
+					if err != nil {
+						return err
+					}
+					url := fmt.Sprintf("%s/im/%s", beaker.Address(), bkrImg.ID)
+					// HACK printTableRow prints "N/A" instead of an empty string,
+					// which we don't want, so we pass a single space instead.
+					printTableRow(" ", url)
+				}
+
+				var start time.Time
+				if details.Status.Scheduled != nil {
+					start = *details.Status.Scheduled
+				}
+				printTableRow("Started", start)
+				printTableRow("Elapsed", jobDuration(*details.Job))
+				printTableRow("Status", jobStatus(details.Job.Status))
+
+				var gpus string
+				if details.Limits != nil {
+					gpus = strconv.Itoa(len(details.Limits.GPUs))
+				}
+				printTableRow("GPUS", gpus)
+
+				for i, pb := range details.Runtime.TCPPorts {
+					// HACK printTableRow prints "N/A" instead of an empty string,
+					// which we don't want, so we pass a single space instead.
+					title := " "
+					if i == 0 {
+						title = "TCP Ports"
+					}
+					url := fmt.Sprintf("http://%s:%d", node.Hostname, pb.HostPort)
+					p := fmt.Sprintf(
+						"%s:%d->%d/tcp (%s)",
+						node.Hostname,
+						pb.HostPort,
+						pb.ContainerPort,
+						url,
+					)
+					printTableRow(title, p)
+				}
+			}
+
+			return nil
 		},
 	}
 }
@@ -683,7 +816,7 @@ func handleAttachErr(err error) error {
 // Find the container of the given session or the running session if no
 // session reference is provided. Returns an error if there is not exactly
 // one running session or if the container is not in a running state.
-func findRunningSessionContainer(ref string) (*docker.Container, error) {
+func findRunningSessionContainer(ref string) (*docker.Container, *api.Job, error) {
 	var session *api.Job
 	var err error
 	if ref == "" {
@@ -692,9 +825,13 @@ func findRunningSessionContainer(ref string) (*docker.Container, error) {
 		session, err = beaker.Job(ref).Get(ctx)
 	}
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return findRunningContainer(*session)
+	c, err := findRunningContainer(*session)
+	if err != nil {
+		return nil, session, err
+	}
+	return c, session, nil
 }
 
 // Find a running session. Returns an error if there are no running sessions
