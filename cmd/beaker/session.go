@@ -520,7 +520,7 @@ func newSessionDescribeCommand() *cobra.Command {
 				printJSON(details)
 			default:
 				printTableRow("ID", details.ID)
-				printTableRow("Name", details.Name)
+				printTableRow("NAME", details.Name)
 				printTableRow(
 					"User",
 					fmt.Sprintf(
@@ -536,7 +536,7 @@ func newSessionDescribeCommand() *cobra.Command {
 				} else if details.Session.Image.Docker != "" {
 					img = fmt.Sprintf("docker://%s", details.Session.Image.Docker)
 				}
-				printTableRow("Image", img)
+				printTableRow("IMAGE", img)
 
 				// Print some extra information for Beaker images, since we have it.
 				if details.Session.Image.Beaker != "" {
@@ -554,9 +554,9 @@ func newSessionDescribeCommand() *cobra.Command {
 				if details.Status.Scheduled != nil {
 					start = *details.Status.Scheduled
 				}
-				printTableRow("Started", start)
-				printTableRow("Elapsed", jobDuration(*details.Job))
-				printTableRow("Status", jobStatus(details.Job.Status))
+				printTableRow("STARTED", start)
+				printTableRow("ELAPSED", jobDuration(*details.Job))
+				printTableRow("STATUS", jobStatus(details.Job.Status))
 
 				var gpus string
 				if details.Limits != nil {
@@ -569,7 +569,7 @@ func newSessionDescribeCommand() *cobra.Command {
 					// which we don't want, so we pass a single space instead.
 					title := " "
 					if i == 0 {
-						title = "TCP Ports"
+						title = "TCP PORTS"
 					}
 					url := fmt.Sprintf("http://%s:%d", node.Hostname, pb.HostPort)
 					p := fmt.Sprintf(
