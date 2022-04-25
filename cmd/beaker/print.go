@@ -232,6 +232,18 @@ func printImages(images []api.Image) error {
 	}
 }
 
+func jobDuration(job api.Job) time.Duration {
+	var duration time.Duration
+	if job.Status.Scheduled != nil {
+		end := time.Now()
+		if job.Status.Finalized != nil {
+			end = *job.Status.Finalized
+		}
+		duration = end.Sub(*job.Status.Scheduled)
+	}
+	return duration
+}
+
 func printJobs(jobs []api.Job) error {
 	switch format {
 	case formatJSON:
@@ -251,14 +263,7 @@ func printJobs(jobs []api.Job) error {
 			return err
 		}
 		for _, job := range jobs {
-			var duration time.Duration
-			if job.Status.Scheduled != nil {
-				end := time.Now()
-				if job.Status.Finalized != nil {
-					end = *job.Status.Finalized
-				}
-				duration = end.Sub(*job.Status.Scheduled)
-			}
+			duration := jobDuration(job)
 
 			var scheduled time.Time
 			if job.Status.Scheduled != nil {
