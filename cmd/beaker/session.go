@@ -573,7 +573,7 @@ func newSessionDescribeCommand() *cobra.Command {
 					}
 					url := fmt.Sprintf("http://%s:%d", node.Hostname, pb.HostPort)
 					p := fmt.Sprintf(
-						"%s:%d->%d/tcp (%s)",
+						"%s:%d->%d/tcp (e.g., %s)",
 						node.Hostname,
 						pb.HostPort,
 						pb.ContainerPort,
