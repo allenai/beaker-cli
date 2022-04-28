@@ -537,6 +537,8 @@ func jobStatus(state api.JobStatus) string {
 		return "running"
 	case state.Scheduled != nil:
 		return "starting"
+	case state.Canceled != nil && state.CanceledFor == "preempted":
+		return "preepted"
 	default:
 		return "pending"
 	}
