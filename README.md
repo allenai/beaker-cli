@@ -4,6 +4,8 @@
 
 Documentation can be found [here](https://github.com/beaker/docs/blob/main/docs).
 
+👀 *Looking for a Python client? See [beaker-py](https://github.com/allenai/beaker-py).*
+
 ## Getting Started
 
 Please refer to our [installation guide](https://github.com/beaker/docs/blob/main/docs/start/install.md).
